@@ -117,6 +117,16 @@ const nova=()=>new C.Engine();
   let ruim=false;try{C.Serializer.deJSON(e2.scene,{formato:1,estado:{vars:{x:{}}},entidades:[]});}catch(x){ruim=true;}ok(ruim&&e2.vars.ler('pontos')===3,'save com variável inválida é recusado sem destruir a cena');
   e.registrarCena('a',{montar(){}});e.registrarCena('b',{montar(){}});e.irPara('a');e.passo();v.definir('pontos',9);e.irPara('b');e.passo();ok(v.ler('pontos')===9&&e.scene.estado.cena==='b','variáveis atravessam a troca de cena');
   const e3=nova();e3.registrarScript('s',{atualizar(en,dt,ctx){ctx.vars.somar('n');}});e3.vars.declarar('n',0);e3.scene.create({Script:{nome:'s'}});e3.passo();e3.passo();ok(e3.vars.ler('n')===2,'scripts usam ctx.vars');}
+{ // scripts com fonte dentro da cena
+  const e=nova();e.vars.declarar('n',0);
+  e.scene.estado.scripts={mover:{fonte:'function iniciar(en,ctx){ctx.vars.somar("n",10);}\nfunction atualizar(en,dt,ctx){en.Transform.x+=60*dt;}\nconst eventos={colisao(en,d,ctx){ctx.vars.somar("n");}};'},
+    quebrado:{fonte:'function atualizar( {'},ruim:{fonte:123}};
+  const a=e.scene.create({Transform:{x:0,y:0},Script:{nome:'mover'}});const w=console.warn;let av=0;console.warn=()=>av++;const erros=e.compilarScripts();console.warn=w;
+  for(let i=0;i<60;i++)e.passo();
+  ok(erros.length===2&&av===2&&Math.abs(a.Transform.x-60)<0.01&&e.vars.ler('n')===10,'scripts da cena compilam e rodam; erro de sintaxe/forma vira erro listado, sem derrubar');
+  e.registrarScript('doJogo',{});e.scene.estado.scripts={doJogo:{fonte:''}};console.warn=()=>{};const e2=e.compilarScripts();console.warn=w;ok(e2.length===1&&/já existe/.test(e2[0].mensagem)&&!e.scripts.mover,'nome igual ao de script do jogo é recusado e scripts antigos da cena são removidos');
+  const s=new C.Scene(),f=d=>{try{C.Serializer.deJSON(s,{formato:1,estado:{scripts:d},entidades:[]});return false;}catch(x){return true;}};
+  ok(f(5)&&f({'1x':{fonte:''}})&&f({a:{}})&&f({a:{fonte:'x'.repeat(50001)}})&&!f({a:{fonte:'function atualizar(){}'}}),'save valida a forma de estado.scripts');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save
