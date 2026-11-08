@@ -10,10 +10,21 @@
     const n = e.nome || e.id;
     if (e.Transform) { num(e.Transform.x, n, 'Transform.x'); num(e.Transform.y, n, 'Transform.y'); }
     if (e.Velocity) { num(e.Velocity.vx, n, 'Velocity.vx'); num(e.Velocity.vy, n, 'Velocity.vy'); }
+    if (e.Controller) for (const k of ['aceleracao', 'velMax']) if (e.Controller[k] !== undefined) { num(e.Controller[k], n, 'Controller.' + k); if (e.Controller[k] <= 0) throw new Error('entidade "' + n + '": Controller.' + k + ' precisa ser maior que 0'); }
+    if (e.Animacao && e.Animacao.animacoes) for (const nome in e.Animacao.animacoes) {
+      const d = e.Animacao.animacoes[nome];
+      if (!d || !Number.isInteger(d.quadros) || d.quadros < 1) throw new Error('entidade "' + n + '": Animacao "' + nome + '": quadros precisa ser inteiro >= 1');
+      if (d.fps !== undefined) { num(d.fps, n, 'Animacao.' + nome + '.fps'); if (d.fps <= 0) throw new Error('entidade "' + n + '": Animacao "' + nome + '": fps precisa ser maior que 0'); }
+    }
     if (e.Body) {
       const b = e.Body, circ = b.forma === 'circulo' || (!b.forma && b.raio !== undefined);
       if (!e.Transform) throw new Error('entidade "' + n + '": Body precisa de Transform');
       if (b.massa !== undefined) { num(b.massa, n, 'Body.massa'); if (b.massa < 0) throw new Error('entidade "' + n + '": Body.massa não pode ser negativa'); }
+      if (b.forma !== undefined && b.forma !== 'circulo' && b.forma !== 'retangulo') throw new Error('entidade "' + n + '": Body.forma desconhecida: ' + b.forma + ' (use "circulo" ou "retangulo")');
+      if (b.elasticidade !== undefined) { num(b.elasticidade, n, 'Body.elasticidade'); if (b.elasticidade < 0 || b.elasticidade > 1) throw new Error('entidade "' + n + '": Body.elasticidade precisa estar entre 0 e 1'); }
+      if (b.amortecimento !== undefined) { num(b.amortecimento, n, 'Body.amortecimento'); if (b.amortecimento < 0) throw new Error('entidade "' + n + '": Body.amortecimento não pode ser negativo'); }
+      if (b.camada !== undefined && typeof b.camada !== 'string') throw new Error('entidade "' + n + '": Body.camada precisa ser texto');
+      if (b.colide !== undefined && !(Array.isArray(b.colide) && b.colide.every(x => typeof x === 'string'))) throw new Error('entidade "' + n + '": Body.colide precisa ser uma lista de textos');
       if (circ) { num(b.raio, n, 'Body.raio'); if (b.raio <= 0) throw new Error('entidade "' + n + '": Body.raio precisa ser maior que 0'); }
       else { num(b.w, n, 'Body.w'); num(b.h, n, 'Body.h'); if (b.w <= 0 || b.h <= 0) throw new Error('entidade "' + n + '": Body.w e Body.h precisam ser maiores que 0'); }
     }

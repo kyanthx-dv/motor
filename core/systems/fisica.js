@@ -61,12 +61,18 @@
     if (ib > 0 && b.Velocity) { vb.vx += j * ib * m.nx; vb.vy += j * ib * m.ny; }
   }
 
-  // Se algo rápido andaria mais de ~8 px num passo, o passo é dividido em subpassos. Assim paredes finas e sensores
-  // não são atravessados. Eventos saem uma vez por par a cada passo (mesmo com vários subpassos).
+  // O passo é dividido em subpassos para que ninguém ande, num subpasso, mais que METADE da menor dimensão de qualquer corpo
+  // (parede e sensor sem Velocity contam). Garantia: sem tunneling até VEL_MAX com corpos de menor dimensão >= 2 px (teto de MAX_SUB subpassos).
+  // A gravidade entra na conta (a velocidade cresce durante o passo). Eventos saem uma vez por par a cada passo.
+  const MAX_SUB = 32;
   C.Systems.fisica = function (scene, dt, ctx) {
-    let vmax = 0;
-    for (const e of scene.query('Transform', 'Velocity', 'Body')) if (invMassa(e) > 0) vmax = Math.max(vmax, Math.hypot(e.Velocity.vx, e.Velocity.vy));
-    const n = Math.min(8, Math.max(1, Math.ceil(vmax * dt / 8))), vistos = new Set();
+    let vmax = 0, fino = Infinity;
+    for (const e of scene.query('Transform', 'Body')) { const b = e.Body; fino = Math.min(fino, forma(b) === 'circulo' ? 2 * b.raio : Math.min(b.w, b.h)); }
+    const g = scene.estado.gravidade || { x: 0, y: 0 }, dg = Math.hypot(g.x || 0, g.y || 0) * dt;
+    for (const e of scene.query('Transform', 'Velocity', 'Body')) if (invMassa(e) > 0) vmax = Math.max(vmax, Math.hypot(e.Velocity.vx, e.Velocity.vy) + dg);
+    vmax = Math.min(vmax, VEL_MAX);
+    const passo = Math.max(1, Math.min(8, fino / 2));
+    const n = Math.min(MAX_SUB, Math.max(1, Math.ceil(vmax * dt / passo))), vistos = new Set();
     for (let i = 0; i < n; i++) subpasso(scene, dt / n, ctx, vistos);
   };
   function subpasso(scene, dt, ctx, vistos) {
