@@ -35,7 +35,7 @@ Ter um núcleo de engine pequeno, entendível e portável. O núcleo roda um jog
 
 - **Entidade:** `id`.
 - **Componente:** objeto simples, por nome. Ex.: `Transform {x, y, rot}`, `Velocity {vx, vy}`, `Body {forma, raio|w|h, massa, elasticidade}`.
-- **Sistema:** roda em ordem fixa por quadro: `Input → Scripts → Physics → Events → (fim do passo)`.
+- **Sistema:** roda em ordem fixa a cada passo: `controles → ui → scripts → fisica → animacao → camera`, depois entrega os eventos e remove entidades marcadas. Entrada, UI e scripts vêm antes da física; animação e câmera depois, para usar as posições já atualizadas. Sistemas próprios entram com `engine.usar(nome, fn)` e rodam depois dos padrões.
 - **Consulta:** `scene.query('Transform', 'Velocity')` devolve as entidades que têm todos esses componentes.
 
 Entidades nunca chamam outras entidades. Elas se influenciam por componentes e eventos.
@@ -50,16 +50,20 @@ enquanto acumulador >= 1/60:
 desenhar(alpha = acumulador / (1/60))   // interpolação opcional
 ```
 
-Limite de segurança: no máximo 5 passos por quadro, para o jogo não travar ao voltar de uma aba.
+**Política de tempo perdido (decisão do motor):** o jogo não tenta recuperar tempo que o aparelho perdeu. Cada quadro simula no máximo `maxPassos` (5) passos e ignora atrasos acima de `maxDelta` (0,25 s); o excedente fica somado em `engine.tempoPerdido`. Para replays e testes exatos, chame `engine.passo()` direto.
+
+**Quem bate o relógio:** `Engine.iniciar()` usa o `agendador` do host (`agora/pedir/cancelar`). O padrão usa `requestAnimationFrame` quando existe e um temporizador em Node; outro host passa o seu em `new Engine({ agendador })`.
+
+**Física:** passos com algo rápido são divididos em até 8 subpassos para não atravessar paredes finas; eventos saem uma vez por par a cada passo.
 
 ## 6. Contratos dos adaptadores
 
-**Renderer:** `init(alvo)`, `resize(w, h)`, `draw(scene, alpha)`, `destroy()`.
+**Renderer:** `redimensionar()`, `desenhar(scene, alpha, engine)`, `destruir()`. O `CanvasRenderer` também expõe `telaParaMundo` e `telaParaJanela`.
 Padrão do projeto: Canvas 2D. Adaptador Phaser vem depois, sem mudar o núcleo.
 
-**Input:** `poll()` devolve `{ pressed: Set, axes: {x,y}, pointer: {x,y,down} }`. O mapeamento tecla→ação fica em configuração, não no código dos sistemas.
+**Input:** `poll()` devolve `{ down, pressed, released, axes: {x,y}, pointer: {x,y,tx,ty,down,pressed} }`. O canvas aceita **um ponteiro principal** por vez (um segundo dedo é ignorado); botões HTML funcionam em paralelo. O mapeamento tecla→ação fica em configuração, não no código dos sistemas.
 
-**Assets:** `load(manifesto)` devolve uma promessa; `get(nome)` devolve o recurso.
+**Assets:** `carregar(manifesto)` devolve uma promessa; `registrar(nome, recurso)` e `get(nome)`. Hoje só imagens e só no navegador (usa `Image`); som e hosts sem `Image` ficam para depois.
 
 ## 7. Formato de cena (JSON)
 
@@ -84,7 +88,7 @@ O campo `formato` permite migrar cenas antigas quando a estrutura mudar.
 core/        núcleo puro (sem navegador)
   engine.js  scene.js  events.js  serializer.js
   systems/   physics.js  scripts.js
-adapters/    canvas-renderer.js  keyboard-touch-input.js  (depois: phaser-renderer.js)
+adapters/    canvas-renderer.js  input.js  assets.js  (depois: phaser-renderer.js)
 games/       exemplos (bolinha, etc.)
 editor/      Flux Engine como editor de cenas (depois)
 docs/        ARQUITETURA.md

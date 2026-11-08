@@ -7,7 +7,7 @@
     const c = scene.estado.camera; if (!c) return;
     c.px = c.x; c.py = c.y;                                               // posição anterior, para interpolar o desenho
     const alvo = c.seguir && scene.find(c.seguir);
-    if (alvo) { const k = 1 - Math.exp(-(c.suavizar ?? 8) * dt); c.x += (alvo.Transform.x - c.x) * k; c.y += (alvo.Transform.y - c.y) * k; }
+    if (alvo && alvo.Transform) { const k = 1 - Math.exp(-(c.suavizar ?? 8) * dt); c.x += (alvo.Transform.x - c.x) * k; c.y += (alvo.Transform.y - c.y) * k; }
     const l = c.limites; if (!l) return;
     const hw = ctx.tela.largura / (c.zoom || 1) / 2, hh = ctx.tela.altura / (c.zoom || 1) / 2;
     c.x = l.x1 - l.x0 <= hw * 2 ? (l.x0 + l.x1) / 2 : Math.max(l.x0 + hw, Math.min(l.x1 - hw, c.x));   // mundo menor que a tela: centraliza

@@ -11,9 +11,11 @@
       this.largura = op.largura || 800; this.altura = op.altura || 450; this.fundo = op.fundo || '#2f7d4f';
       this.debug = false; this.dpr = 1; this.esc = 1; this.ox = 0; this.oy = 0; this.cam = { cx: this.largura / 2, cy: this.altura / 2, z: 1 };
       this.redimensionar();
-      if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => this.redimensionar()).observe(canvas);
-      else window.addEventListener('resize', () => this.redimensionar());
+      this._aoRedimensionar = () => this.redimensionar();
+      if (typeof ResizeObserver !== 'undefined') { this._ro = new ResizeObserver(this._aoRedimensionar); this._ro.observe(canvas); }
+      else window.addEventListener('resize', this._aoRedimensionar);
     }
+    destruir() { if (this._ro) this._ro.disconnect(); else window.removeEventListener('resize', this._aoRedimensionar); }
     redimensionar() {
       const r = this.canvas.getBoundingClientRect(); this.dpr = Math.min(window.devicePixelRatio || 1, 3);
       this.canvas.width = Math.max(1, Math.round(r.width * this.dpr)); this.canvas.height = Math.max(1, Math.round(r.height * this.dpr));
