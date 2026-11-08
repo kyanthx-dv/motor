@@ -4,12 +4,12 @@
   const C = Core, $ = id => document.getElementById(id), tela = $('tela');
   const renderer = new C.CanvasRenderer(tela, { largura: 800, altura: 450, fundo: '#2b3a4a' });
   const engine = new C.Engine({ renderer }), cena = engine.scene;
-  let sel = null, sujo = true, arrastando = null, salvoPlay = null;
+  let sel = null, sujo = true, arrastando = null, salvoPlay = null, input = null;
 
   function exemplo() {
     cena.create({ nome: 'chao', Transform: { x: 400, y: 430 }, Body: { forma: 'retangulo', w: 760, h: 24, massa: 0, elasticidade: 0.4 }, Sprite: { cor: '#3f6b4a' } });
     cena.create({ nome: 'plataforma', Transform: { x: 560, y: 300 }, Body: { forma: 'retangulo', w: 180, h: 16, massa: 0 }, Sprite: { cor: '#6b4f2f' } });
-    cena.create({ nome: 'jogador', Transform: { x: 180, y: 380 }, Body: { forma: 'circulo', raio: 18, massa: 1, elasticidade: 0.2 }, Sprite: { forma: 'circulo', raio: 18, cor: '#4aa3ff' }, Controller: { aceleracao: 1500, velMax: 260 } });
+    cena.create({ nome: 'jogador', Transform: { x: 180, y: 380 }, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 18, massa: 1, elasticidade: 0.2 }, Sprite: { forma: 'circulo', raio: 18, cor: '#4aa3ff' }, Controller: { aceleracao: 1500, velMax: 260 } });
     cena.create({ nome: 'bola', Transform: { x: 330, y: 200 }, Body: { forma: 'circulo', raio: 12, massa: 0.5, elasticidade: 0.8 }, Sprite: { forma: 'circulo', raio: 12, cor: '#f5a524' } });
     cena.create({ nome: 'gol', Transform: { x: 700, y: 250 }, Body: { forma: 'retangulo', w: 40, h: 90, massa: 0, sensor: true }, Sprite: { cor: 'rgba(125,220,140,.45)' } });
     engine.vars.declarar('pontos', 0); engine.vars.declarar('fase', 'Fase 1'); engine.vars.declarar('som', true);
@@ -38,8 +38,8 @@
   function criar() { const e = cena.create({ nome: nomeLivre('objeto'), Transform: { x: 400, y: 225 }, Body: { forma: 'circulo', raio: 18, massa: 1, elasticidade: 0.4 }, Sprite: { forma: 'circulo', raio: 18, cor: '#a78bfa' } }); selecionar(e.id); msg('Objeto criado.', 'ok'); json(); }
   function duplicar() { const e = cena.get(sel); if (!e) return; const d = JSON.parse(JSON.stringify(e)); delete d.id; d.nome = nomeLivre((e.nome || 'objeto') + ' cópia'); d.Transform.x += 24; d.Transform.y += 24; const novo = cena.create(d); selecionar(novo.id); msg('Objeto duplicado.', 'ok'); json(); }
   function remover() { if (sel == null || !cena.get(sel)) return; cena.destroy(sel); cena.flush(); sel = null; listar(); props(); redesenhar(); atualizarAcoes(); msg('Objeto removido.', 'ok'); json(); }
-  function play() { salvoPlay = JSON.stringify(C.Serializer.paraJSON(cena)); engine.iniciar(); atualizarAcoes(); msg('Motor em execução.', 'ok'); }
-  function parar() { engine.parar(); if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(); redesenhar(); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
+  function play() { salvoPlay = JSON.stringify(C.Serializer.paraJSON(cena)); input = new Core.Input(tela, renderer); engine.input = input; engine.iniciar(); atualizarAcoes(); msg('Motor em execução.', 'ok'); }
+  function parar() { engine.parar(); if (input) { input.destruir(); input = null; engine.input = null; } if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(); redesenhar(); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
 
   // ---- propriedades (só mostra o que a entidade já tem)
   const CAMPOS = {
