@@ -93,6 +93,7 @@
   chute.addEventListener('pointerdown', e => { input.pressionar('acao', true); e.preventDefault(); });
   chute.addEventListener('pointerup', solta); chute.addEventListener('pointerleave', solta); chute.addEventListener('pointercancel', solta);
 
+  if (C.Depurador) new C.Depurador(engine, renderer, tela);
   montar(); engine.iniciar();
   window.jogo = { engine, cena, renderer, input, montar };      // acesso pelo console do navegador
 })();

@@ -21,6 +21,7 @@
       // Política de tempo (decisão do motor, não acidente): se o aparelho atrasa, o jogo NÃO tenta recuperar o tempo perdido.
       // Cada quadro simula no máximo maxPassos passos e ignora delta acima de maxDelta; o excedente fica contado em tempoPerdido.
       // Para replays/testes exatos, chame engine.passo() diretamente.
+      this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
       this.ctx = { engine: this, scene: this.scene, events: this.events, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
@@ -38,6 +39,13 @@
     }
     // Cenas (telas do jogo): registrarCena('menu', { montar(engine, dados) { ... } }); irPara('menu', dados).
     // Trocar no meio de um passo é seguro: a troca acontece quando o passo termina.
+    _rodarSistemas(dt, ctx) {
+      if (!this.perfil) { for (const s of this.systems) s.fn(this.scene, dt, ctx); return; }
+      for (const s of this.systems) {
+        const t0 = this.agendador.agora(); s.fn(this.scene, dt, ctx); const ms = this.agendador.agora() - t0;
+        this.tempos[s.nome] = (this.tempos[s.nome] ?? ms) * 0.9 + ms * 0.1;
+      }
+    }
     registrarCena(nome, def) { this.cenas[nome] = def; return this; }
     irPara(nome, dados) {
       if (!this.cenas[nome]) throw new Error('cena não registrada: ' + nome);
@@ -58,7 +66,7 @@
       ctx.input = this.input ? this.input.poll() : SEM_INPUT();
       for (const e of this.scene.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; }
       this._emPasso = true;
-      try { for (const s of this.systems) s.fn(this.scene, dt, ctx); this.events.flush(); this.scene.flush(); }
+      try { this._rodarSistemas(dt, ctx); this.events.flush(); this.scene.flush(); }
       finally { this._emPasso = false; }
       if (this._proxima) this._aplicarCena();
       this.tempo += dt; this.passos++;

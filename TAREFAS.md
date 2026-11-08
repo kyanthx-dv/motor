@@ -13,12 +13,13 @@
 
 - [x] Revisão sênior (Manus): A1 agendador do host, A2/A3 docs alinhados ao código, B1 migração finita, B2 um ponteiro principal, B3 ids únicos, B4 eventos descartados contados, B5 política de tempo documentada, R1 validação, R2 subpassos, R3 save sem campos de runtime, R4 guarda de carregamento, R6 teste de navegador
 
+- [x] Depurador (inspecionar e editar entidades, pausa, passo a passo, tempo por sistema)
+
 ## Próximo
 - [ ] Assets em hosts sem `Image` e som (R5)
 - [ ] Módulos ES / pacote (R4, quando for integrar em app)
 - [ ] Som
 - [ ] Retângulos que giram
-- [ ] Ferramentas de depuração (inspecionar entidades)
 - [ ] Adaptador Phaser (opcional)
 - [ ] Editor (Flux Engine gera cenas e scripts)
 

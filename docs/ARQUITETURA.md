@@ -54,6 +54,8 @@ desenhar(alpha = acumulador / (1/60))   // interpolação opcional
 
 **Quem bate o relógio:** `Engine.iniciar()` usa o `agendador` do host (`agora/pedir/cancelar`). O padrão usa `requestAnimationFrame` quando existe e um temporizador em Node; outro host passa o seu em `new Engine({ agendador })`.
 
+**Depuração:** `adapters/debug.js` (`new Core.Depurador(engine, renderer, canvas)`) abre com o botão Depurar ou F2. Lista entidades, seleciona por clique, edita componentes em JSON (validado antes de aplicar), pausa, avança um passo e mostra o tempo médio de cada sistema (`engine.perfil = true` liga a medição; `engine.tempos` guarda os valores).
+
 **Física:** passos com algo rápido são divididos em até 8 subpassos para não atravessar paredes finas; eventos saem uma vez por par a cada passo.
 
 ## 6. Contratos dos adaptadores

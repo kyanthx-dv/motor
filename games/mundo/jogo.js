@@ -52,6 +52,7 @@
   $('b-mais').addEventListener('click', () => zoom(1.25)); $('b-menos').addEventListener('click', () => zoom(0.8));
   $('b-debug').addEventListener('click', () => { renderer.debug = !renderer.debug; });
   tela.addEventListener('wheel', e => { e.preventDefault(); zoom(e.deltaY < 0 ? 1.1 : 0.9); }, { passive: false });
+  if (C.Depurador) new C.Depurador(engine, renderer, tela);
   montar(); engine.iniciar();
   window.jogo = { engine, cena, renderer, input, montar };
 })();

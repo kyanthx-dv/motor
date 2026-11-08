@@ -6,6 +6,14 @@
 (function (root) {
   const C = root.Core = root.Core || {};
   class CanvasRenderer {
+    // Caixa aproximada de uma entidade (usada pelo depurador para clicar e destacar). Prefere a imagem do Sprite, depois o Body.
+    static limitesDe(e) {
+      const b = e.Body, s = e.Sprite || {};
+      if (s.imagem) { const k = s.escala || 1; return { hw: (s.quadroW || 32) * k / 2, hh: (s.quadroH || 32) * k / 2, ox: s.offX || 0, oy: s.offY || 0 }; }
+      if (b) { const c = b.forma === 'circulo' || (!b.forma && b.raio !== undefined); return c ? { hw: b.raio, hh: b.raio, ox: 0, oy: 0 } : { hw: b.w / 2, hh: b.h / 2, ox: 0, oy: 0 }; }
+      const f = s.forma || (s.raio ? 'circulo' : 'retangulo');
+      return f === 'retangulo' ? { hw: (s.w ?? 20) / 2, hh: (s.h ?? 20) / 2, ox: 0, oy: 0 } : { hw: s.raio ?? 10, hh: s.raio ?? 10, ox: 0, oy: 0 };
+    }
     constructor(canvas, op = {}) {
       this.canvas = canvas; this.g = canvas.getContext('2d'); this.assets = op.assets || null;
       this.largura = op.largura || 800; this.altura = op.altura || 450; this.fundo = op.fundo || '#2f7d4f';
@@ -67,6 +75,13 @@
         if (s.rotulo) { g.fillStyle = s.corTexto || '#fff'; g.font = '600 ' + (s.tamanhoTexto || 14) + 'px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s.rotulo, x, y); }
       };
       for (const e of todos) if (!e.Sprite.fixo) pintar(e, cx, cy, L / z / 2, A / z / 2);
+      if (this.selecionada != null) {
+        const e = scene.get(this.selecionada);
+        if (e && e.Transform) {
+          const l = CanvasRenderer.limitesDe(e); g.strokeStyle = '#ffd400'; g.lineWidth = 2.5 / z; g.setLineDash([6 / z, 4 / z]);
+          g.strokeRect(e.Transform.x + l.ox - l.hw, e.Transform.y + l.oy - l.hh, l.hw * 2, l.hh * 2); g.setLineDash([]);
+        }
+      }
       if (this.debug) {
         g.strokeStyle = '#ff3b6b'; g.lineWidth = 1.5 / z;
         for (const e of scene.query('Transform', 'Body')) {

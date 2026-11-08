@@ -95,6 +95,7 @@
   $('b-salvar').addEventListener('click', () => { try { localStorage.setItem(KEY, JSON.stringify(C.Serializer.paraJSON(cena))); aviso('Jogo salvo'); } catch (e) { aviso('Não foi possível salvar'); } });
   $('b-carregar').addEventListener('click', () => { try { const raw = localStorage.getItem(KEY); if (!raw) return aviso('Nada salvo ainda'); C.Serializer.deJSON(cena, JSON.parse(raw)); aviso('Jogo carregado'); } catch (e) { aviso('Save inválido'); } });
   $('b-debug').addEventListener('click', () => { renderer.debug = !renderer.debug; });
+  if (C.Depurador) new C.Depurador(engine, renderer, tela);
   engine.irPara('menu'); engine.iniciar();
   window.jogo = { engine, cena, renderer, input };
 })();

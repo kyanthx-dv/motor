@@ -12,3 +12,4 @@
 - Botões: entidade com `Botao:{acao:{irPara:'cena'}}` + `Sprite:{fixo:true, w, h, rotulo}` (fixo = não anda com a câmera).
 - Camadas: `Body:{camada:'jogador', colide:['cenario','item']}`. Sem `colide` colide com tudo.
 - Testes: `node tests/test-core.js` (núcleo, sem navegador). Opcional: `node tests/test-navegador.js` (precisa de `npm i -D playwright`).
+- Depurador: botão **Depurar** (ou F2) em qualquer exemplo. Clique numa entidade para selecioná-la e edite os componentes.
