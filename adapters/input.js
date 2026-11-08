@@ -28,7 +28,7 @@
       ouvir(canvas, 'pointerdown', e => {
         if (this.ptId !== null) { e.preventDefault(); return; }       // 2º dedo no canvas é ignorado: não corrompe o estado do 1º
         this.ptId = e.pointerId; const p = this.local(e); this.atualizarPonteiro(p, true); this.pEdge = true;
-        if (!this.joystick.ativo) { const j = this.joystick; j.ativo = true; j.id = e.pointerId; j.x0 = j.x = p.x; j.y0 = j.y = p.y; j.dx = j.dy = 0; try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }
+        if (e.pointerType === 'touch' && !this.joystick.ativo) { const j = this.joystick; j.ativo = true; j.id = e.pointerId; j.x0 = j.x = p.x; j.y0 = j.y = p.y; j.dx = j.dy = 0; try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }
         e.preventDefault();
       });
       ouvir(canvas, 'pointermove', e => {
