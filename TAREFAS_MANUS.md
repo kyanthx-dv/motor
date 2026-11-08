@@ -11,7 +11,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 6. Nunca invente que testou. Se não rodou, diga.
 
 ## Fila
-- [ ] **M1** `package.json` com scripts `test` (core) e `test:navegador` (Playwright como devDependency). Atualizar README com os comandos.
+- [x] **M1** `package.json` com scripts `test` (core) e `test:navegador` (Playwright como devDependency). Atualizar README com os comandos.
 - [ ] **M2** GitHub Actions (`.github/workflows/ci.yml`) rodando `npm test` em cada PR.
 - [ ] **M3** `adapters/input.js`: o joystick virtual só aparece para toque (`e.pointerType === "touch"`). Mouse segue só como ponteiro/clique. Testar no navegador.
 - [ ] **M4** README: seção "Contrato do host" (o motor precisa de um agendador; no navegador é automático).
@@ -21,7 +21,9 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 B6 física · A2 validação de componentes (B1–B5 já corrigidos).
 
 ## Relatório do Manus
-(vazio)
+- M1 concluída: adicionado `package.json`/lockfile e documentados os comandos no README.
+- Testado: `node tests/test-core.js`, `npm test` e `npm run test:navegador` (todos passaram).
+- Dúvidas: nenhuma.
 
 ## Dúvidas do Manus
 (vazio)
