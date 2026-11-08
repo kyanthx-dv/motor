@@ -4,7 +4,7 @@
   const C = Core, $ = id => document.getElementById(id), tela = $('tela');
   const renderer = new C.CanvasRenderer(tela, { largura: 800, altura: 450, fundo: '#2b3a4a' });
   const engine = new C.Engine({ renderer }), cena = engine.scene;
-  let sel = null, sujo = true;
+  let sel = null, sujo = true, arrastando = null, salvoPlay = null;
 
   function exemplo() {
     cena.create({ nome: 'chao', Transform: { x: 400, y: 430 }, Body: { forma: 'retangulo', w: 760, h: 24, massa: 0, elasticidade: 0.4 }, Sprite: { cor: '#3f6b4a' } });
@@ -32,7 +32,14 @@
       if (e.id === sel) b.setAttribute('aria-current', 'true'); b.addEventListener('click', () => selecionar(e.id)); li.append(b); ul.append(li);
     }
   }
-  function selecionar(id) { sel = id != null && cena.get(id) ? id : null; listar(); props(); redesenhar(); }
+  function atualizarAcoes() { const tem = sel != null && !!cena.get(sel); $('e-duplicar').disabled = !tem; $('e-remover').disabled = !tem; $('e-play').disabled = engine.rodando; $('e-parar').disabled = !engine.rodando; }
+  function selecionar(id) { sel = id != null && cena.get(id) ? id : null; listar(); props(); redesenhar(); atualizarAcoes(); }
+  function nomeLivre(base) { let nome = base, n = 2; while (cena.find(nome)) nome = base + ' ' + n++; return nome; }
+  function criar() { const e = cena.create({ nome: nomeLivre('objeto'), Transform: { x: 400, y: 225 }, Body: { forma: 'circulo', raio: 18, massa: 1, elasticidade: 0.4 }, Sprite: { forma: 'circulo', raio: 18, cor: '#a78bfa' } }); selecionar(e.id); msg('Objeto criado.', 'ok'); json(); }
+  function duplicar() { const e = cena.get(sel); if (!e) return; const d = JSON.parse(JSON.stringify(e)); delete d.id; d.nome = nomeLivre((e.nome || 'objeto') + ' cópia'); d.Transform.x += 24; d.Transform.y += 24; const novo = cena.create(d); selecionar(novo.id); msg('Objeto duplicado.', 'ok'); json(); }
+  function remover() { if (sel == null || !cena.get(sel)) return; cena.destroy(sel); cena.flush(); sel = null; listar(); props(); redesenhar(); atualizarAcoes(); msg('Objeto removido.', 'ok'); json(); }
+  function play() { salvoPlay = JSON.stringify(C.Serializer.paraJSON(cena)); engine.iniciar(); atualizarAcoes(); msg('Motor em execução.', 'ok'); }
+  function parar() { engine.parar(); if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(); redesenhar(); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
 
   // ---- propriedades (só mostra o que a entidade já tem)
   const CAMPOS = {
@@ -96,6 +103,8 @@
     try { C.Serializer.deJSON(cena, JSON.parse($('json').value)); msg('Cena carregada.', 'ok'); } catch (x) { msg('Não carregou (a cena atual foi mantida): ' + x.message, 'erro'); return; }
     selecionar(sel); variaveis(); redesenhar();
   });
+  $('e-criar').addEventListener('click', criar); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
+  $('e-play').addEventListener('click', play); $('e-parar').addEventListener('click', parar);
 
   // ---- seleção e cursor no canvas
   function mundo(ev) { const b = tela.getBoundingClientRect(); return renderer.telaParaMundo(ev.clientX - b.left, ev.clientY - b.top); }
@@ -107,8 +116,10 @@
     }
     return melhor;
   }
-  tela.addEventListener('click', ev => { const w = mundo(ev), h = escolher(w.x, w.y); selecionar(h ? h.id : null); });
-  tela.addEventListener('pointermove', ev => { const w = mundo(ev), h = escolher(w.x, w.y); $('status').textContent = 'x ' + Math.round(w.x) + ' · y ' + Math.round(w.y) + (h ? ' · ' + (h.nome || 'sem nome') + ' #' + h.id : ''); });
+  tela.addEventListener('click', ev => { if (arrastando) return; const w = mundo(ev), h = escolher(w.x, w.y); selecionar(h ? h.id : null); });
+  tela.addEventListener('pointerdown', ev => { const w = mundo(ev), h = escolher(w.x, w.y); if (!h) return; selecionar(h.id); arrastando = { id: h.id, dx: w.x - h.Transform.x, dy: w.y - h.Transform.y }; tela.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+  tela.addEventListener('pointermove', ev => { const w = mundo(ev), h = arrastando && cena.get(arrastando.id); if (h) { h.Transform.x = w.x - arrastando.dx; h.Transform.y = w.y - arrastando.dy; props(); json(); redesenhar(); } const sob = escolher(w.x, w.y); $('status').textContent = 'x ' + Math.round(w.x) + ' · y ' + Math.round(w.y) + (sob ? ' · ' + (sob.nome || 'sem nome') + ' #' + sob.id : ''); });
+  tela.addEventListener('pointerup', () => { arrastando = null; });
   $('c-col').addEventListener('change', redesenhar);
 
   exemplo(); listar(); props(); variaveis(); json(); loop();
