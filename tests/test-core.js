@@ -62,4 +62,35 @@ const nova=()=>new C.Engine();
  u.scene.create({Transform:{x:100,y:50},Botao:{acao:{irPara:'alvo'}},Sprite:{fixo:true,w:80,h:30}});
  u.input={poll:()=>({down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{tx:300,ty:300,pressed:true}})};u.passo();ok(foi===null,'clique fora do botão não faz nada');
  u.scene.find('')||0;u.input={poll:()=>({down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{tx:110,ty:55,pressed:true}})};u.passo();ok(foi==='alvo','clique no botão troca de cena');}
+// 9) correções da revisão sênior
+{ // A1: o motor roda com um agendador do host (sem navegador)
+  let cb=null,agora=0;const e=new C.Engine({agendador:{agora:()=>agora,pedir:f=>{cb=f;return 1;},cancelar:()=>{cb=null;}}});
+  e.scene.create({Transform:{x:0,y:0},Velocity:{vx:60,vy:0}});e.iniciar();for(let i=0;i<30;i++){agora+=1000/60;cb(agora);}e.parar();
+  ok(e.passos>=29&&e.passos<=30&&cb===null,'Engine roda e para com agendador do host (passos '+e.passos+')');
+  // B5: tempo perdido fica contado
+  const f=new C.Engine({agendador:{agora:()=>0,pedir:g=>{cb=g;return 1;},cancelar:()=>{}}});f.iniciar();cb(10000);f.parar();
+  ok(f.passos===5&&f.tempoPerdido>9,'passos limitados e tempo perdido contado ('+f.tempoPerdido.toFixed(1)+' s)');}
+{ // B1: migração que não avança dá erro em vez de travar
+  const S=C.Serializer,F0=S.FORMATO;S.FORMATO=3;S.migracoes[1]=d=>d;S.migracoes[2]=d=>({...d,formato:'x'});
+  let m1=false,m2=false;try{S.deJSON(new C.Scene(),{formato:1,entidades:[]});}catch(x){m1=/não avançou/.test(x.message);}
+  try{S.deJSON(new C.Scene(),{formato:2,entidades:[]});}catch(x){m2=/não avançou/.test(x.message);}
+  let m3=false;try{S.deJSON(new C.Scene(),{formato:'abc',entidades:[]});}catch(x){m3=true;}
+  S.FORMATO=F0;delete S.migracoes[1];delete S.migracoes[2];ok(m1&&m2&&m3,'migração inválida e formato inválido dão erro finito');}
+{ // B3: id duplicado
+  const s=new C.Scene();s.create({id:7});let d1=false;try{s.create({id:7});}catch(x){d1=true;}ok(d1&&s.entities.size===1,'id duplicado é rejeitado');
+  s.create({id:1,nome:'antes'});let d2=false;try{C.Serializer.deJSON(s,{formato:1,entidades:[{id:2},{id:2}]});}catch(x){d2=true;}
+  ok(d2&&s.find('antes'),'save com ids duplicados falha sem destruir a cena atual');}
+{ // B4: cascata de eventos deixa rastro
+  const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
+{ // R3: campos de runtime não vão para o save
+  const e=nova();e.scene.estado.camera={x:10,y:20,zoom:1};e.scene.create({Transform:{x:0,y:0}});e.passo();e.passo();
+  const j=C.Serializer.paraJSON(e.scene);ok(!('px' in j.estado.camera)&&!('px' in j.entidades[0].Transform),'save não inclui px/py');}
+{ // R1: validação na criação
+  const s=new C.Scene(),falha=d=>{try{s.create(d);return false;}catch(x){return true;}};
+  ok(falha({Transform:{x:NaN,y:0}})&&falha({Transform:{x:0,y:0},Body:{forma:'circulo'}})&&falha({Transform:{x:0,y:0},Body:{w:10,h:0}})&&falha({Body:{raio:5}})&&falha({Transform:{x:0,y:0},Body:{raio:5,massa:-1}}),'componentes inválidos são recusados com erro claro');
+  ok(!falha({Transform:{x:0,y:0},Body:{raio:5,massa:1}}),'componentes válidos continuam aceitos');}
+{ // R2: objeto rápido não atravessa parede fina
+  const e=nova();e.scene.create({Transform:{x:300,y:0},Body:{forma:'retangulo',w:4,h:200,massa:0}});
+  const b=e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1500,vy:0},Body:{raio:6,massa:1,elasticidade:.5}});
+  for(let i=0;i<30;i++)e.passo();ok(b.Transform.x<300,'bola a 1500 px/s não atravessa parede de 4 px (x '+b.Transform.x.toFixed(0)+')');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

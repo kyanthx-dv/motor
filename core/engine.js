@@ -3,13 +3,25 @@
    quando o navegador pede. Por quê: física e replays ficam iguais em qualquer aparelho. */
 (function (root) {
   const C = root.Core = root.Core || {};
+  // Quem "bate o relógio" é o host. Padrão: requestAnimationFrame se existir; senão um temporizador (Node, workers).
+  // Outro host (SDL, app nativo) passa seu próprio agendador: { agora(), pedir(fn), cancelar(id) }.
+  const agendadorPadrao = () => {
+    const raf = typeof requestAnimationFrame === 'function', agora = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    return { agora, pedir: fn => (raf ? requestAnimationFrame(fn) : setTimeout(() => fn(agora()), 16)), cancelar: id => (raf ? cancelAnimationFrame(id) : clearTimeout(id)) };
+  };
   const SEM_INPUT = () => ({ down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, down: false } });
   class Engine {
     constructor(opts = {}) {
+      if (!C.Scene || !C.Events) throw new Error('Core: carregue events.js e scene.js antes de engine.js');
+      if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
       this.scene = new C.Scene(); this.events = new C.Events();
       this.input = opts.input || null; this.renderer = opts.renderer || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
+      // Política de tempo (decisão do motor, não acidente): se o aparelho atrasa, o jogo NÃO tenta recuperar o tempo perdido.
+      // Cada quadro simula no máximo maxPassos passos e ignora delta acima de maxDelta; o excedente fica contado em tempoPerdido.
+      // Para replays/testes exatos, chame engine.passo() diretamente.
+      this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
       this.ctx = { engine: this, scene: this.scene, events: this.events, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
@@ -52,22 +64,23 @@
       this.tempo += dt; this.passos++;
     }
     iniciar() {
-      if (this.rodando) return; this.rodando = true; let ultimo = performance.now();
+      if (this.rodando) return; this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
       const quadro = agora => {
         if (!this.rodando) return;
-        let delta = (agora - ultimo) / 1000; ultimo = agora; if (delta > 0.25) delta = 0.25;   // aba em segundo plano
+        let delta = (agora - ultimo) / 1000; ultimo = agora;
+        if (delta > this.maxDelta) { this.tempoPerdido += delta - this.maxDelta; delta = this.maxDelta; }   // aba em segundo plano
         this.fps = this.fps * 0.92 + (1 / Math.max(delta, 1e-4)) * 0.08;
         if (!this.pausado) {
           this.acum += delta; let n = 0;
-          while (this.acum >= this.dt && n < 5) { this.passo(); this.acum -= this.dt; n++; }
-          if (n === 5) this.acum = 0;                    // não tenta "recuperar" tempo perdido
+          while (this.acum >= this.dt && n < this.maxPassos) { this.passo(); this.acum -= this.dt; n++; }
+          if (n === this.maxPassos && this.acum >= this.dt) { this.tempoPerdido += this.acum; this.acum = 0; }
         }
         if (this.renderer) this.renderer.desenhar(this.scene, this.pausado ? 1 : this.acum / this.dt, this);
-        this._raf = requestAnimationFrame(quadro);
+        this._raf = ag.pedir(quadro);
       };
-      this._raf = requestAnimationFrame(quadro);
+      this._raf = ag.pedir(quadro);
     }
-    parar() { this.rodando = false; if (this._raf) cancelAnimationFrame(this._raf); }
+    parar() { this.rodando = false; if (this._raf != null) this.agendador.cancelar(this._raf); }
   }
   C.Engine = Engine;
 })(typeof window !== 'undefined' ? window : globalThis);

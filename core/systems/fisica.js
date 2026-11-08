@@ -4,7 +4,7 @@
    Gravidade opcional em scene.estado.gravidade = { x, y } (px/s²). */
 (function (root) {
   const C = root.Core = root.Core || {}; C.Systems = C.Systems || {};
-  const VEL_MAX = 1600;      // limite para um corpo não atravessar paredes de uma vez
+  const VEL_MAX = 1600;      // teto de velocidade (os subpassos garantem a detecção mesmo perto dele)
   const REPOUSO = 25;        // abaixo disso não quica: evita tremedeira de objeto parado
   const ITERACOES = 3;       // repete a resolução para empilhamentos ficarem estáveis
   const forma = b => b.forma || (b.raio ? 'circulo' : 'retangulo');
@@ -61,8 +61,17 @@
     if (ib > 0 && b.Velocity) { vb.vx += j * ib * m.nx; vb.vy += j * ib * m.ny; }
   }
 
+  // Se algo rápido andaria mais de ~8 px num passo, o passo é dividido em subpassos. Assim paredes finas e sensores
+  // não são atravessados. Eventos saem uma vez por par a cada passo (mesmo com vários subpassos).
   C.Systems.fisica = function (scene, dt, ctx) {
+    let vmax = 0;
+    for (const e of scene.query('Transform', 'Velocity', 'Body')) if (invMassa(e) > 0) vmax = Math.max(vmax, Math.hypot(e.Velocity.vx, e.Velocity.vy));
+    const n = Math.min(8, Math.max(1, Math.ceil(vmax * dt / 8))), vistos = new Set();
+    for (let i = 0; i < n; i++) subpasso(scene, dt / n, ctx, vistos);
+  };
+  function subpasso(scene, dt, ctx, vistos) {
     const g = scene.estado.gravidade || { x: 0, y: 0 };
+    const avisar = (nome, para, outro) => { const k = nome + para + ':' + outro; if (!vistos.has(k)) { vistos.add(k); ctx.events.emit(nome, { para, outro }); } };
     // 1) mover
     for (const e of scene.query('Transform', 'Velocity')) {
       const v = e.Velocity, t = e.Transform;
@@ -88,16 +97,14 @@
           if (Math.abs(a.Transform.x - b.Transform.x) > alcance[i] + alcance[k] || Math.abs(a.Transform.y - b.Transform.y) > alcance[i] + alcance[k]) continue;
           const m = testar(a, b); if (!m) continue;
           if (a.Body.sensor || b.Body.sensor) {
-            if (it === 0) {
-              if (a.Body.sensor) ctx.events.emit('gatilho', { para: a.id, outro: b.id });
-              if (b.Body.sensor) ctx.events.emit('gatilho', { para: b.id, outro: a.id });
-            }
+            if (a.Body.sensor) avisar('gatilho', a.id, b.id);
+            if (b.Body.sensor) avisar('gatilho', b.id, a.id);
             continue;
           }
           resolver(a, b, m);
-          if (it === 0) { ctx.events.emit('colisao', { para: a.id, outro: b.id }); ctx.events.emit('colisao', { para: b.id, outro: a.id }); }
+          avisar('colisao', a.id, b.id); avisar('colisao', b.id, a.id);
         }
       }
     }
-  };
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
