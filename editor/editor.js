@@ -33,7 +33,7 @@
     }
   }
   function atualizarAcoes() { const tem = sel != null && !!cena.get(sel); $('e-duplicar').disabled = !tem; $('e-remover').disabled = !tem; $('e-play').disabled = engine.rodando; $('e-parar').disabled = !engine.rodando; }
-  function selecionar(id) { sel = id != null && cena.get(id) ? id : null; listar(); props(); redesenhar(); atualizarAcoes(); }
+  function selecionar(id) { sel = id != null && cena.get(id) ? id : null; listar(); props(); redesenhar(); atualizarAcoes(); if (window.editor && window.editor.aoSelecionar) window.editor.aoSelecionar(); }
   function nomeLivre(base) { let nome = base, n = 2; while (cena.find(nome)) nome = base + ' ' + n++; return nome; }
   function criar() { const e = cena.create({ nome: nomeLivre('objeto'), Transform: { x: 400, y: 225 }, Body: { forma: 'circulo', raio: 18, massa: 1, elasticidade: 0.4 }, Sprite: { forma: 'circulo', raio: 18, cor: '#a78bfa' } }); selecionar(e.id); msg('Objeto criado.', 'ok'); json(); }
   function duplicar() { const e = cena.get(sel); if (!e) return; const d = JSON.parse(JSON.stringify(e)); delete d.id; d.nome = nomeLivre((e.nome || 'objeto') + ' cópia'); d.Transform.x += 24; d.Transform.y += 24; const novo = cena.create(d); selecionar(novo.id); msg('Objeto duplicado.', 'ok'); json(); }
@@ -123,5 +123,5 @@
   $('c-col').addEventListener('change', redesenhar);
 
   exemplo(); listar(); props(); variaveis(); json(); loop();
-  window.editor = { engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, get sel() { return sel; } };
+  window.editor = { engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; } };
 })();

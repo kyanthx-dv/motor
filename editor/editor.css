@@ -23,3 +23,5 @@ button{background:var(--bg);color:var(--fg);border:1px solid var(--linha);border
 .json{margin-top:14px}.json summary{cursor:pointer;color:var(--mudo)}textarea{height:180px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;margin-top:6px;resize:vertical}.linha{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 .vazio{color:var(--mudo)}
 @media (max-width:900px){.grade{grid-template-columns:minmax(0,1fr)}.centro{order:-1}.lista{max-height:30vh}}
+
+.centro .scripts{margin-top:12px}.codigo{height:220px;tab-size:2;white-space:pre;overflow:auto}.scripts .linha select{flex:1 1 140px}.scripts .linha input{flex:2 1 160px}

@@ -128,3 +128,7 @@ Cada conceito tem equivalente direto em C# e C++: entidade = struct/id, componen
 ## 14. Editor (pasta `editor/`)
 
 O editor só edita o **JSON da cena** e usa o próprio motor para validar (cria uma cópia da entidade numa `Scene` temporária; se o motor recusar, nada muda). Assim o editor de celular (Flutter/WebView) edita o mesmo formato. E1: lista de objetos, seleção por clique, propriedades, variáveis e JSON da cena (carga transacional).
+
+## 15. Scripts com fonte na cena (E3a)
+
+`scene.estado.scripts = { nome: { fonte } }` guarda código JavaScript dentro do projeto. `engine.compilarScripts()` (chamado por `iniciar()`) transforma cada fonte em script do motor. A fonte declara `function iniciar(e, ctx)`, `function atualizar(e, dt, ctx)` e/ou `const eventos = { colisao(e, d, ctx) {} }`. Erro de sintaxe não derruba nada: o script não é registrado e o erro fica em `engine.errosScripts`. Nome igual ao de um script registrado no código do jogo é recusado. Blocos visuais (E3b) vão gerar esse mesmo texto. **Segurança:** o código roda com os poderes da página; para projetos de terceiros será preciso isolar (Worker/iframe).

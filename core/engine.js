@@ -73,8 +73,27 @@
       if (this._proxima) this._aplicarCena();
       this.tempo += dt; this.passos++;
     }
+    // Scripts escritos no editor ficam na cena (scene.estado.scripts = { nome: { fonte } }) e viram scripts do motor aqui.
+    // A fonte declara funções iniciar(e, ctx), atualizar(e, dt, ctx) e/ou um objeto eventos = { colisao(e, d, ctx) {...} }.
+    // Erro de sintaxe NÃO derruba nada: o script não é registrado e o erro fica em engine.errosScripts.
+    // ATENÇÃO: o código roda com os mesmos poderes da página. Para projetos de terceiros, rode num ambiente isolado.
+    compilarScripts() {
+      for (const n of this._compilados || []) delete this.scripts[n];
+      this._compilados = []; const erros = this.errosScripts = [], fontes = this.scene.estado.scripts;
+      if (!fontes || typeof fontes !== 'object') return erros;
+      for (const nome in fontes) {
+        try {
+          if (!C.Variaveis.NOME.test(nome)) throw new Error('nome de script inválido');
+          if (this.scripts[nome]) throw new Error('já existe um script com esse nome no código do jogo');
+          const f = fontes[nome]; if (!f || typeof f.fonte !== 'string') throw new Error('script sem "fonte" (texto)');
+          this.scripts[nome] = new Function(f.fonte + '\n;return { iniciar: typeof iniciar === "function" ? iniciar : undefined, atualizar: typeof atualizar === "function" ? atualizar : undefined, eventos: typeof eventos === "object" && eventos ? eventos : undefined };')();
+          this._compilados.push(nome);
+        } catch (x) { erros.push({ script: nome, mensagem: String(x && x.message || x) }); if (typeof console !== 'undefined') console.warn('[Core] script "' + nome + '" não foi compilado: ' + (x && x.message || x)); }
+      }
+      return erros;
+    }
     iniciar() {
-      if (this.rodando) return; this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
+      if (this.rodando) return; this.compilarScripts(); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
       const quadro = agora => {
         if (!this.rodando) return;
         let delta = (agora - ultimo) / 1000; ultimo = agora;

@@ -75,6 +75,22 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.screenshot({ path: process.env.EDITOR_PNG || '/tmp/editor.png' });
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(200);
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'editor sem rolagem horizontal no celular');
+  // editor E3a: scripts em JS dentro da cena
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.fill('#sc-nome', 'andar'); await p.click('#sc-novo');
+  await p.fill('#sc-fonte', 'function atualizar(e, dt, ctx) { e.Transform.x += 100 * dt; ctx.vars.somar("pontos"); }');
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => editor.cena.find('bola').Script.nome === 'andar' && JSON.parse(document.getElementById('json').value).estado.scripts.andar.fonte.includes('100 * dt')), 'criar e anexar script grava no JSON da cena');
+  await p.click('#e-play'); await p.waitForTimeout(600);
+  ok(await p.evaluate(() => editor.cena.find('bola').Transform.x > 360 && editor.engine.vars.ler('pontos') > 10), 'Play compila e roda o script (move o objeto e usa variáveis)');
+  await p.click('#e-parar'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => editor.cena.find('bola').Transform.x === 330 && !!editor.cena.estado.scripts.andar && editor.engine.vars.ler('pontos') === 0), 'Parar restaura a cena e mantém o script');
+  await p.fill('#sc-fonte', 'function atualizar( {');
+  ok(await p.evaluate(() => /sintaxe/i.test(document.getElementById('sc-msg').textContent)), 'erro de sintaxe aparece enquanto digita');
+  await p.click('#e-play'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => editor.engine.rodando && /Ao iniciar/.test(document.getElementById('sc-msg').textContent)), 'Play com script quebrado avisa e não derruba o motor');
+  await p.click('#e-parar');
+  await p.click('#sc-remover'); ok(await p.evaluate(() => !editor.cena.find('bola').Script && !('andar' in editor.cena.estado.scripts)), 'remover script também desanexa dos objetos');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
