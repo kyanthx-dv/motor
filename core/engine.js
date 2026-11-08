@@ -61,6 +61,7 @@
     registrarScript(nome, def) { this.scripts[nome] = def; return this; }
     // Um passo de lógica. Público de propósito: testes e replays chamam direto.
     passo(dt = this.dt) {
+      if (typeof dt !== 'number' || !isFinite(dt) || dt <= 0) throw new RangeError('passo(dt): dt precisa ser um número finito maior que 0 (recebeu ' + dt + ')');   // fronteira pública: testes e replays
       const ctx = this.ctx; ctx.dt = dt;
       ctx.tela = this.renderer ? { largura: this.renderer.largura, altura: this.renderer.altura } : { largura: 800, altura: 450 };
       ctx.input = this.input ? this.input.poll() : SEM_INPUT();

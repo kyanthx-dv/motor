@@ -21,6 +21,8 @@
   class Scene {
     constructor() { this.entities = new Map(); this.nextId = 1; this.estado = {}; this._remover = new Set(); }
     create(dados = {}) {
+      if (dados === null || typeof dados !== 'object') throw new Error('create precisa de um objeto');
+      if (dados.id != null && (!Number.isInteger(dados.id) || dados.id < 0)) throw new Error('id de entidade precisa ser um inteiro >= 0: ' + dados.id);
       const id = dados.id != null ? dados.id : this.nextId++;
       if (this.entities.has(id)) throw new Error('id de entidade duplicado: ' + id);
       if (id >= this.nextId) this.nextId = id + 1;

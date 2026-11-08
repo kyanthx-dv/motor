@@ -28,12 +28,19 @@
       host.append(this.btn, this.p);
       this.info = this.p.querySelector('.dbg-info'); this.lista = this.p.querySelector('.dbg-l'); this.json = this.p.querySelector('.dbg-j');
       this.filtro = this.p.querySelector('.dbg-f'); this.msg = this.p.querySelector('.dbg-msg'); this.bPausar = this.p.querySelector('[data-a=pausar]');
-      this.btn.addEventListener('click', () => this.alternar());
-      window.addEventListener('keydown', ev => { if (ev.key === 'F2') { ev.preventDefault(); this.alternar(); } });
-      this.p.addEventListener('click', ev => { const a = ev.target.dataset && ev.target.dataset.a; if (a) this.acao(a, ev.target); });
-      this.lista.addEventListener('change', () => this.selecionar(+this.lista.value));
-      canvas.addEventListener('click', ev => { if (!this.aberto) return; const b = canvas.getBoundingClientRect(), w = renderer.telaParaMundo(ev.clientX - b.left, ev.clientY - b.top), h = this.escolher(w.x, w.y); if (h) this.selecionar(h.id); });
-      setInterval(() => { if (this.aberto) this.atualizar(); }, 250);
+      this._canvas = canvas; this._ls = [];   // todo listener fica registrado aqui para destruir() poder remover
+      const on = (alvo, tipo, fn) => { alvo.addEventListener(tipo, fn); this._ls.push([alvo, tipo, fn]); };
+      on(this.btn, 'click', () => this.alternar());
+      on(window, 'keydown', ev => { if (ev.key === 'F2') { ev.preventDefault(); this.alternar(); } });
+      on(this.p, 'click', ev => { const a = ev.target.dataset && ev.target.dataset.a; if (a) this.acao(a, ev.target); });
+      on(this.lista, 'change', () => this.selecionar(+this.lista.value));
+      on(canvas, 'click', ev => { if (!this.aberto) return; const b = canvas.getBoundingClientRect(), w = renderer.telaParaMundo(ev.clientX - b.left, ev.clientY - b.top), h = this.escolher(w.x, w.y); if (h) this.selecionar(h.id); });
+      this._timer = setInterval(() => { if (this.aberto) this.atualizar(); }, 250);
+    }
+    // Desmonta tudo: timer, listeners e elementos. Chame ao recriar a engine/cena (apps SPA).
+    destruir() {
+      clearInterval(this._timer); for (const [a, t, f] of this._ls) a.removeEventListener(t, f); this._ls = [];
+      this.e.perfil = false; this.r.selecionada = null; this.btn.remove(); this.p.remove(); this.aberto = false;
     }
     alternar() { this.aberto = !this.aberto; this.p.hidden = !this.aberto; this.e.perfil = this.aberto; if (this.aberto) this.atualizar(); else this.r.selecionada = null; }
     escolher(x, y) {

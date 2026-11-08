@@ -25,14 +25,18 @@
       if (v > S.FORMATO) throw new Error('save de uma versão mais nova do núcleo');
       for (let guarda = 0; v < S.FORMATO; guarda++) {          // cada migração precisa AVANÇAR o formato; senão erro (nunca laço infinito)
         const m = S.migracoes[v]; if (!m || guarda > 100) throw new Error('sem migração do formato ' + v);
-        d = m(d); if (!d || !Number.isInteger(d.formato) || d.formato <= v) throw new Error('migração do formato ' + v + ' não avançou o formato');
+        d = m(d); if (!d || d.formato !== v + 1) throw new Error('migração do formato ' + v + ' não avançou exatamente para ' + (v + 1));   // exige v+1: pular versão deixaria uma migração sem rodar
         v = d.formato;
       }
-      const ids = d.entidades.map(e => e && e.id).filter(id => id != null);     // valida ANTES de limpar a cena: save ruim não destrói o jogo atual
-      if (new Set(ids).size !== ids.length) throw new Error('save com ids de entidade duplicados');
-      scene.clear();
-      scene.estado = d.estado || {};
-      for (const e of d.entidades) scene.create(e);
+      const isObj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
+      if (d.estado !== undefined && !isObj(d.estado)) throw new Error('save inválido: "estado" precisa ser um objeto');
+      // Transacional: monta tudo numa cena temporária. Só se TUDO for válido troca a cena atual; save ruim nunca destrói o jogo.
+      const tmp = new C.Scene(); tmp.estado = d.estado || {};
+      d.entidades.forEach((e, i) => {
+        if (!isObj(e)) throw new Error('save inválido: entidade #' + i + ' não é um objeto');
+        tmp.create(e);                                           // valida id (inteiro, único) e componentes
+      });
+      scene.entities = tmp.entities; scene.nextId = tmp.nextId; scene.estado = tmp.estado; scene._remover = new Set();
       return scene;
     }
   };
