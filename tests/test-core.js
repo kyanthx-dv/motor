@@ -88,6 +88,24 @@ const nova=()=>new C.Engine();
   const F0=S.FORMATO;S.FORMATO=3;S.migracoes[1]=d=>({...d,formato:3});let salto=false;try{S.deJSON(new C.Scene(),{formato:1,entidades:[]});}catch(x){salto=true;}S.FORMATO=F0;delete S.migracoes[1];ok(salto,'migração que pula formato é rejeitada');
   const e=nova(),bad=v=>{try{e.passo(v);return false;}catch(x){return x instanceof RangeError;}};
   ok(bad(NaN)&&bad(Infinity)&&bad(0)&&bad(-1)&&bad('1')&&e.tempo===0,'passo(dt) recusa tempo inválido sem alterar o estado');}
+{ // revisão 3: física sem tunneling em várias velocidades/espessuras, scripts isolados, validação
+  let furos=[];
+  for(const v of [300,800,1200,1600])for(const esp of [2,4,10])for(const raio of [3,12])for(const gy of [0,900]){
+    const e=nova();e.scene.estado.gravidade={x:0,y:gy};
+    e.scene.create({nome:'p',Transform:{x:200,y:0},Body:{forma:'retangulo',w:esp,h:600,massa:0}});
+    const b=e.scene.create({nome:'b',Transform:{x:100,y:0},Velocity:{vx:v,vy:0},Body:{forma:'circulo',raio:raio,massa:1,elasticidade:0.5,semGravidade:true}});
+    for(let i=0;i<40;i++)e.passo();
+    if(b.Transform.x>200+esp/2)furos.push(v+'/'+esp+'/'+raio+'/'+gy);}
+  ok(furos.length===0,'sem tunneling em 48 combinações de velocidade/espessura/raio/gravidade'+(furos.length?' FUROS: '+furos.join(' '):''));
+  const e=nova();e.scene.create({nome:'s',Transform:{x:200,y:0},Body:{forma:'retangulo',w:2,h:100,massa:0,sensor:true}});
+  e.scene.create({nome:'b',Transform:{x:100,y:0},Velocity:{vx:1600,vy:0},Body:{forma:'circulo',raio:3,massa:1}});let gat=0;e.events.on('gatilho',()=>gat++);for(let i=0;i<10;i++)e.passo();ok(gat>0,'sensor fino sem Velocity também é detectado');
+  const e2=nova();e2.registrarScript('quebra',{atualizar(){throw new Error('boom');}});e2.registrarScript('ok',{atualizar(en){en.Transform.x+=1;}});
+  e2.scene.create({Script:{nome:'quebra'}});const k=e2.scene.create({Transform:{x:0,y:0},Script:{nome:'ok'}});const w=console.warn;let av=0;console.warn=()=>av++;e2.passo();e2.passo();console.warn=w;
+  ok(k.Transform.x===2&&e2.errosScript===2&&av===1,'erro em script não derruba as outras entidades (avisa uma vez, conta todas)');
+  const sc=new C.Scene(),f=d=>{try{sc.create(d);return false;}catch(x){return true;}},T={x:0,y:0};
+  ok(f({Transform:T,Body:{forma:'triangulo',w:5,h:5}})&&f({Transform:T,Body:{raio:5,elasticidade:2}})&&f({Transform:T,Body:{raio:5,amortecimento:-1}})&&f({Transform:T,Body:{raio:5,camada:3}})&&f({Transform:T,Body:{raio:5,colide:'x'}})&&f({Controller:{velMax:0}})&&f({Animacao:{animacoes:{a:{quadros:0}}}})&&f({Animacao:{animacoes:{a:{quadros:2,fps:-1}}}}),'A2: formas, elasticidade, camadas, Controller e Animacao inválidos são recusados');
+  ok(new C.Engine().scene&&(()=>{const i=C.Engine.prototype;return true;})(),'engine segue construindo');
+  let c1=false;try{C.Serializer.deJSON(new C.Scene(),{formato:1,estado:{camera:{zoom:0}},entidades:[]});}catch(x){c1=true;}ok(c1,'save com câmera de zoom inválido é recusado');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save

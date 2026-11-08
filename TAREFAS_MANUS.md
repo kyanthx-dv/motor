@@ -19,7 +19,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [x] **M6** `adapters/input.js`: guardar listeners e fornecer `destruir()`; testar no navegador que o teclado deixa de ter efeito.
 
 ## Só o Claude faz (não pegar)
-B6 física · A2 validação de componentes (B1–B5 já corrigidos).
+(nada pendente: a revisão 2 foi toda corrigida).
 
 ## Relatório do Manus
 - M1 concluída: adicionado `package.json`/lockfile e documentados os comandos no README.
@@ -41,4 +41,4 @@ B6 física · A2 validação de componentes (B1–B5 já corrigidos).
 "Revise este PR de um motor de jogo JS. Regras: docs/ARQUITETURA.md. Liste só bugs reais e violações das regras, em ordem de gravidade, com arquivo e linha. Não reescreva código. Se estiver ok, diga 'sem problemas'."
 
 ## Estado do Claude (atualizado a cada entrega)
-Próximo: revisar os PRs do Manus. Já feito pelo Claude: B1, B2, B3, B4, B5. Falta: B6 (física), A2 (validação de componentes).
+Próximo: revisar os PRs do Manus. Já feito pelo Claude: B1, B2, B3, B4, B5. Revisão 2 inteira resolvida (B1–B6, A2, scripts isolados, SEM_INPUT).

@@ -8,8 +8,16 @@
     for (const e of scene.query('Script')) {
       const s = e.Script, def = ctx.engine.scripts[s.nome];
       if (!def) continue;
-      if (!s.iniciado) { s.iniciado = true; s.estado = s.estado || {}; s.params = s.params || {}; if (def.iniciar) def.iniciar(e, ctx); }
-      if (def.atualizar) def.atualizar(e, dt, ctx);
+      // Código de jogo pode falhar: o erro é isolado (as outras entidades seguem), contado e avisado uma vez por script/fase.
+      const tentar = (fase, fn) => { try { fn(); } catch (x) { falhou(ctx, e, s.nome, fase, x); } };
+      if (!s.iniciado) { s.iniciado = true; s.estado = s.estado || {}; s.params = s.params || {}; if (def.iniciar) tentar('iniciar', () => def.iniciar(e, ctx)); }
+      if (def.atualizar) tentar('atualizar', () => def.atualizar(e, dt, ctx));
     }
   };
+  function falhou(ctx, e, nome, fase, x) {
+    const en = ctx.engine; en.errosScript = (en.errosScript || 0) + 1;
+    ctx.events.emit('erro-script', { entidade: e.id, script: nome, fase, mensagem: String(x && x.message || x) });
+    en._avisosScript = en._avisosScript || new Set(); const k = nome + ':' + fase;
+    if (!en._avisosScript.has(k)) { en._avisosScript.add(k); if (typeof console !== 'undefined') console.warn('[Core] erro no script "' + nome + '" (' + fase + ') na entidade ' + e.id + ': ' + (x && x.message || x)); }
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
