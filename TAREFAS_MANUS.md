@@ -13,7 +13,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 ## Fila
 - [x] **M1** `package.json` com scripts `test` (core) e `test:navegador` (Playwright como devDependency). Atualizar README com os comandos.
 - [ ] **M2** GitHub Actions (`.github/workflows/ci.yml`) rodando `npm test` em cada PR.
-- [ ] **M3** `adapters/input.js`: o joystick virtual só aparece para toque (`e.pointerType === "touch"`). Mouse segue só como ponteiro/clique. Testar no navegador.
+- [x] **M3** `adapters/input.js`: o joystick virtual só aparece para toque (`e.pointerType === "touch"`). Mouse segue só como ponteiro/clique. Testar no navegador.
 - [ ] **M4** README: seção "Contrato do host" (o motor precisa de um agendador; no navegador é automático).
 - [ ] **M5** `adapters/audio.js`: sons curtos por nome via WebAudio (`carregar`, `tocar`), com detecção se `AudioContext` existe. Só o adaptador, sem mexer no core.
 - [x] **M6** `adapters/input.js`: guardar listeners e fornecer `destruir()`; testar no navegador que o teclado deixa de ter efeito.
@@ -25,6 +25,9 @@ B6 física · A2 validação de componentes (B1–B5 já corrigidos).
 - M1 concluída: adicionado `package.json`/lockfile e documentados os comandos no README.
 - Testado: `node tests/test-core.js`, `npm test` e `npm run test:navegador` (todos passaram).
 - M6 concluída: `Input` guarda os listeners e `destruir()` remove teclado, janela e canvas; teste de teclado adicionado.
+- Testado: `node tests/test-core.js`, `node tests/test-navegador.js` e `node --check` nos arquivos alterados (todos passaram).
+- Dúvidas: nenhuma.
+- M3 concluída: joystick virtual restrito a toque; mouse permanece apenas como ponteiro/clique, com testes de navegador adicionados.
 - Testado: `node tests/test-core.js`, `node tests/test-navegador.js` e `node --check` nos arquivos alterados (todos passaram).
 - Dúvidas: nenhuma.
 
