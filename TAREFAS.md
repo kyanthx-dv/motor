@@ -27,3 +27,6 @@
 - Uma tarefa por vez. Rodar `node tests/test-core.js` antes de salvar (commit).
 - Nada de dependências em `core/`.
 - Mudou o formato da cena? Subir `Serializer.FORMATO` e escrever a migração.
+
+- [x] Variáveis no motor (`engine.vars`) · [x] Editor E1 (`editor/index.html`)
+- [ ] Editor E2: mover/criar/remover/Play (Manus, M7) · E3: blocos do Flux gerando scripts (Claude)

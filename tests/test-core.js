@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','variaveis','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -106,6 +106,17 @@ const nova=()=>new C.Engine();
   ok(f({Transform:T,Body:{forma:'triangulo',w:5,h:5}})&&f({Transform:T,Body:{raio:5,elasticidade:2}})&&f({Transform:T,Body:{raio:5,amortecimento:-1}})&&f({Transform:T,Body:{raio:5,camada:3}})&&f({Transform:T,Body:{raio:5,colide:'x'}})&&f({Controller:{velMax:0}})&&f({Animacao:{animacoes:{a:{quadros:0}}}})&&f({Animacao:{animacoes:{a:{quadros:2,fps:-1}}}}),'A2: formas, elasticidade, camadas, Controller e Animacao inválidos são recusados');
   ok(new C.Engine().scene&&(()=>{const i=C.Engine.prototype;return true;})(),'engine segue construindo');
   let c1=false;try{C.Serializer.deJSON(new C.Scene(),{formato:1,estado:{camera:{zoom:0}},entidades:[]});}catch(x){c1=true;}ok(c1,'save com câmera de zoom inválido é recusado');}
+{ // variáveis: tipos, erros claros, evento, save/load e troca de cena
+  const e=nova(),v=e.vars,evs=[];e.events.on('variavel-mudou',d=>evs.push(d));
+  v.declarar('pontos',0);v.declarar('fase','A');v.declarar('som',true);v.somar('pontos',3);v.definir('fase','B');v.definir('pontos',3);e.passo();
+  ok(v.ler('pontos')===3&&v.tipo('som')==='booleano'&&evs.length===5&&evs[4].antes==='A'&&evs[4].valor==='B','declarar/ler/definir/somar emitem variavel-mudou só quando muda');
+  const f=fn=>{try{fn();return false;}catch(x){return true;}};
+  ok(f(()=>v.ler('pontso'))&&f(()=>v.definir('pontos','x'))&&f(()=>v.somar('fase'))&&f(()=>v.declarar('pontos',1))&&f(()=>v.declarar('1x',1))&&f(()=>v.declarar('n',NaN))&&f(()=>v.declarar('o',{})),'nome errado, tipo trocado, redeclarar e valor inválido dão erro claro');
+  const j=JSON.parse(JSON.stringify(C.Serializer.paraJSON(e.scene))),e2=nova();C.Serializer.deJSON(e2.scene,j);
+  ok(e2.vars.ler('pontos')===3&&e2.vars.ler('fase')==='B','variáveis vão e voltam no save');
+  let ruim=false;try{C.Serializer.deJSON(e2.scene,{formato:1,estado:{vars:{x:{}}},entidades:[]});}catch(x){ruim=true;}ok(ruim&&e2.vars.ler('pontos')===3,'save com variável inválida é recusado sem destruir a cena');
+  e.registrarCena('a',{montar(){}});e.registrarCena('b',{montar(){}});e.irPara('a');e.passo();v.definir('pontos',9);e.irPara('b');e.passo();ok(v.ler('pontos')===9&&e.scene.estado.cena==='b','variáveis atravessam a troca de cena');
+  const e3=nova();e3.registrarScript('s',{atualizar(en,dt,ctx){ctx.vars.somar('n');}});e3.vars.declarar('n',0);e3.scene.create({Script:{nome:'s'}});e3.passo();e3.passo();ok(e3.vars.ler('n')===2,'scripts usam ctx.vars');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save

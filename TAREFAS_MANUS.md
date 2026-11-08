@@ -17,6 +17,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [ ] **M4** README: seção "Contrato do host" (o motor precisa de um agendador; no navegador é automático).
 - [ ] **M5** `adapters/audio.js`: sons curtos por nome via WebAudio (`carregar`, `tocar`), com detecção se `AudioContext` existe. Só o adaptador, sem mexer no core.
 - [x] **M6** `adapters/input.js`: guardar listeners e fornecer `destruir()`; testar no navegador que o teclado deixa de ter efeito.
+- [ ] **M7 (E2)** `editor/editor.js`: arrastar o objeto selecionado no canvas para mover (atualiza Transform.x/y e o painel); botão "Novo objeto" (círculo ou retângulo, com Transform, Body e Sprite válidos); botão "Remover" e "Duplicar"; botões Play/Parar (Play: salva o JSON, roda `engine.iniciar()`; Parar: `engine.parar()` e recarrega o JSON salvo). Testes no `tests/test-navegador.js`. NÃO mexer em `core/`. Use sempre `aplicar()`/validação do motor, sem regras próprias.
 
 ## Só o Claude faz (não pegar)
 (nada pendente: a revisão 2 foi toda corrigida).
