@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>Aventura · Núcleo da Engine</title>
+<link rel="stylesheet" href="games/futebol/estilo.css"></head><body>
+<div id="jogo">
+  <canvas id="tela"></canvas>
+  <div class="aviso" id="aviso" hidden></div>
+  <div class="barra">
+    <button id="b-salvar" type="button">Salvar</button>
+    <button id="b-carregar" type="button">Carregar</button>
+    <button id="b-debug" type="button">Colisores</button>
+  </div>
+</div>
+<script src="core/events.js"></script>
+<script src="core/scene.js"></script>
+<script src="core/serializer.js"></script>
+<script src="core/systems/controles.js"></script>
+<script src="core/systems/ui.js"></script>
+<script src="core/systems/scripts.js"></script>
+<script src="core/systems/fisica.js"></script>
+<script src="core/systems/animacao.js"></script>
+<script src="core/systems/camera.js"></script>
+<script src="core/engine.js"></script>
+<script src="adapters/assets.js"></script>
+<script src="adapters/canvas-renderer.js"></script>
+<script src="adapters/input.js"></script>
+<script src="games/aventura/jogo.js"></script>
+</body></html>

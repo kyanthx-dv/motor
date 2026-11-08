@@ -8,9 +8,10 @@
 - [x] Câmera (seguir, zoom, limites), sprites, animação e carregador de imagens
 - [x] Testes automáticos do núcleo (`node tests/test-core.js`)
 
+- [x] Cenas e menus (`registrarCena`, `irPara`, botões com `Botao`)
+- [x] Colisão por camadas (`Body.camada` e `Body.colide`)
+
 ## Próximo
-- [ ] Cenas e menus (trocar de fase, tela inicial)
-- [ ] Colisão por camadas (o que colide com o quê)
 - [ ] Som
 - [ ] Retângulos que giram
 - [ ] Ferramentas de depuração (inspecionar entidades)

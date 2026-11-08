@@ -9,6 +9,9 @@
   const ITERACOES = 3;       // repete a resolução para empilhamentos ficarem estáveis
   const forma = b => b.forma || (b.raio ? 'circulo' : 'retangulo');
   const invMassa = e => (e.Body.massa > 0 ? 1 / e.Body.massa : 0);
+  // Camadas: Body.camada (nome, padrão 'padrao') e Body.colide (lista de camadas; sem lista = todas).
+  // Só colidem se cada um aceita a camada do outro.
+  const colidem = (a, b) => { const ca = a.Body.colide, cb = b.Body.colide; return (!ca || ca.includes(b.Body.camada || 'padrao')) && (!cb || cb.includes(a.Body.camada || 'padrao')); };
   const limitar = (v, a, b) => Math.max(a, Math.min(b, v));
 
   function circCirc(a, b) {
@@ -81,6 +84,7 @@
           const a = corpos[i], b = corpos[k];
           if (invMassa(a) === 0 && invMassa(b) === 0) continue;
           if (a.Body.sensor && b.Body.sensor) continue;
+          if (!colidem(a, b)) continue;
           if (Math.abs(a.Transform.x - b.Transform.x) > alcance[i] + alcance[k] || Math.abs(a.Transform.y - b.Transform.y) > alcance[i] + alcance[k]) continue;
           const m = testar(a, b); if (!m) continue;
           if (a.Body.sensor || b.Body.sensor) {

@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','serializer','systems/controles','systems/scripts','systems/fisica','systems/animacao','systems/camera','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -43,4 +43,23 @@ const nova=()=>new C.Engine();
  ok(Math.abs(f.scene.estado.camera.x-1000)<1&&Math.abs(f.scene.estado.camera.y-500)<1,'câmera segue o alvo');
  f.scene.find('alvo').Transform.x=5000;f.scene.find('alvo').Transform.y=-900;for(let i=0;i<200;i++)f.passo();
  ok(f.scene.estado.camera.x===2000-400&&f.scene.estado.camera.y===225,'câmera respeita os limites do mundo');}
+// 7) camadas de colisão
+{const passa=(ca,cb,colA,colB)=>{const e=nova();const a=e.scene.create({Transform:{x:0,y:0},Velocity:{vx:100,vy:0},Body:{raio:10,massa:1,elasticidade:1,camada:ca,colide:colA}});
+  e.scene.create({Transform:{x:40,y:0},Body:{raio:10,massa:0,camada:cb,colide:colB}});for(let i=0;i<60;i++)e.passo();return a.Transform.x>40;};
+ ok(!passa('a','b'),'sem filtro colide (comportamento antigo)');
+ ok(passa('a','b',['c']),'camada fora da lista atravessa');
+ ok(!passa('a','b',['b'],['a']),'camadas que se aceitam colidem');
+ ok(passa('a','b',['b'],['x']),'os dois lados precisam aceitar');}
+// 8) cenas e interface
+{const e=nova();const log=[];e.registrarCena('menu',{montar(en,d){log.push('menu');en.scene.create({nome:'m'});}});
+ e.registrarCena('jogo',{montar(en,d){log.push('jogo:'+d.fase);en.scene.create({nome:'j'});}});
+ e.irPara('menu');ok(e.scene.estado.cena==='menu'&&e.scene.find('m'),'irPara fora do passo monta na hora');
+ e.registrarScript('troca',{atualizar(en,dt,ctx){ctx.engine.irPara('jogo',{fase:3});ok(ctx.scene.find('m')!==null,'dentro do passo a troca espera o fim');}});
+ e.scene.create({Script:{nome:'troca'}});e.passo();
+ ok(e.scene.estado.cena==='jogo'&&e.scene.find('j')&&!e.scene.find('m')&&log.join()==='menu,jogo:3','cena nova monta com dados e limpa a anterior');
+ let erro=false;try{e.irPara('nada');}catch(x){erro=true;}ok(erro,'cena inexistente dá erro claro');
+ const u=nova();let foi=null;u.registrarCena('alvo',{montar(){foi='alvo';}});
+ u.scene.create({Transform:{x:100,y:50},Botao:{acao:{irPara:'alvo'}},Sprite:{fixo:true,w:80,h:30}});
+ u.input={poll:()=>({down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{tx:300,ty:300,pressed:true}})};u.passo();ok(foi===null,'clique fora do botão não faz nada');
+ u.scene.find('')||0;u.input={poll:()=>({down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{tx:110,ty:55,pressed:true}})};u.passo();ok(foi==='alvo','clique no botão troca de cena');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
