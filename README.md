@@ -7,3 +7,7 @@
 - Segundo exemplo (câmera + sprites animados): abra `mundo.html`.
 - Câmera: `scene.estado.camera = { x, y, zoom, seguir:'nome', suavizar, limites:{x0,y0,x1,y1} }`.
 - Sprite com imagem: `Sprite:{imagem:'nome', quadroW, quadroH, escala}` + `Animacao:{atual, animacoes:{nome:{linha,quadros,fps,repetir}}}`; imagens via `Core.Assets` (`carregar({nome:url})` ou `registrar(nome, canvas)`).
+- Terceiro exemplo (cenas, menus, camadas, salvar/carregar): abra `aventura.html`.
+- Cenas: `engine.registrarCena('nome', { montar(engine, dados) {...} })` e `engine.irPara('nome', dados)`.
+- Botões: entidade com `Botao:{acao:{irPara:'cena'}}` + `Sprite:{fixo:true, w, h, rotulo}` (fixo = não anda com a câmera).
+- Camadas: `Body:{camada:'jogador', colide:['cenario','item']}`. Sem `colide` colide com tudo.

@@ -10,10 +10,10 @@
       this.input = opts.input || null; this.renderer = opts.renderer || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
-      this.scripts = {}; this.systems = [];
+      this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
       this.ctx = { engine: this, scene: this.scene, events: this.events, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
-        this.usar('controles', C.Systems.controles); this.usar('scripts', C.Systems.scripts); this.usar('fisica', C.Systems.fisica);
+        this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts); this.usar('fisica', C.Systems.fisica);
         this.usar('animacao', C.Systems.animacao); this.usar('camera', C.Systems.camera);
       }
       // Eventos com { para: id } vão para o script da entidade (def.eventos[nome])
@@ -24,6 +24,19 @@
         if (h) h(e, d, this.ctx);
       });
     }
+    // Cenas (telas do jogo): registrarCena('menu', { montar(engine, dados) { ... } }); irPara('menu', dados).
+    // Trocar no meio de um passo é seguro: a troca acontece quando o passo termina.
+    registrarCena(nome, def) { this.cenas[nome] = def; return this; }
+    irPara(nome, dados) {
+      if (!this.cenas[nome]) throw new Error('cena não registrada: ' + nome);
+      this._proxima = { nome, dados: dados || {} };
+      if (!this._emPasso) this._aplicarCena();
+    }
+    _aplicarCena() {
+      const { nome, dados } = this._proxima; this._proxima = null;
+      this.scene.clear(); this.events.fila.length = 0; this.scene.estado.cena = nome;   // o nome da cena é salvo junto
+      this.cenas[nome].montar(this, dados);
+    }
     usar(nome, fn) { this.systems.push({ nome, fn }); return this; }
     registrarScript(nome, def) { this.scripts[nome] = def; return this; }
     // Um passo de lógica. Público de propósito: testes e replays chamam direto.
@@ -32,8 +45,10 @@
       ctx.tela = this.renderer ? { largura: this.renderer.largura, altura: this.renderer.altura } : { largura: 800, altura: 450 };
       ctx.input = this.input ? this.input.poll() : SEM_INPUT();
       for (const e of this.scene.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; }
-      for (const s of this.systems) s.fn(this.scene, dt, ctx);
-      this.events.flush(); this.scene.flush();
+      this._emPasso = true;
+      try { for (const s of this.systems) s.fn(this.scene, dt, ctx); this.events.flush(); this.scene.flush(); }
+      finally { this._emPasso = false; }
+      if (this._proxima) this._aplicarCena();
       this.tempo += dt; this.passos++;
     }
     iniciar() {
