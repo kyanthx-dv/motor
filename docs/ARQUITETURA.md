@@ -120,3 +120,11 @@ Cada conceito tem equivalente direto em C# e C++: entidade = struct/id, componen
 - Sistema novo = arquivo novo em `core/systems/`, registrado em ordem.
 - Mudou o formato da cena? Subir o número de `formato` e escrever a migração.
 - Comentar o *porquê*, não o *quê*. O projeto também serve para aprender.
+
+## 13. Variáveis (desde o E1)
+
+`engine.vars` (e `ctx.vars` nos scripts): `declarar(nome, inicial)`, `ler`, `definir`, `somar`, `remover`, `existe`, `tipo`, `todas`. Ficam em `scene.estado.vars`, entram no save/load e **atravessam a troca de cena**. Três tipos: `numero`, `texto`, `booleano` (o tipo é o do valor declarado e não muda). Estrito de propósito: ler/definir uma variável não declarada, trocar o tipo ou usar nome inválido dá erro claro. Evento `variavel-mudou { nome, valor, antes }` a cada mudança real.
+
+## 14. Editor (pasta `editor/`)
+
+O editor só edita o **JSON da cena** e usa o próprio motor para validar (cria uma cópia da entidade numa `Scene` temporária; se o motor recusar, nada muda). Assim o editor de celular (Flutter/WebView) edita o mesmo formato. E1: lista de objetos, seleção por clique, propriedades, variáveis e JSON da cena (carga transacional).

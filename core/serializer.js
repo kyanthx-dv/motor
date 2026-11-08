@@ -31,6 +31,11 @@
       const isObj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
       if (d.estado !== undefined && !isObj(d.estado)) throw new Error('save inválido: "estado" precisa ser um objeto');
       // Transacional: monta tudo numa cena temporária. Só se TUDO for válido troca a cena atual; save ruim nunca destrói o jogo.
+      const vs = d.estado && d.estado.vars;
+      if (vs !== undefined) {
+        if (!isObj(vs)) throw new Error('save inválido: estado.vars precisa ser um objeto');
+        for (const k in vs) if (!C.Variaveis.NOME.test(k) || !C.Variaveis.tipoDe(vs[k])) throw new Error('save inválido: variável "' + k + '" com nome ou valor inválido');
+      }
       const cam = d.estado && d.estado.camera; if (cam !== undefined && (!isObj(cam) || (cam.zoom !== undefined && !(isFinite(cam.zoom) && cam.zoom > 0)))) throw new Error('save inválido: estado.camera (zoom precisa ser > 0)');
       const tmp = new C.Scene(); tmp.estado = d.estado || {};
       d.entidades.forEach((e, i) => {

@@ -12,9 +12,9 @@
   const SEM_INPUT = () => ({ down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false } });
   class Engine {
     constructor(opts = {}) {
-      if (!C.Scene || !C.Events) throw new Error('Core: carregue events.js e scene.js antes de engine.js');
+      if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
       if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
-      this.scene = new C.Scene(); this.events = new C.Events();
+      this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this);
       this.input = opts.input || null; this.renderer = opts.renderer || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
@@ -24,7 +24,7 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, events: this.events, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts); this.usar('fisica', C.Systems.fisica);
         this.usar('animacao', C.Systems.animacao); this.usar('camera', C.Systems.camera);
@@ -54,7 +54,8 @@
     }
     _aplicarCena() {
       const { nome, dados } = this._proxima; this._proxima = null;
-      this.scene.clear(); this.events.fila.length = 0; this.scene.estado.cena = nome;   // o nome da cena é salvo junto
+      const vars = this.scene.estado.vars; this.scene.clear(); this.events.fila.length = 0; if (vars) this.scene.estado.vars = vars;   // variáveis atravessam a troca de cena
+      this.scene.estado.cena = nome;   // o nome da cena é salvo junto
       this.cenas[nome].montar(this, dados);
     }
     usar(nome, fn) { this.systems.push({ nome, fn }); return this; }

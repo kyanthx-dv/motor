@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Editor do Motor</title>
+<link rel="stylesheet" href="../editor/editor.css"></head><body>
+<header class="topo"><b>Editor do Motor</b><span class="sub">E1 · ver, selecionar e editar</span>
+  <label class="chk"><input type="checkbox" id="c-col"> Colisores</label></header>
+<main class="grade">
+  <section class="painel" aria-label="Objetos"><h2>Objetos <small id="n-obj"></small></h2><ul id="lista" class="lista"></ul></section>
+  <section class="centro"><div class="palco"><canvas id="tela"></canvas></div><div class="status" id="status">Clique em um objeto para selecionar.</div></section>
+  <section class="painel" aria-label="Propriedades"><h2>Propriedades</h2><div id="props" class="props"></div>
+    <h2>Variáveis <small id="n-var"></small></h2><div id="vars" class="vars"></div>
+    <form id="nova-var" class="nv"><input id="nv-nome" placeholder="nome" aria-label="Nome da variável"><select id="nv-tipo" aria-label="Tipo"><option value="numero">número</option><option value="texto">texto</option><option value="booleano">verdadeiro/falso</option></select><input id="nv-val" placeholder="valor inicial" aria-label="Valor inicial"><button type="submit">Criar</button></form>
+    <div id="msg" class="msg" role="status"></div>
+    <details class="json"><summary>Cena em JSON</summary><textarea id="json" spellcheck="false" aria-label="Cena em JSON"></textarea>
+      <div class="linha"><button type="button" id="j-ler">Atualizar do editor</button><button type="button" id="j-aplicar">Aplicar JSON</button></div></details>
+  </section>
+</main>
+<script src="../core/events.js"></script><script src="../core/scene.js"></script><script src="../core/variaveis.js"></script><script src="../core/serializer.js"></script>
+<script src="../core/systems/controles.js"></script><script src="../core/systems/ui.js"></script><script src="../core/systems/scripts.js"></script><script src="../core/systems/fisica.js"></script><script src="../core/systems/animacao.js"></script><script src="../core/systems/camera.js"></script>
+<script src="../core/engine.js"></script><script src="../adapters/assets.js"></script><script src="../adapters/canvas-renderer.js"></script>
+<script src="editor.js"></script>
+</body></html>

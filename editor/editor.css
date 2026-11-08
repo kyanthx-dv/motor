@@ -1,0 +1,25 @@
+:root{--bg:#f3f1ec;--painel:#fbfaf7;--fg:#1d2430;--mudo:#6b7280;--linha:#dcd8cf;--acento:#b45309;--acento-fg:#fff;--campo:#fff;--sel:#fde7c4;--erro:#b42318;--ok:#2f7d3a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171f;--painel:#1a212b;--fg:#e7e9ee;--mudo:#93a0b2;--linha:#2b3441;--acento:#f5a524;--acento-fg:#1a1203;--campo:#121821;--sel:#3a2d12;--erro:#ff8a7a;--ok:#7ddc8c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12171f;--painel:#1a212b;--fg:#e7e9ee;--mudo:#93a0b2;--linha:#2b3441;--acento:#f5a524;--acento-fg:#1a1203;--campo:#121821;--sel:#3a2d12;--erro:#ff8a7a;--ok:#7ddc8c;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.topo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--linha);background:var(--painel)}
+.topo b{font-size:16px;letter-spacing:.01em}.sub{color:var(--mudo);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.chk{margin-left:auto;display:flex;gap:6px;align-items:center;color:var(--mudo)}
+.grade{display:grid;grid-template-columns:minmax(150px,200px) minmax(0,1fr) minmax(250px,320px);gap:12px;padding:12px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));align-items:start}
+.painel{background:var(--painel);border:1px solid var(--linha);border-radius:10px;padding:10px;min-width:0}
+h2{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--mudo);font-weight:600}h2 small{font-weight:400;margin-left:4px}.painel h2:not(:first-child){margin-top:16px}
+.lista{list-style:none;margin:0;padding:0;max-height:62vh;overflow:auto}.lista button{width:100%;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;color:inherit;font:inherit;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.lista button:hover{background:var(--bg)}.lista button[aria-current="true"]{background:var(--sel);box-shadow:inset 3px 0 var(--acento)}.lista i{color:var(--mudo);font-style:normal;font-variant-numeric:tabular-nums}
+.palco{aspect-ratio:16/9;width:100%;background:#000;border-radius:10px;overflow:hidden;border:1px solid var(--linha)}#tela{width:100%;height:100%;display:block;cursor:crosshair}
+.status{margin-top:8px;color:var(--mudo);font-size:12px;font-variant-numeric:tabular-nums;min-height:1.4em}
+.props,.vars{display:grid;gap:6px}.grupo{border-top:1px solid var(--linha);padding-top:6px}.grupo>b{font-size:12px;color:var(--acento);text-transform:uppercase;letter-spacing:.08em}
+.campo{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:center;margin-top:4px}.campo label{color:var(--mudo)}
+input:not([type=checkbox]):not([type=color]),select,textarea{background:var(--campo);color:var(--fg);border:1px solid var(--linha);border-radius:6px;padding:5px 7px;font:inherit;min-width:0;width:100%}
+input[type=color]{width:100%;height:30px;border:1px solid var(--linha);border-radius:6px;background:var(--campo);padding:2px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--acento);outline-offset:1px}
+button{background:var(--bg);color:var(--fg);border:1px solid var(--linha);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}button:hover{border-color:var(--acento)}
+.nv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.nv button{background:var(--acento);color:var(--acento-fg);border-color:var(--acento);font-weight:600}
+.var{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;align-items:center}.var span{overflow:hidden;text-overflow:ellipsis}.var small{color:var(--mudo)}
+.msg{min-height:1.4em;margin-top:8px;font-size:13px}.msg.erro{color:var(--erro)}.msg.ok{color:var(--ok)}
+.json{margin-top:14px}.json summary{cursor:pointer;color:var(--mudo)}textarea{height:180px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;margin-top:6px;resize:vertical}.linha{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.vazio{color:var(--mudo)}
+@media (max-width:900px){.grade{grid-template-columns:minmax(0,1fr)}.centro{order:-1}.lista{max-height:30vh}}
