@@ -1,0 +1,20 @@
+/* Página do exemplo. O jogo em si é desenhado no canvas; aqui só moldura e botões. */
+:root{--bg:#e8ebe4;--fg:#1c231f;--mute:#65706a;--card:rgba(255,255,255,.92);--line:#cdd4ca;--accent:#2f7d4f;--btn:#ffffff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121815;--fg:#e8efe9;--mute:#97a39b;--card:rgba(32,40,35,.92);--line:#334039;--accent:#6fcf97;--btn:#222d27;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121815;--fg:#e8efe9;--mute:#97a39b;--card:rgba(32,40,35,.92);--line:#334039;--accent:#6fcf97;--btn:#222d27;color-scheme:dark}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+#jogo{position:relative;height:100%;width:100%}
+#tela{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.placar{position:absolute;left:50%;top:14px;transform:translateX(-50%);padding:6px 18px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px;pointer-events:none;white-space:pre}
+.flash{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-size:clamp(40px,12vw,96px);font-weight:800;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.45);pointer-events:none}
+.aviso{position:absolute;left:50%;top:64px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:7px 14px;border-radius:999px;pointer-events:none}
+.barra{position:absolute;left:50%;bottom:calc(12px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:6px;padding:6px;border-radius:999px;background:var(--card);border:1px solid var(--line);max-width:calc(100% - 20px);flex-wrap:wrap;justify-content:center}
+.barra button{font:inherit;font-weight:600;color:var(--fg);background:var(--btn);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;touch-action:manipulation}
+.barra button:active{transform:scale(.96)}
+.chute{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;border:2px solid #fff;background:rgba(59,130,246,.85);color:#fff;font:inherit;font-weight:700;touch-action:none}
+.chute:active{background:rgba(37,99,235,1)}
+.dica{position:absolute;left:max(14px,env(safe-area-inset-left,0px));top:14px;max-width:min(260px,32vw);font-size:12px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none}
+@media (max-width:640px){.dica{display:none}}

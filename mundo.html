@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>Mundo · Núcleo da Engine</title>
+<link rel="stylesheet" href="games/futebol/estilo.css"></head><body>
+<div id="jogo">
+  <canvas id="tela"></canvas>
+  <div class="placar">Mundo</div>
+  <div class="dica">Setas ou WASD movem. No celular, arraste na tela. Roda do mouse ou botões fazem zoom.</div>
+  <div class="barra">
+    <button id="b-reiniciar" type="button">Reiniciar</button>
+    <button id="b-mais" type="button">Zoom +</button>
+    <button id="b-menos" type="button">Zoom −</button>
+    <button id="b-debug" type="button">Colisores</button>
+  </div>
+</div>
+<script src="core/events.js"></script>
+<script src="core/scene.js"></script>
+<script src="core/serializer.js"></script>
+<script src="core/systems/controles.js"></script>
+<script src="core/systems/scripts.js"></script>
+<script src="core/systems/fisica.js"></script>
+<script src="core/systems/animacao.js"></script>
+<script src="core/systems/camera.js"></script>
+<script src="core/engine.js"></script>
+<script src="adapters/assets.js"></script>
+<script src="adapters/canvas-renderer.js"></script>
+<script src="adapters/input.js"></script>
+<script src="games/mundo/jogo.js"></script>
+</body></html>
