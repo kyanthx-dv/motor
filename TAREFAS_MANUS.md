@@ -12,7 +12,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 
 ## Fila
 - [x] **M1** `package.json` com scripts `test` (core) e `test:navegador` (Playwright como devDependency). Atualizar README com os comandos.
-- [ ] **M2** GitHub Actions (`.github/workflows/ci.yml`) rodando `npm test` em cada PR.
+- [x] **M2** GitHub Actions (`.github/workflows/ci.yml`) rodando `npm test` em cada PR.
 - [x] **M3** `adapters/input.js`: o joystick virtual só aparece para toque (`e.pointerType === "touch"`). Mouse segue só como ponteiro/clique. Testar no navegador.
 - [ ] **M4** README: seção "Contrato do host" (o motor precisa de um agendador; no navegador é automático).
 - [ ] **M5** `adapters/audio.js`: sons curtos por nome via WebAudio (`carregar`, `tocar`), com detecção se `AudioContext` existe. Só o adaptador, sem mexer no core.
@@ -29,6 +29,9 @@ B6 física · A2 validação de componentes (B1–B5 já corrigidos).
 - Dúvidas: nenhuma.
 - M3 concluída: joystick virtual restrito a toque; mouse permanece apenas como ponteiro/clique, com testes de navegador adicionados.
 - Testado: `node tests/test-core.js`, `node tests/test-navegador.js` e `node --check` nos arquivos alterados (todos passaram).
+- Dúvidas: nenhuma.
+- M2 concluída: workflow do GitHub Actions configurado para instalar dependências e rodar `npm test` em cada Pull Request.
+- Testado: `node tests/test-core.js` e validação sintática do workflow YAML (todos passaram).
 - Dúvidas: nenhuma.
 
 ## Dúvidas do Manus
