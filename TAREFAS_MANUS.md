@@ -18,7 +18,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [ ] **M5** `adapters/audio.js`: sons curtos por nome via WebAudio (`carregar`, `tocar`), com detecção se `AudioContext` existe. Só o adaptador, sem mexer no core.
 
 ## Só o Claude faz (não pegar)
-B1 carregamento transacional · B2 migrações v+1 · B4 validar save · B5 validar `dt` · B3 `destruir()` do depurador · B6 física · A2 validação de componentes.
+B6 física · A2 validação de componentes (B1–B5 já corrigidos).
 
 ## Relatório do Manus
 (vazio)
@@ -30,4 +30,4 @@ B1 carregamento transacional · B2 migrações v+1 · B4 validar save · B5 vali
 "Revise este PR de um motor de jogo JS. Regras: docs/ARQUITETURA.md. Liste só bugs reais e violações das regras, em ordem de gravidade, com arquivo e linha. Não reescreva código. Se estiver ok, diga 'sem problemas'."
 
 ## Estado do Claude (atualizado a cada entrega)
-Próximo: corrigir B1, B2, B4, B5, B3 num PR só. Depois revisar os PRs do Manus.
+Próximo: revisar os PRs do Manus. Já feito pelo Claude: B1, B2, B3, B4, B5. Falta: B6 (física), A2 (validação de componentes).

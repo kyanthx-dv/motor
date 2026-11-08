@@ -80,6 +80,14 @@ const nova=()=>new C.Engine();
   const s=new C.Scene();s.create({id:7});let d1=false;try{s.create({id:7});}catch(x){d1=true;}ok(d1&&s.entities.size===1,'id duplicado é rejeitado');
   s.create({id:1,nome:'antes'});let d2=false;try{C.Serializer.deJSON(s,{formato:1,entidades:[{id:2},{id:2}]});}catch(x){d2=true;}
   ok(d2&&s.find('antes'),'save com ids duplicados falha sem destruir a cena atual');}
+{ // revisão 2: carga transacional, migração v+1, save malformado, dt inválido
+  const S=C.Serializer,s=new C.Scene();s.create({id:1,nome:'atual'});
+  const falha=d=>{try{S.deJSON(s,d);return false;}catch(x){return true;}};
+  ok(falha({formato:1,entidades:[{id:2},{id:3,Transform:{x:NaN,y:0}}]})&&s.find('atual')&&s.entities.size===1,'save com entidade inválida preserva a cena atual');
+  ok(falha({formato:1,entidades:[null]})&&falha({formato:1,entidades:[{id:'a'}]})&&falha({formato:1,entidades:[{id:1.5}]})&&falha({formato:1,estado:5,entidades:[]})&&s.find('atual'),'save malformado falha sem destruir a cena');
+  const F0=S.FORMATO;S.FORMATO=3;S.migracoes[1]=d=>({...d,formato:3});let salto=false;try{S.deJSON(new C.Scene(),{formato:1,entidades:[]});}catch(x){salto=true;}S.FORMATO=F0;delete S.migracoes[1];ok(salto,'migração que pula formato é rejeitada');
+  const e=nova(),bad=v=>{try{e.passo(v);return false;}catch(x){return x instanceof RangeError;}};
+  ok(bad(NaN)&&bad(Infinity)&&bad(0)&&bad(-1)&&bad('1')&&e.tempo===0,'passo(dt) recusa tempo inválido sem alterar o estado');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save
