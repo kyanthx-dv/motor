@@ -9,6 +9,7 @@
 h2{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--mudo);font-weight:600}h2 small{font-weight:400;margin-left:4px}.painel h2:not(:first-child){margin-top:16px}
 .lista{list-style:none;margin:0;padding:0;max-height:62vh;overflow:auto}.lista button{width:100%;text-align:left;background:none;border:0;border-radius:6px;padding:6px 8px;color:inherit;font:inherit;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
 .lista button:hover{background:var(--bg)}.lista button[aria-current="true"]{background:var(--sel);box-shadow:inset 3px 0 var(--acento)}.lista i{color:var(--mudo);font-style:normal;font-variant-numeric:tabular-nums}
+.projetos{border-bottom:1px solid var(--linha);padding-bottom:10px;margin-bottom:12px}.projetos select{min-height:86px}.projetos .linha button{flex:1 1 auto;padding:5px 6px;font-size:12px}
 .palco{aspect-ratio:16/9;width:100%;background:#000;border-radius:10px;overflow:hidden;border:1px solid var(--linha)}#tela{width:100%;height:100%;display:block;cursor:crosshair}
 .status{margin-top:8px;color:var(--mudo);font-size:12px;font-variant-numeric:tabular-nums;min-height:1.4em}
 .props,.vars{display:grid;gap:6px}.grupo{border-top:1px solid var(--linha);padding-top:6px}.grupo>b{font-size:12px;color:var(--acento);text-transform:uppercase;letter-spacing:.08em}
@@ -26,6 +27,8 @@ button{background:var(--bg);color:var(--fg);border:1px solid var(--linha);border
 
 .centro .scripts{margin-top:12px}.codigo{height:220px;tab-size:2;white-space:pre;overflow:auto}.scripts .linha select{flex:1 1 140px}.scripts .linha input{flex:2 1 160px}
 .aviso{background:var(--sel);border:1px solid var(--acento);color:var(--fg);border-radius:8px;padding:8px 10px;margin-bottom:8px;font-weight:600}
+.sair-jogar{display:none;position:fixed;z-index:20;right:16px;top:16px;background:rgba(0,0,0,.65);color:#fff;border-color:rgba(255,255,255,.5)}
+.modo-jogo{overflow:hidden}.modo-jogo .topo,.modo-jogo .painel,.modo-jogo .status{display:none}.modo-jogo .grade{display:block;width:100vw;height:100vh;padding:0}.modo-jogo .centro{width:100vw;height:100vh}.modo-jogo .palco{width:100vw;height:100vh;aspect-ratio:auto;border:0;border-radius:0}.modo-jogo #tela{cursor:default}.modo-jogo .sair-jogar{display:block}
 
 .blocos{display:grid;gap:8px;margin:8px 0;padding:8px;border:1px dashed var(--linha);border-radius:8px}.pilha{display:grid;gap:4px;margin:4px 0 4px 14px;min-width:0}.blocos>.pilha{margin-left:0}
 .bloco{border:1px solid var(--linha);border-left:4px solid var(--acento);background:var(--campo);border-radius:8px;padding:6px 8px;min-width:0}.bloco.hat{border-left-color:#2f7d3a;background:var(--painel)}

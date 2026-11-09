@@ -4,7 +4,7 @@
   const C = Core, $ = id => document.getElementById(id), tela = $('tela');
   const renderer = new C.CanvasRenderer(tela, { largura: 800, altura: 450, fundo: '#2b3a4a' });
   const engine = new C.Engine({ renderer }), cena = engine.scene;
-  let sel = null, sujo = true, arrastando = null, salvoPlay = null, input = null;
+  let sel = null, sujo = true, arrastando = null, salvoPlay = null, input = null, projetoAtual = null, projetos = {}, modoJogo = false;
 
   function exemplo() {
     cena.create({ nome: 'chao', Transform: { x: 400, y: 430 }, Body: { forma: 'retangulo', w: 760, h: 24, massa: 0, elasticidade: 0.4 }, Sprite: { cor: '#3f6b4a' } });
@@ -23,6 +23,22 @@
   const msg = (t, tipo) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (tipo || ''); };
   const el = (tag, cls, txt) => { const x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; return x; };
 
+  const PROJETOS_KEY = 'motor.editor.projetos.v1';
+  function guardarProjetos() { localStorage.setItem(PROJETOS_KEY, JSON.stringify(projetos)); }
+  function lerProjetos() { try { const v = JSON.parse(localStorage.getItem(PROJETOS_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (x) { return {}; } }
+  function atualizarProjetos() { const s = $('projetos'); s.innerHTML = ''; Object.keys(projetos).sort().forEach(n => { const o = el('option', null, n); o.value = n; s.append(o); }); s.value = projetoAtual || ''; $('projeto-nome').value = projetoAtual || ''; }
+  function persistirAtual() { if (projetoAtual) { projetos[projetoAtual] = C.Serializer.paraJSON(cena); guardarProjetos(); } }
+  function cenaVazia() { return { formato: 1, estado: { vars: {} }, entidades: [] }; }
+  function abrirProjeto(nome) {
+    if (!projetos[nome]) return;
+    if (engine.rodando) parar();
+    try { persistirAtual(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(projetos[nome]))); projetoAtual = nome; selecionar(null); variaveis(); json(); atualizarProjetos(); msg('Projeto "' + nome + '" aberto.', 'ok'); } catch (x) { msg('Não abriu o projeto: ' + x.message, 'erro'); }
+  }
+  function criarProjeto() { const nome = $('projeto-nome').value.trim(); if (!nome) return msg('Dê um nome ao projeto.', 'erro'); if (projetos[nome]) return msg('Já existe um projeto com esse nome.', 'erro'); if (engine.rodando) parar(); persistirAtual(); projetos[nome] = cenaVazia(); guardarProjetos(); abrirProjeto(nome); }
+  function renomearProjeto() { const nome = $('projeto-nome').value.trim(); if (!projetoAtual || !nome) return msg('Dê um nome ao projeto.', 'erro'); if (nome !== projetoAtual && projetos[nome]) return msg('Já existe um projeto com esse nome.', 'erro'); if (nome === projetoAtual) return; persistirAtual(); projetos[nome] = projetos[projetoAtual]; delete projetos[projetoAtual]; projetoAtual = nome; guardarProjetos(); atualizarProjetos(); msg('Projeto renomeado.', 'ok'); }
+  function apagarProjeto() { const alvo = $('projetos').value || projetoAtual; if (!alvo) return; if (Object.keys(projetos).length < 2) return msg('Mantenha pelo menos um projeto.', 'erro'); if (!window.confirm('Apagar o projeto "' + alvo + '"?')) return; delete projetos[alvo]; guardarProjetos(); if (alvo === projetoAtual) abrirProjeto(Object.keys(projetos).sort()[0]); else { atualizarProjetos(); msg('Projeto apagado.', 'ok'); } }
+  function inicializarProjetos() { projetos = lerProjetos(); const nomes = Object.keys(projetos).sort(); if (!nomes.length) { projetoAtual = 'Exemplo'; projetos[projetoAtual] = C.Serializer.paraJSON(cena); guardarProjetos(); } else abrirProjeto(nomes[0]); atualizarProjetos(); }
+
   // ---- lista de objetos
   function listar() {
     const ul = $('lista'); ul.innerHTML = ''; const todos = [...cena.entities.values()];
@@ -39,7 +55,8 @@
   function duplicar() { const e = cena.get(sel); if (!e) return; const d = JSON.parse(JSON.stringify(e)); delete d.id; d.nome = nomeLivre((e.nome || 'objeto') + ' cópia'); d.Transform.x += 24; d.Transform.y += 24; const novo = cena.create(d); selecionar(novo.id); msg('Objeto duplicado.', 'ok'); json(); }
   function remover() { if (sel == null || !cena.get(sel)) return; cena.destroy(sel); cena.flush(); sel = null; listar(); props(); redesenhar(); atualizarAcoes(); msg('Objeto removido.', 'ok'); json(); }
   function play() { salvoPlay = JSON.stringify(C.Serializer.paraJSON(cena)); input = new Core.Input(tela, renderer); engine.input = input; engine.iniciar(); atualizarAcoes(); msg('Motor em execução.', 'ok'); }
-  function parar() { engine.parar(); if (input) { input.destruir(); input = null; engine.input = null; } if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(); redesenhar(); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
+  function parar() { engine.parar(); if (input) { input.destruir(); input = null; engine.input = null; } if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(); redesenhar(); } if (modoJogo) { modoJogo = false; document.body.classList.remove('modo-jogo'); $('e-jogar').textContent = 'Jogar'; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
+  function jogar() { if (modoJogo) return parar(); persistirAtual(); modoJogo = true; document.body.classList.add('modo-jogo'); $('e-jogar').textContent = 'Sair'; play(); if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); }
 
   // ---- propriedades (só mostra o que a entidade já tem)
   const CAMPOS = {
@@ -97,14 +114,16 @@
   });
 
   // ---- JSON da cena (salvar/abrir sem arquivo; o motor carrega de forma transacional)
-  function json() { $('json').value = JSON.stringify(C.Serializer.paraJSON(cena), null, 1); }
+  function json() { $('json').value = JSON.stringify(C.Serializer.paraJSON(cena), null, 1); persistirAtual(); }
   $('j-ler').addEventListener('click', () => { json(); msg('JSON atualizado.', 'ok'); });
   $('j-aplicar').addEventListener('click', () => {
     try { C.Serializer.deJSON(cena, JSON.parse($('json').value)); msg('Cena carregada.', 'ok'); } catch (x) { msg('Não carregou (a cena atual foi mantida): ' + x.message, 'erro'); return; }
     selecionar(sel); variaveis(); redesenhar();
   });
   $('e-criar').addEventListener('click', criar); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
-  $('e-play').addEventListener('click', play); $('e-parar').addEventListener('click', parar);
+  $('e-play').addEventListener('click', play); $('e-parar').addEventListener('click', parar); $('e-jogar').addEventListener('click', jogar); $('e-sair-jogar').addEventListener('click', parar);
+  $('projeto-criar').addEventListener('click', criarProjeto); $('projeto-abrir').addEventListener('click', () => abrirProjeto($('projetos').value)); $('projeto-renomear').addEventListener('click', renomearProjeto); $('projeto-apagar').addEventListener('click', apagarProjeto);
+  document.addEventListener('fullscreenchange', () => { if (modoJogo && !document.fullscreenElement) parar(); });
 
   // ---- seleção e cursor no canvas
   function mundo(ev) { const b = tela.getBoundingClientRect(); return renderer.telaParaMundo(ev.clientX - b.left, ev.clientY - b.top); }
@@ -122,6 +141,7 @@
   tela.addEventListener('pointerup', () => { arrastando = null; });
   $('c-col').addEventListener('change', redesenhar);
 
-  exemplo(); listar(); props(); variaveis(); json(); loop();
-  window.editor = { engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; } };
+  exemplo(); listar(); props(); variaveis(); json();
+  window.editor = { engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get projetoAtual() { return projetoAtual; } };
+  inicializarProjetos(); loop();
 })();

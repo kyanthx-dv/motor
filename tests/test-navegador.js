@@ -47,7 +47,12 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   });
   ok(r.depois === true && r.fim === false, 'multitoque: soltar o 2º dedo mantém o 1º; soltar o 1º encerra');
   // editor E1: lista, seleção por clique, edição validada pelo motor, variáveis e JSON transacional
-  await p.setViewportSize({ width: 1300, height: 760 }); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.setViewportSize({ width: 1300, height: 760 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => document.querySelectorAll('#projetos option').length === 1 && editor.projetoAtual === 'Exemplo'), 'M11 cria projeto inicial na lista local');
+  await p.fill('#projeto-nome', 'Projeto 2'); await p.click('#projeto-criar'); await p.waitForTimeout(80); ok(await p.evaluate(() => document.querySelectorAll('#projetos option').length === 2 && editor.projetoAtual === 'Projeto 2' && editor.cena.entities.size === 0), 'M11 cria projeto vazio');
+  await p.fill('#projeto-nome', 'Projeto Renomeado'); await p.click('#projeto-renomear'); await p.waitForTimeout(50); ok(await p.evaluate(() => editor.projetoAtual === 'Projeto Renomeado' && ![...document.querySelectorAll('#projetos option')].some(o => o.value === 'Projeto 2')), 'M11 renomeia projeto');
+  await p.selectOption('#projetos', 'Exemplo'); await p.click('#projeto-abrir'); await p.waitForTimeout(80); ok(await p.evaluate(() => editor.projetoAtual === 'Exemplo' && editor.cena.entities.size === 5), 'M11 abre projeto salvo');
+  await p.selectOption('#projetos', 'Projeto Renomeado'); p.once('dialog', d => d.accept()); await p.click('#projeto-apagar'); await p.waitForTimeout(80); ok(await p.evaluate(() => document.querySelectorAll('#projetos option').length === 1 && editor.projetoAtual === 'Exemplo'), 'M11 apaga projeto');
   ok(await p.evaluate(() => document.querySelectorAll('#lista button').length === 5 && !!window.editor), 'editor abre com 5 objetos na lista');
   const pos = await p.evaluate(() => { const e = editor.cena.find('bola'), b = document.getElementById('tela').getBoundingClientRect(), r = editor.renderer; return { x: b.left + r.ox + e.Transform.x * r.esc, y: b.top + r.oy + e.Transform.y * r.esc }; });
   await p.mouse.click(pos.x, pos.y); await p.waitForTimeout(150);
@@ -75,6 +80,8 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   const jogadorX = await p.evaluate(() => ({ x: editor.cena.find('jogador').Transform.x, input: editor.engine.input })); ok(jogadorX.input === null, 'editor M8 não mantém Input fora do Play');
   await p.click('#e-play'); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(240); await p.keyboard.up('ArrowRight'); const inputPlay = await p.evaluate(x => ({ move: editor.cena.find('jogador').Transform.x > x + 10, ativo: !!editor.engine.input }), jogadorX.x); ok(inputPlay.move && inputPlay.ativo, 'editor M8 no Play: seta move o jogador com Controller');
   await p.click('#e-parar'); await p.waitForTimeout(80); ok(await p.evaluate(x => editor.engine.input === null && Math.abs(editor.cena.find('jogador').Transform.x - x) < 0.001, jogadorX.x), 'editor M8 Parar destrói o Input e restaura a cena');
+  await p.click('#e-jogar'); await p.waitForTimeout(180); ok(await p.evaluate(() => document.body.classList.contains('modo-jogo') && editor.engine.rodando && !!editor.engine.input), 'M11 Jogar entra em tela cheia com entrada ligada');
+  await p.click('#e-sair-jogar'); await p.waitForTimeout(120); ok(await p.evaluate(() => !document.body.classList.contains('modo-jogo') && !editor.engine.rodando && editor.engine.input === null), 'M11 Sair do jogo interrompe e desliga a entrada');
   await p.screenshot({ path: process.env.EDITOR_PNG || '/tmp/editor.png' });
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(200);
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'editor sem rolagem horizontal no celular');
@@ -82,12 +89,12 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.waitForTimeout(400);
   await p.fill('#sc-nome', 'andar'); await p.click('#sc-novo');
   await p.fill('#sc-fonte', 'function atualizar(e, dt, ctx) { e.Transform.x += 100 * dt; ctx.vars.somar("pontos"); }');
-  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.waitForTimeout(100);
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.waitForTimeout(100); const scriptX = await p.evaluate(() => editor.cena.find('bola').Transform.x);
   ok(await p.evaluate(() => editor.cena.find('bola').Script.nome === 'andar' && JSON.parse(document.getElementById('json').value).estado.scripts.andar.fonte.includes('100 * dt')), 'criar e anexar script grava no JSON da cena');
   await p.click('#e-play'); await p.waitForTimeout(600);
   ok(await p.evaluate(() => editor.cena.find('bola').Transform.x > 360 && editor.engine.vars.ler('pontos') > 10), 'Play compila e roda o script (move o objeto e usa variáveis)');
   await p.click('#e-parar'); await p.waitForTimeout(150);
-  ok(await p.evaluate(() => editor.cena.find('bola').Transform.x === 330 && !!editor.cena.estado.scripts.andar && editor.engine.vars.ler('pontos') === 0), 'Parar restaura a cena e mantém o script');
+  ok(await p.evaluate(x => Math.abs(editor.cena.find('bola').Transform.x - x) < 0.001 && !!editor.cena.estado.scripts.andar && editor.engine.vars.ler('pontos') === 0, scriptX), 'Parar restaura a cena e mantém o script');
   await p.fill('#sc-fonte', 'function atualizar( {');
   ok(await p.evaluate(() => /sintaxe/i.test(document.getElementById('sc-msg').textContent)), 'erro de sintaxe aparece enquanto digita');
   await p.click('#e-play'); await p.waitForTimeout(300);
