@@ -30,6 +30,10 @@
   }
   function cond(c) {
     c = c || {};
+    if (c.k === 'tecla' && c.tecla !== undefined) {   // tecla livre, pelo nome (e.key em minúsculas)
+      if (typeof c.tecla !== 'string' || c.tecla.length < 1 || c.tecla.length > 20) throw erro('escolha uma tecla');
+      return 'ctx.input.' + (c.modo === 'pressed' ? 'keysPressed' : 'keys') + '.has(' + JSON.stringify(c.tecla.toLowerCase()) + ')';
+    }
     if (c.k === 'tecla') {
       if (!ACOES.includes(c.acao)) throw erro('tecla desconhecida: ' + c.acao);
       return 'ctx.input.' + (c.modo === 'pressed' ? 'pressed' : 'down') + '.has(' + JSON.stringify(c.acao) + ')';
@@ -40,6 +44,8 @@
     }
     throw erro('condição desconhecida: ' + c.k);
   }
+  // Nome amigável de uma tecla para a interface
+  E.nomeTecla = k => ({ ' ': 'Espaço', arrowleft: '←', arrowright: '→', arrowup: '↑', arrowdown: '↓', enter: 'Enter', escape: 'Esc', shift: 'Shift', control: 'Ctrl', alt: 'Alt', tab: 'Tab', backspace: 'Apagar' }[k] || (k.length === 1 ? k.toUpperCase() : k));
   const N = (x, d) => ({ k: 'num', v: x });
   // Definição dos blocos: cat (menu), campos (como o editor desenha), ger (linhas de código). Filhos: f (então/dentro) e s (senão).
   const BLOCOS = {

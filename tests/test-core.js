@@ -146,6 +146,11 @@ const nova=()=>new C.Engine();
   ok(f([{t:'mover_x'}])&&f([{t:'evento_quadro',f:[{t:'nao_existe'}]}])&&f([{t:'evento_quadro',f:[{t:'var_somar',var:'x y',v:{k:'num',v:1}}]}])&&f([{t:'evento_quadro',f:[{t:'mover_x',v:{k:'num',v:'abc'}}]}])&&f([{t:'evento_quadro',f:[{t:'se',c:{k:'tecla',acao:'zzz'},f:[]}]}]),'gerador recusa bloco desconhecido, variável/número/tecla inválidos');
   ok(G.gerar([{t:'evento_quadro',f:[{t:'cor',cor:'"; alert(1); "'}]}]).includes('"\\"; alert(1); \\""'),'texto digitado é escapado (sem injeção de código)');
   const s2=new C.Scene(),bom={formato:1,estado:{scripts:{x:{fonte:'',blocos:[]}}},entidades:[]};C.Serializer.deJSON(s2,bom);let ruim=false;try{C.Serializer.deJSON(s2,{formato:1,estado:{scripts:{x:{fonte:'',blocos:5}}},entidades:[]});}catch(x){ruim=true;}ok(ruim,'save valida estado.scripts[].blocos');}
+{ // tecla livre: gerador e SEM_INPUT
+  const G=EditorBlocos,c=(t,m)=>G.gerar([{t:'evento_quadro',f:[{t:'se',c:{k:'tecla',tecla:t,modo:m},f:[],s:[]}]}]);
+  ok(c('Z','down').includes('ctx.input.keys.has("z")')&&c(' ','pressed').includes('keysPressed.has(" ")'),'tecla livre gera keys/keysPressed (minúsculas, aceita espaço)');
+  let f1=false,f2=false;try{c('','down');}catch(x){f1=true;}try{c('x'.repeat(21),'down');}catch(x){f2=true;}ok(f1&&f2,'tecla livre vazia ou longa demais é recusada');
+  const e=nova();e.vars.declarar('n',0);e.registrarScript('t',{atualizar(en,dt,ctx){if(ctx.input.keys.has('z')||ctx.input.keysPressed.has('z'))ctx.vars.somar('n');}});e.scene.create({Script:{nome:'t'}});e.passo();ok(e.vars.ler('n')===0,'motor sem Input expõe keys/keysPressed vazios (sem erro)');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save
