@@ -15,7 +15,7 @@
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
       if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
       this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this);
-      this.input = opts.input || null; this.renderer = opts.renderer || null;
+      this.input = opts.input || null; this.renderer = opts.renderer || null; this.audio = opts.audio || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
       // Política de tempo (decisão do motor, não acidente): se o aparelho atrasa, o jogo NÃO tenta recuperar o tempo perdido.
@@ -24,7 +24,7 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, get audio() { return this.engine.audio; }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts); this.usar('fisica', C.Systems.fisica);
         this.usar('animacao', C.Systems.animacao); this.usar('camera', C.Systems.camera);
@@ -91,6 +91,14 @@
         } catch (x) { erros.push({ script: nome, mensagem: String(x && x.message || x) }); if (typeof console !== 'undefined') console.warn('[Core] script "' + nome + '" não foi compilado: ' + (x && x.message || x)); }
       }
       return erros;
+    }
+    // Aleatório DETERMINÍSTICO (mulberry32): mesma semente (estado.semente, padrão 1) = mesma sequência, então replays e testes são previsíveis.
+    // O estado do gerador fica em scene.estado.rng e vai/volta no save.
+    aleatorio(min = 0, max = 1) {
+      const s = this.scene.estado; let a = (Number.isInteger(s.rng) ? s.rng : Number.isInteger(s.semente) ? s.semente : 1) >>> 0;
+      a = (a + 0x6D2B79F5) >>> 0; s.rng = a;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return min + (((t ^ (t >>> 14)) >>> 0) / 4294967296) * (max - min);
     }
     iniciar() {
       if (this.rodando) return; this.compilarScripts(); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();

@@ -151,6 +151,29 @@ const nova=()=>new C.Engine();
   ok(c('Z','down').includes('ctx.input.keys.has("z")')&&c(' ','pressed').includes('keysPressed.has(" ")'),'tecla livre gera keys/keysPressed (minúsculas, aceita espaço)');
   let f1=false,f2=false;try{c('','down');}catch(x){f1=true;}try{c('x'.repeat(21),'down');}catch(x){f2=true;}ok(f1&&f2,'tecla livre vazia ou longa demais é recusada');
   const e=nova();e.vars.declarar('n',0);e.registrarScript('t',{atualizar(en,dt,ctx){if(ctx.input.keys.has('z')||ctx.input.keysPressed.has('z'))ctx.vars.somar('n');}});e.scene.create({Script:{nome:'t'}});e.passo();ok(e.vars.ler('n')===0,'motor sem Input expõe keys/keysPressed vazios (sem erro)');}
+{ // blocos novos: criar objeto, temporizador, aleatório, bipe
+  const G=EditorBlocos,R=(c,min,max)=>({k:'rand',min,max});
+  const e=nova(),n0=e.scene.entities.size;e.vars.declarar('pontos',0);
+  const cri=G.novo('criar');cri.vx={k:'num',v:100};cri.vy={k:'num',v:50};cri.tipo='parado';
+  const sem=Object.assign(G.novo('criar'),{forma:'retangulo',tipo:'sem'});
+  const tmp=G.novo('temporizador');tmp.v={k:'num',v:0.5};tmp.f=[Object.assign(G.novo('var_somar'),{var:'pontos'})];
+  const ruim=Object.assign(G.novo('criar'),{tam:{k:'num',v:-5}});
+  const bl=[{t:'evento_inicio',f:[cri,sem,ruim]},{t:'evento_quadro',f:[tmp]}];
+  e.scene.estado.scripts={m:{blocos:bl,fonte:G.gerar(bl)}};e.scene.create({Transform:{x:0,y:0},Script:{nome:'m'}});
+  const w=console.warn;let av=0;console.warn=()=>av++;e.compilarScripts();for(let i=0;i<120;i++)e.passo();console.warn=w;
+  const criados=[...e.scene.entities.values()].filter(x=>x.nome==='criado');
+  ok(criados.length===2&&criados.some(x=>x.Body&&x.Body.massa===0&&x.Transform.x===100)&&criados.some(x=>!x.Body&&x.Sprite.w===32),'criar objeto: círculo parado e quadrado sem colisão (tamanho inválido só isola o erro)');
+  ok(e.vars.ler('pontos')>=3&&e.vars.ler('pontos')<=4&&av>=1,'temporizador a cada 0,5 s dispara ~2 vezes por segundo');
+  const A=nova(),B=nova(),C2=nova();A.scene.estado.semente=7;B.scene.estado.semente=7;C2.scene.estado.semente=8;
+  const sa=[1,2,3,4].map(()=>A.aleatorio(0,100)),sb=[1,2,3,4].map(()=>B.aleatorio(0,100)),sc2=[1,2,3,4].map(()=>C2.aleatorio(0,100));
+  ok(sa.join()===sb.join()&&sa.join()!==sc2.join()&&sa.every(x=>x>=0&&x<100),'aleatório: mesma semente = mesma sequência, dentro do intervalo');
+  const J=JSON.parse(JSON.stringify(C.Serializer.paraJSON(A.scene))),A2=nova();C.Serializer.deJSON(A2.scene,J);ok(A2.aleatorio(0,100)===A.aleatorio(0,100),'aleatório continua igual depois de salvar e carregar');
+  ok(G.gerar([{t:'evento_quadro',f:[{t:'var_somar',var:'pontos',v:R(0,1,5)}]}]).includes('ctx.engine.aleatorio(1, 5)'),'valor aleatório gera ctx.engine.aleatorio(min, max)');
+  const chamadas=[],e2=nova();e2.registrarScript('s',{atualizar(en,dt,ctx){if(ctx.audio)ctx.audio.bipe(440,0.1);}});e2.scene.create({Script:{nome:'s'}});e2.passo();e2.audio={bipe:(f,d)=>chamadas.push([f,d])};e2.passo();
+  ok(chamadas.length===1&&chamadas[0][0]===440,'ctx.audio só existe quando o host fornece (sem áudio = sem erro)');
+  const osc=[],fakeCtx=class{constructor(){this.currentTime=0;this.destination={};this.state='running';}createOscillator(){const o={frequency:{value:0},connect(){},start(t){osc.push(['start',o.frequency.value]);},stop(){}};return o;}createGain(){return{gain:{value:0,setValueAtTime(){},linearRampToValueAtTime(){}},connect(){}};}};
+  globalThis.AudioContext=fakeCtx;vm.runInThisContext(fs.readFileSync(__dirname+'/../adapters/audio.js','utf8'));const au=new C.Audio();
+  au.bipe(99999,0.1);au.bipe(NaN,0.1);const r=au.bipe(440,0.1);delete globalThis.AudioContext;ok(osc.length===2&&osc[0][1]===20000&&r&&!new C.Audio().bipe(440,0.1),'Audio.bipe limita a frequência, recusa NaN e é seguro sem AudioContext');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save

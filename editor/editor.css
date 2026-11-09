@@ -37,3 +37,4 @@ button{background:var(--bg);color:var(--fg);border:1px solid var(--linha);border
 .val{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}.bt{margin-left:auto;display:inline-flex;gap:2px}.bt button{padding:2px 7px}.rot{color:var(--mudo);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:6px 0 0 14px}
 select.add{width:auto;color:var(--acento);border-style:dashed;margin:4px 0 0 14px;max-width:calc(100% - 14px)}.blocos>select.add{margin-left:0}.aviso-mini{color:var(--erro)}
 .bloco button.tecla{border-style:dashed;color:var(--acento)}
+.bloco.cat-Som{border-left-color:#14b8a6}
