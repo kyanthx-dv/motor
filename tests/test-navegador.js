@@ -154,6 +154,12 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(criados >= 1, 'Play: o temporizador cria objetos durante o jogo (' + criados + ')');
   await p.click('#e-parar'); await p.waitForTimeout(150);
   ok(await p.evaluate(n => editor.cena.entities.size === n, antesN), 'Parar descarta os objetos criados durante o jogo');
+  // exemplo pelo editor: abre, roda, moedas nascem
+  await p.goto(url('editor/index')); await p.waitForTimeout(400); await p.click('#p-exemplo'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => !!editor.cena.find('jogador') && editor.cena.estado.scripts.moeda && document.getElementById('projetos').value.startsWith('Pega-moedas')), 'botão abre o exemplo Pega-moedas como projeto novo');
+  await p.click('#e-play'); await p.waitForTimeout(1600);
+  ok(await p.evaluate(() => [...editor.cena.entities.values()].some(x => x.nome === 'moeda') && /Pontos/.test(editor.cena.find('placar').Sprite.rotulo)), 'exemplo roda no navegador: moedas nascem e o placar aparece');
+  await p.screenshot({ path: process.env.EX_PNG || '/tmp/ex.png' }); await p.click('#e-parar');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

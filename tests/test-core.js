@@ -188,6 +188,17 @@ const nova=()=>new C.Engine();
   let ruim=false;try{G.gerar([{t:'evento_quadro',f:[f('som',{som:'x'})]}]);}catch(x){ruim=true;}ok(ruim,'som desconhecido é recusado');
   const ops=[],FC=class{constructor(){this.currentTime=0;this.sampleRate=8000;this.destination={};this.state='running';}createOscillator(){return{type:'',frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},start(){ops.push('osc');},stop(){}};}createGain(){return{gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}createBuffer(c,n){return{getChannelData:()=>new Float32Array(n)};}createBufferSource(){return{connect(){},start(){ops.push('ruido');},stop(){}};}};
   globalThis.AudioContext=FC;vm.runInThisContext(fs.readFileSync(__dirname+'/../adapters/audio.js','utf8'));const au=new C.Audio();ok(au.efeito('moeda')&&au.efeito('explosao')&&!au.efeito('x')&&ops.join()==='osc,osc,ruido','Audio.efeito sintetiza os sons prontos e ignora nome desconhecido');delete globalThis.AudioContext;}
+{ // Exemplo "Pega-moedas" ponta a ponta (blocos -> código -> motor): spawn, coletar, bomba reinicia
+  vm.runInThisContext(fs.readFileSync(__dirname+'/../editor/exemplos.js','utf8'));
+  const e=nova();C.Serializer.deJSON(e.scene,EditorExemplos.pegaMoedas());const er=e.compilarScripts();e.iniciar();e.parar();
+  const w=console.warn;let av=0;console.warn=()=>av++;
+  for(let i=0;i<130;i++)e.passo();
+  const nome=n=>[...e.scene.entities.values()].filter(x=>x.nome===n),jog=nome('jogador')[0];
+  ok(er.length===0&&av===0&&nome('moeda').length>=1&&e.scene.find('placar').Sprite.rotulo==='Pontos: 0','exemplo: compila sem erros, moedas nascem sozinhas, placar mostra 0');
+  const m=nome('moeda')[0];jog.Transform.x=m.Transform.x;jog.Transform.y=m.Transform.y;jog.Velocity={vx:0,vy:0};e.passo();e.passo();
+  ok(e.vars.ler('pontos')===1&&!e.scene.get(m.id)&&e.scene.find('placar').Sprite.rotulo==='Pontos: 1','exemplo: encostar na moeda soma ponto, remove a moeda e atualiza o placar');
+  for(let i=0;i<200&&!nome('bomba').length;i++)e.passo();const b=nome('bomba')[0];jog.Transform.x=b.Transform.x;jog.Transform.y=b.Transform.y;e.passo();e.passo();console.warn=w;
+  ok(b&&e.vars.ler('pontos')===0&&nome('bomba').length===0&&nome('moeda').length===0,'exemplo: encostar na bomba reinicia o jogo (pontos 0, objetos criados somem)');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save

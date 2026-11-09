@@ -81,7 +81,7 @@
   const CAMPOS = {
     Transform: [['x', 'num'], ['y', 'num']],
     Body: [['forma', 'sel', ['circulo', 'retangulo']], ['raio', 'num'], ['w', 'num'], ['h', 'num'], ['massa', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['sensor', 'bool']],
-    Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['w', 'num'], ['h', 'num'], ['raio', 'num']],
+    Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['fixo', 'bool']],
     Controller: [['aceleracao', 'num'], ['velMax', 'num']]
   };
   function campo(rotulo, entrada) { const d = el('div', 'campo'), l = el('label', null, rotulo); entrada.id = 'f-' + rotulo + Math.random().toString(36).slice(2, 6); l.htmlFor = entrada.id; d.append(l, entrada); return d; }
@@ -95,6 +95,7 @@
         if (!(k in e[comp])) continue; const v = e[comp][k]; let i;
         if (tipo === 'sel') { i = el('select'); for (const o of op) { const x = el('option', null, o); x.value = o; i.append(x); } i.value = v; }
         else if (tipo === 'bool') { i = el('input'); i.type = 'checkbox'; i.checked = !!v; i.style.width = 'auto'; }
+        else if (tipo === 'txt') { i = el('input'); i.value = v; }
         else if (tipo === 'cor') { i = el('input'); if (/^#[0-9a-f]{6}$/i.test(v)) i.type = 'color'; i.value = v; }
         else { i = el('input'); i.type = 'number'; i.step = 'any'; i.value = v; }
         i.addEventListener('change', () => aplicar(comp, k, tipo === 'num' ? (i.value === '' ? NaN : +i.value) : tipo === 'bool' ? i.checked : i.value));
@@ -142,6 +143,11 @@
   $('e-criar').addEventListener('click', criar); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
   $('e-play').addEventListener('click', play); $('e-parar').addEventListener('click', parar); $('e-jogar').addEventListener('click', jogar); $('e-sair-jogar').addEventListener('click', parar); $('e-desfazer').addEventListener('click', desfazer); $('e-refazer').addEventListener('click', refazer);
   document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey || ev.target.matches('input, textarea, select') || ev.target.isContentEditable) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
+  // Exemplo pronto vira um projeto novo (nunca sobrescreve o seu).
+  $('p-exemplo').addEventListener('click', () => {
+    if (engine.rodando) parar(); const base = 'Pega-moedas'; let nome = base, i = 2; while (projetos[nome]) nome = base + ' ' + i++;
+    projetos[nome] = EditorExemplos.pegaMoedas(); guardarProjetos(); abrirProjeto(nome);
+  });
   $('projeto-criar').addEventListener('click', criarProjeto); $('projeto-abrir').addEventListener('click', () => abrirProjeto($('projetos').value)); $('projeto-renomear').addEventListener('click', renomearProjeto); $('projeto-apagar').addEventListener('click', apagarProjeto);
   document.addEventListener('fullscreenchange', () => { if (modoJogo && !document.fullscreenElement) parar(); });
 

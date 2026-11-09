@@ -66,6 +66,8 @@
           if (c.t) topo.append(el('span', null, c.t));
           else if (c.tipo === 'valor') topo.append(campoValor(b, c.n, c.n));
           else if (c.tipo === 'var') topo.append(campoVar(b, c.n));
+          else if (c.tipo === 'txt') topo.append(entrada('text', b[c.n] == null ? '' : b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
+          else if (c.tipo === 'script') topo.append(sel([['', '(nenhum)'], ...(opc.scripts ? opc.scripts() : [])], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'script do objeto criado'));
           else if (c.tipo === 'sel') topo.append(sel(c.ops, b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
           else if (c.tipo === 'cond') topo.append(campoCond(b));
           else if (c.tipo === 'cor') topo.append(entrada('color', /^#[0-9a-f]{6}$/i.test(b.cor) ? b.cor : '#ff5555', x => { b.cor = x; mudou(); }, 'cor'));
