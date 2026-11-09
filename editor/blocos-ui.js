@@ -27,7 +27,18 @@
     function campoCond(b) {
       const c = b.c, w = el('span', 'val');
       w.append(sel([['cmp', 'comparar'], ['tecla', 'tecla']], c.k, k => { b.c = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : { k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } }; redesenhar(); }, 'tipo de condição'));
-      if (c.k === 'tecla') { w.append(sel(B.ACOES, c.acao, x => { c.acao = x; mudou(); }, 'tecla'), sel([['down', 'segurada'], ['pressed', 'apertada agora']], c.modo || 'down', x => { c.modo = x; mudou(); }, 'modo')); }
+      if (c.k === 'tecla') {
+        w.append(sel([['acao', 'direção/ação'], ['livre', 'qualquer tecla']], c.tecla !== undefined ? 'livre' : 'acao', t => { if (t === 'livre') { delete c.acao; c.tecla = 'z'; } else { delete c.tecla; c.acao = 'acao'; } redesenhar(); }, 'tipo de tecla'));
+        if (c.tecla !== undefined) {
+          const bt = el('button', 'tecla', 'Tecla: ' + B.nomeTecla(c.tecla)); bt.type = 'button'; bt.title = 'Clique e aperte a tecla desejada';
+          bt.addEventListener('click', () => {
+            bt.textContent = 'aperte uma tecla…';
+            const ouvir = ev => { ev.preventDefault(); ev.stopPropagation(); window.removeEventListener('keydown', ouvir, true); if (ev.key !== 'Escape') c.tecla = ev.key.toLowerCase(); redesenhar(); };
+            window.addEventListener('keydown', ouvir, true);
+          }); w.append(bt);
+        } else w.append(sel(B.ACOES, c.acao, x => { c.acao = x; mudou(); }, 'tecla'));
+        w.append(sel([['down', 'segurada'], ['pressed', 'apertada agora']], c.modo || 'down', x => { c.modo = x; mudou(); }, 'modo'));
+      }
       else { w.append(campoValor(c, 'a', 'valor A'), sel(B.OPS, c.op, x => { c.op = x; mudou(); }, 'comparação'), campoValor(c, 'b', 'valor B')); }
       return w;
     }

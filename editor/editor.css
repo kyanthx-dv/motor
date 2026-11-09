@@ -36,3 +36,4 @@ button{background:var(--bg);color:var(--fg);border:1px solid var(--linha);border
 .topo{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.topo>b{flex:1 1 auto}.topo select,.topo input:not([type=color]){width:auto;max-width:100%;min-width:60px}.topo input[type=number]{width:80px}.topo input[type=color]{width:40px;height:28px}
 .val{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}.bt{margin-left:auto;display:inline-flex;gap:2px}.bt button{padding:2px 7px}.rot{color:var(--mudo);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:6px 0 0 14px}
 select.add{width:auto;color:var(--acento);border-style:dashed;margin:4px 0 0 14px;max-width:calc(100% - 14px)}.blocos>select.add{margin-left:0}.aviso-mini{color:var(--erro)}
+.bloco button.tecla{border-style:dashed;color:var(--acento)}

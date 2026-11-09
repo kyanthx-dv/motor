@@ -1,6 +1,6 @@
 /* Adaptador · Input
    Teclado, mouse e toque viram o mesmo formato. O núcleo nunca vê teclas, só ações:
-   poll() -> { down, pressed, released, axes:{x,y}, pointer:{x,y,down} }
+   poll() -> { down, pressed, released, keys, keysPressed, axes:{x,y}, pointer:{x,y,down} }   (keys = teclas livres pelo nome)
    "pressed" vale só no passo em que a ação foi apertada (borda de subida). */
 (function (root) {
   const C = root.Core = root.Core || {};
@@ -12,19 +12,21 @@
     constructor(canvas, renderer, teclas) {
       this.canvas = canvas; this.renderer = renderer; this.teclas = teclas || TECLAS;
       this.listeners = [];
-      this.down = new Set(); this.edge = new Set(); this.soltou = new Set();
+      this.down = new Set(); this.edge = new Set(); this.soltou = new Set(); this.keys = new Set(); this.keysEdge = new Set();
       this.joystick = { ativo: false, x0: 0, y0: 0, x: 0, y: 0, dx: 0, dy: 0, raio: 56, id: null };
       this.pointer = { x: 0, y: 0, tx: 0, ty: 0, down: false }; this.pEdge = false; this.ptId = null;   // um ponteiro principal no canvas; botões HTML são independentes
       this.mapa = new Map();
       for (const a in this.teclas) for (const k of this.teclas[a]) this.mapa.set(k, a);
       const ouvir = (alvo, tipo, fn) => { alvo.addEventListener(tipo, fn); this.listeners.push({ alvo, tipo, fn }); };
       const digitando = e => { const t = e.target && e.target.tagName; return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT'; };
+      // Teclas livres: qualquer tecla pelo nome (e.key em minúsculas: 'z', ' ', 'arrowup'). Só registra; só bloqueia o navegador nas teclas mapeadas.
       ouvir(window, 'keydown', e => {
-        if (digitando(e)) return; const a = this.mapa.get(e.key.toLowerCase()); if (!a) return;
+        if (digitando(e)) return; const k = e.key.toLowerCase(); if (!this.keys.has(k)) { this.keys.add(k); this.keysEdge.add(k); }
+        const a = this.mapa.get(k); if (!a) return;
         e.preventDefault(); this.pressionar(a, true);
       });
-      ouvir(window, 'keyup', e => { const a = this.mapa.get(e.key.toLowerCase()); if (a) this.pressionar(a, false); });
-      ouvir(window, 'blur', () => { [...this.down].forEach(a => this.pressionar(a, false)); });
+      ouvir(window, 'keyup', e => { const k = e.key.toLowerCase(); this.keys.delete(k); const a = this.mapa.get(k); if (a) this.pressionar(a, false); });
+      ouvir(window, 'blur', () => { this.keys.clear(); [...this.down].forEach(a => this.pressionar(a, false)); });
       ouvir(canvas, 'pointerdown', e => {
         if (this.ptId !== null) { e.preventDefault(); return; }       // 2º dedo no canvas é ignorado: não corrompe o estado do 1º
         this.ptId = e.pointerId; const p = this.local(e); this.atualizarPonteiro(p, true); this.pEdge = true;
@@ -58,13 +60,13 @@
       return { x, y };
     }
     poll() {
-      const s = { down: new Set(this.down), pressed: new Set(this.edge), released: new Set(this.soltou), axes: this.eixos(), pointer: { ...this.pointer, pressed: this.pEdge } };
-      this.pEdge = false; this.edge.clear(); this.soltou.clear(); return s;
+      const s = { keys: new Set(this.keys), keysPressed: new Set(this.keysEdge), down: new Set(this.down), pressed: new Set(this.edge), released: new Set(this.soltou), axes: this.eixos(), pointer: { ...this.pointer, pressed: this.pEdge } };
+      this.pEdge = false; this.edge.clear(); this.soltou.clear(); this.keysEdge.clear(); return s;
     }
     destruir() {
       for (const { alvo, tipo, fn } of this.listeners) alvo.removeEventListener(tipo, fn);
       this.listeners.length = 0;
-      this.down.clear(); this.edge.clear(); this.soltou.clear();
+      this.down.clear(); this.edge.clear(); this.soltou.clear(); this.keys.clear(); this.keysEdge.clear();
       this.joystick.ativo = false; this.joystick.id = null; this.joystick.dx = this.joystick.dy = 0;
       this.ptId = null; this.pointer.down = false;
     }
