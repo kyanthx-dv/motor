@@ -5,9 +5,12 @@
   const MODELO = '// Roda uma vez, quando o jogo começa.\nfunction iniciar(e, ctx) {\n}\n\n// Roda 60 vezes por segundo. e = este objeto; ctx.vars = variáveis do jogo.\nfunction atualizar(e, dt, ctx) {\n  e.Transform.x += 40 * dt;\n}\n';
   const fontes = () => cena.estado.scripts || (cena.estado.scripts = {});
   let atual = null;
+  // Alguns ambientes (ex.: páginas hospedadas com CSP, como artefatos) proíbem criar código a partir de texto: aí scripts NÃO rodam.
+  const semEval = (() => { try { new Function('return 1')(); return false; } catch (x) { return true; } })();
+  if (semEval) { const a = $('sc-aviso'); a.hidden = false; a.textContent = 'Este ambiente bloqueia código criado a partir de texto (CSP): os scripts não rodam aqui. Abra o editor pelo arquivo editor/index.html no seu computador ou pelo GitHub Pages.'; }
   const msg = (t, tipo) => { const m = $('sc-msg'); m.textContent = t || ''; m.className = 'msg ' + (tipo || ''); };
   function verificar() {
-    if (!atual) { msg(''); return; }
+    if (!atual || semEval) { msg(''); return; }
     try { new Function($('sc-fonte').value); msg('Sintaxe ok.', 'ok'); } catch (x) { msg('Erro de sintaxe: ' + x.message, 'erro'); }
   }
   function usos(nome) { return [...cena.entities.values()].filter(e => e.Script && e.Script.nome === nome); }
