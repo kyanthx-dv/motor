@@ -6,6 +6,11 @@
 - Arquitetura e marcos: `docs/ARQUITETURA.md`.
 - Núcleo em `core/` (sem navegador), adaptadores em `adapters/`, jogo exemplo em `games/futebol/`.
 - Para integrar em um app: crie `new Core.Engine({renderer, input})`, registre scripts, monte a cena com `engine.scene.create({...})` e chame `engine.iniciar()`.
+
+## Contrato do host
+
+O motor não cria o relógio da aplicação: `Engine.iniciar()` precisa de um agendador com os métodos `agora()`, `pedir(callback)` e `cancelar(handle)`. No navegador, o padrão usa `requestAnimationFrame`; em Node, usa um temporizador. Em outro host, passe o agendador explicitamente: `new Core.Engine({renderer, input, agendador})`. Para testes determinísticos e replays, também é possível chamar `engine.passo(dt)` diretamente.
+
 - Segundo exemplo (câmera + sprites animados): abra `mundo.html`.
 - Câmera: `scene.estado.camera = { x, y, zoom, seguir:'nome', suavizar, limites:{x0,y0,x1,y1} }`.
 - Sprite com imagem: `Sprite:{imagem:'nome', quadroW, quadroH, escala}` + `Animacao:{atual, animacoes:{nome:{linha,quadros,fps,repetir}}}`; imagens via `Core.Assets` (`carregar({nome:url})` ou `registrar(nome, canvas)`).
