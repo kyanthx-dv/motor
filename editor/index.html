@@ -9,10 +9,11 @@
   <section class="centro"><div class="palco"><canvas id="tela"></canvas></div><div class="status" id="status">Clique em um objeto para selecionar.</div>
     <section class="painel scripts" aria-label="Scripts"><h2>Scripts <small id="n-sc"></small></h2>
       <div id="sc-aviso" class="aviso" role="alert" hidden></div>
-      <div class="linha"><select id="sc-lista" aria-label="Scripts do projeto"></select><input id="sc-nome" placeholder="nome do novo script" aria-label="Nome do novo script"><button type="button" id="sc-novo">Novo script</button></div>
+      <div class="linha"><select id="sc-lista" aria-label="Scripts do projeto"></select><input id="sc-nome" placeholder="nome do novo script" aria-label="Nome do novo script"><button type="button" id="sc-novo-b">Novo (blocos)</button><button type="button" id="sc-novo">Novo (código)</button></div>
+      <div id="bl" class="blocos" hidden></div>
       <textarea id="sc-fonte" class="codigo" spellcheck="false" maxlength="50000" aria-label="Código do script (JavaScript)" placeholder="Crie um script para escrever o código."></textarea>
       <div id="sc-msg" class="msg" role="status"></div>
-      <div class="linha"><button type="button" id="sc-anexar">Anexar ao objeto selecionado</button><button type="button" id="sc-desanexar">Desanexar</button><button type="button" id="sc-remover">Remover script</button></div>
+      <div class="linha"><button type="button" id="sc-conv" hidden>Converter em código (sem volta)</button><button type="button" id="sc-anexar">Anexar ao objeto selecionado</button><button type="button" id="sc-desanexar">Desanexar</button><button type="button" id="sc-remover">Remover script</button></div>
       <div id="sc-info" class="status"></div></section></section>
   <section class="painel" aria-label="Propriedades"><h2>Propriedades</h2><div id="props" class="props"></div>
     <h2>Variáveis <small id="n-var"></small></h2><div id="vars" class="vars"></div>
@@ -25,5 +26,5 @@
 <script src="../core/events.js"></script><script src="../core/scene.js"></script><script src="../core/variaveis.js"></script><script src="../core/serializer.js"></script>
 <script src="../core/systems/controles.js"></script><script src="../core/systems/ui.js"></script><script src="../core/systems/scripts.js"></script><script src="../core/systems/fisica.js"></script><script src="../core/systems/animacao.js"></script><script src="../core/systems/camera.js"></script>
 <script src="../core/engine.js"></script><script src="../adapters/assets.js"></script><script src="../adapters/canvas-renderer.js"></script><script src="../adapters/input.js"></script>
-<script src="editor.js"></script><script src="scripts.js"></script>
+<script src="editor.js"></script><script src="gerador.js"></script><script src="blocos-ui.js"></script><script src="scripts.js"></script>
 </body></html>

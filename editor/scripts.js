@@ -14,6 +14,11 @@
     try { new Function($('sc-fonte').value); msg('Sintaxe ok.', 'ok'); } catch (x) { msg('Erro de sintaxe: ' + x.message, 'erro'); }
   }
   function usos(nome) { return [...cena.entities.values()].filter(e => e.Script && e.Script.nome === nome); }
+  const usaBlocos = n => !!(n && fontes()[n] && fontes()[n].blocos);
+  function regerar() {   // blocos -> código (o motor só conhece o código)
+    const sc = fontes()[atual]; try { sc.fonte = EditorBlocos.gerar(sc.blocos); $('sc-fonte').value = sc.fonte; msg('Código gerado dos blocos.', 'ok'); } catch (x) { msg('Bloco incompleto: ' + x.message, 'erro'); }
+    ed.json();
+  }
   function atualizar() {
     const nomes = Object.keys(fontes()), s = $('sc-lista'); s.innerHTML = '';
     for (const n of nomes) { const o = document.createElement('option'); o.value = o.textContent = n; s.append(o); }
@@ -21,8 +26,17 @@
     s.value = atual || ''; $('n-sc').textContent = '(' + nomes.length + ')';
     const f = $('sc-fonte'); f.disabled = !atual; if (document.activeElement !== f) f.value = atual ? fontes()[atual].fonte : '';
     const e = cena.get(ed.sel), tem = e && e.Script ? e.Script.nome : null;
-    $('sc-anexar').disabled = !atual || !e; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
+    $('sc-novo-b').addEventListener('click', () => {
+    const nome = $('sc-nome').value.trim();
+    if (!C.Variaveis.NOME.test(nome)) { msg('Nome inválido: use letras, números e _ (não comece com número).', 'erro'); return; }
+    if (fontes()[nome]) { msg('Já existe um script chamado "' + nome + '".', 'erro'); return; }
+    fontes()[nome] = { blocos: [], fonte: EditorBlocos.gerar([]) }; atual = nome; $('sc-nome').value = ''; $('sc-fonte').value = fontes()[nome].fonte; atualizar(); ed.json();
+  });
+  $('sc-conv').addEventListener('click', () => { if (atual) { delete fontes()[atual].blocos; atualizar(); ed.json(); } });
+  $('sc-anexar').disabled = !atual || !e; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
     $('sc-info').textContent = (e ? 'Objeto selecionado: ' + (e.nome || '#' + e.id) + ' · script: ' + (tem || 'nenhum') : 'Nenhum objeto selecionado.') + (atual ? ' · "' + atual + '" usado por ' + usos(atual).length + ' objeto(s)' : '');
+    const bl = $('bl'), com = usaBlocos(atual); bl.hidden = !com; $('sc-conv').hidden = !com; f.readOnly = com;
+    if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), aoMudar: regerar }); }
     verificar();
   }
   $('sc-lista').addEventListener('change', () => { atual = $('sc-lista').value; $('sc-fonte').value = fontes()[atual].fonte; atualizar(); });

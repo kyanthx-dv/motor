@@ -127,6 +127,25 @@ const nova=()=>new C.Engine();
   e.registrarScript('doJogo',{});e.scene.estado.scripts={doJogo:{fonte:''}};console.warn=()=>{};const e2=e.compilarScripts();console.warn=w;ok(e2.length===1&&/já existe/.test(e2[0].mensagem)&&!e.scripts.mover,'nome igual ao de script do jogo é recusado e scripts antigos da cena são removidos');
   const s=new C.Scene(),f=d=>{try{C.Serializer.deJSON(s,{formato:1,estado:{scripts:d},entidades:[]});return false;}catch(x){return true;}};
   ok(f(5)&&f({'1x':{fonte:''}})&&f({a:{}})&&f({a:{fonte:'x'.repeat(50001)}})&&!f({a:{fonte:'function atualizar(){}'}}),'save valida a forma de estado.scripts');}
+{ // E3b: blocos -> código -> motor (comportamento real, não só texto)
+  vm.runInThisContext(fs.readFileSync(__dirname+'/../editor/gerador.js','utf8'));const G=EditorBlocos;
+  const e=nova();e.vars.declarar('pontos',0);e.vars.declarar('fase','A');
+  const se=G.novo('se');se.c={k:'cmp',a:{k:'x'},op:'>',b:{k:'num',v:50}};se.f=[G.novo('var_somar')];se.s=[{t:'vel_x',v:{k:'num',v:7}}];
+  const somarSe=G.novo('var_somar');somarSe.v={k:'num',v:10};somarSe.var='pontos';
+  const colisao=[{t:'evento_colisao',f:[{t:'var_definir',var:'fase',v:{k:'txt',v:'bateu'}},G.novo('remover_outro')]}];
+  const blocos=[{t:'evento_inicio',f:[Object.assign(G.novo('var_somar'),{v:{k:'num',v:5},var:'pontos'})]},{t:'evento_quadro',f:[G.novo('mover_x'),se]},...colisao];
+  se.f[0].var='pontos';
+  e.scene.estado.scripts={b:{blocos,fonte:G.gerar(blocos)}};
+  const a=e.scene.create({nome:'a',Transform:{x:0,y:0},Velocity:{vx:0,vy:0},Body:{raio:10,massa:1},Script:{nome:'b'}});
+  const o=e.scene.create({nome:'o',Transform:{x:200,y:0},Body:{raio:10,massa:0}});
+  ok(e.compilarScripts().length===0,'código gerado dos blocos compila');
+  for(let i=0;i<60;i++)e.passo();
+  ok(e.vars.ler('pontos')>=10&&a.Transform.x>60&&a.Transform.x<70&&a.Velocity.vx===7,'blocos: iniciar, mover, se/senão e variáveis funcionam no motor');
+  a.Transform.x=195;e.passo();e.passo();ok(e.vars.ler('fase')==='bateu'&&!e.scene.get(o.id),'blocos: evento de colisão + remover o outro objeto');
+  const f=b=>{try{G.gerar(b);return false;}catch(x){return true;}};
+  ok(f([{t:'mover_x'}])&&f([{t:'evento_quadro',f:[{t:'nao_existe'}]}])&&f([{t:'evento_quadro',f:[{t:'var_somar',var:'x y',v:{k:'num',v:1}}]}])&&f([{t:'evento_quadro',f:[{t:'mover_x',v:{k:'num',v:'abc'}}]}])&&f([{t:'evento_quadro',f:[{t:'se',c:{k:'tecla',acao:'zzz'},f:[]}]}]),'gerador recusa bloco desconhecido, variável/número/tecla inválidos');
+  ok(G.gerar([{t:'evento_quadro',f:[{t:'cor',cor:'"; alert(1); "'}]}]).includes('"\\"; alert(1); \\""'),'texto digitado é escapado (sem injeção de código)');
+  const s2=new C.Scene(),bom={formato:1,estado:{scripts:{x:{fonte:'',blocos:[]}}},entidades:[]};C.Serializer.deJSON(s2,bom);let ruim=false;try{C.Serializer.deJSON(s2,{formato:1,estado:{scripts:{x:{fonte:'',blocos:5}}},entidades:[]});}catch(x){ruim=true;}ok(ruim,'save valida estado.scripts[].blocos');}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save
