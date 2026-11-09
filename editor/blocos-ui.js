@@ -66,11 +66,14 @@
           else if (c.tipo === 'valor') topo.append(campoValor(b, c.n, c.n));
           else if (c.tipo === 'var') topo.append(campoVar(b, c.n));
           else if (c.tipo === 'cond') topo.append(campoCond(b));
+          else if (c.tipo === 'texto') topo.append(entrada('text', b[c.n] == null ? '' : b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
+          else if (c.tipo === 'sel') topo.append(sel(c.ops, b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
+          else if (c.tipo === 'script') topo.append(sel([['', '(nenhum)'], ...opc.scripts().map(n => [n, n])], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'script'));
           else if (c.tipo === 'cor') topo.append(entrada('color', /^#[0-9a-f]{6}$/i.test(b.cor) ? b.cor : '#ff5555', x => { b.cor = x; mudou(); }, 'cor'));
         }
         topo.append(botoes(arr, i)); linha.append(topo);
         if (hat) { linha.append(pilha(b.f, false), menu(b.f, false)); }
-        else if (def.filhos) { linha.append(el('div', 'rot', 'então'), pilha(b.f, false), menu(b.f, false), el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); }
+        else if (def.filhos) { if (b.t === 'se') linha.append(el('div', 'rot', 'então')); linha.append(pilha(b.f, false), menu(b.f, false)); if (def.filhos.includes('s')) linha.append(el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); }
         p.append(linha);
       });
       return p;

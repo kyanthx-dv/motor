@@ -62,6 +62,25 @@
     remover: { cat: 'Objeto', campos: [{ t: 'remover este objeto' }], ger: () => ['ctx.scene.destroy(e.id);'] },
     remover_outro: { cat: 'Objeto', campos: [{ t: 'remover o outro objeto (em colisão/gatilho)' }], ger: () => ["if (typeof d !== 'undefined' && d) ctx.scene.destroy(d.outro);"] }
   };
+  const positivo = v => { if (v && v.k === 'num' && !(Number(v.v) > 0)) throw erro('o tempo/tamanho precisa ser maior que 0'); return valor(v); };
+  const FORMAS = ['circulo', 'retangulo'], EFEITOS = ['bip', 'moeda', 'pulo', 'acerto', 'explosao'];
+  E.FORMAS = FORMAS; E.EFEITOS = EFEITOS;
+  Object.assign(BLOCOS, {
+    criar: { cat: 'Objeto', campos: [{ t: 'criar objeto' }, { n: 'nome', tipo: 'texto', padrao: 'tiro' }, { n: 'forma', tipo: 'sel', ops: FORMAS, padrao: 'circulo' }, { t: 'tamanho' }, { n: 'tam', tipo: 'valor', padrao: N(8) }, { n: 'cor', tipo: 'cor', padrao: '#ffd23f' }, { t: 'em x' }, { n: 'px', tipo: 'valor', padrao: { k: 'x' } }, { t: 'y' }, { n: 'py', tipo: 'valor', padrao: { k: 'y' } }, { t: 'velocidade x' }, { n: 'vx', tipo: 'valor', padrao: N(0) }, { t: 'y' }, { n: 'vy', tipo: 'valor', padrao: N(0) }, { t: 'script' }, { n: 'script', tipo: 'script', padrao: '' }],
+      ger: b => {
+        if (!FORMAS.includes(b.forma)) throw erro('forma desconhecida: ' + b.forma); const s = positivo(b.tam), cor = JSON.stringify(String(b.cor || '#ffffff'));
+        const corpo = b.forma === 'circulo' ? '{ forma: "circulo", raio: ' + s + ', massa: 1, elasticidade: 0.5 }' : '{ forma: "retangulo", w: ' + s + ', h: ' + s + ', massa: 1, elasticidade: 0.5 }';
+        const sprite = b.forma === 'circulo' ? '{ forma: "circulo", raio: ' + s + ', cor: ' + cor + ' }' : '{ w: ' + s + ', h: ' + s + ', cor: ' + cor + ' }';
+        if (b.script && !NOME.test(b.script)) throw erro('nome de script inválido');
+        return ['ctx.scene.create({ nome: ' + JSON.stringify(String(b.nome || 'objeto')) + ', Transform: { x: ' + valor(b.px) + ', y: ' + valor(b.py) + ' }, Velocity: { vx: ' + valor(b.vx) + ', vy: ' + valor(b.vy) + ' }, Body: ' + corpo + ', Sprite: ' + sprite + (b.script ? ', Script: { nome: ' + JSON.stringify(b.script) + ' }' : '') + ' });'];
+      } },
+    a_cada: { cat: 'Tempo', campos: [{ t: 'a cada' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'segundo(s), fazer' }], filhos: ['f'],
+      ger: (b, g) => { const k = JSON.stringify('t' + (++contador)), n = positivo(b.v); return ['{', '  const s = e.Script.estado, k = ' + k + ', n = ' + n + '; s[k] = (s[k] || 0) + dt;', '  if (s[k] >= n) {', '    s[k] -= n;', ...g.lista(b.f).map(l => '  ' + l), '  }', '}']; } },
+    depois: { cat: 'Tempo', campos: [{ t: 'depois de' }, { n: 'v', tipo: 'valor', padrao: N(2) }, { t: 'segundo(s), fazer uma vez' }], filhos: ['f'],
+      ger: (b, g) => { const k = JSON.stringify('t' + (++contador)), n = positivo(b.v); return ['{', '  const s = e.Script.estado, k = ' + k + ';', '  if (!s[k + "f"]) {', '    s[k] = (s[k] || 0) + dt;', '    if (s[k] >= ' + n + ') {', '      s[k + "f"] = true;', ...g.lista(b.f).map(l => '    ' + l), '    }', '  }', '}']; } },
+    som: { cat: 'Som', campos: [{ t: 'tocar som' }, { n: 'som', tipo: 'sel', ops: EFEITOS, padrao: 'bip' }], ger: b => { if (!EFEITOS.includes(b.som)) throw erro('som desconhecido: ' + b.som); return ['if (ctx.audio) ctx.audio.efeito(' + JSON.stringify(b.som) + ');']; } },
+    reiniciar: { cat: 'Controle', campos: [{ t: 'reiniciar o jogo' }], ger: () => ['ctx.engine.reiniciar();'] }
+  });
   const HATS = {
     evento_inicio: { rotulo: 'quando o jogo começa', sec: 'inicio' },
     evento_quadro: { rotulo: 'a cada quadro (60 vezes por segundo)', sec: 'quadro' },
@@ -70,6 +89,7 @@
   };
   E.BLOCOS = BLOCOS; E.HATS = HATS;
 
+  let contador = 0;   // numera os temporizadores (estado guardado em e.Script.estado, entra no save)
   const ind = (linhas, n) => linhas.map(l => '  '.repeat(n) + l);
   function lista(arr, nivel) {
     if (!Array.isArray(arr)) throw erro('lista de blocos inválida');
@@ -82,14 +102,14 @@
   }
   E.gerar = function (blocos) {
     if (!Array.isArray(blocos)) throw erro('blocos inválidos');
-    const sec = { inicio: [], quadro: [], colisao: [], gatilho: [] };
+    contador = 0; const sec = { inicio: [], quadro: [], colisao: [], gatilho: [] };
     for (const h of blocos) { const d = h && HATS[h.t]; if (!d) throw erro('comece com um bloco de evento'); sec[d.sec].push(...lista(h.f || [], 0)); }
     const out = ['// Gerado pelos blocos. Edite os blocos: este texto é refeito a cada mudança.'];
-    if (sec.inicio.length) out.push('function iniciar(e, ctx) {', ...ind(sec.inicio, 1), '}');
+    if (sec.inicio.length) out.push('function iniciar(e, ctx) {', '  const dt = ctx.dt;', ...ind(sec.inicio, 1), '}');
     if (sec.quadro.length) out.push('function atualizar(e, dt, ctx) {', ...ind(sec.quadro, 1), '}');
     const ev = [];
-    if (sec.colisao.length) ev.push(['  colisao(e, d, ctx) {', ...ind(sec.colisao, 2), '  }']);
-    if (sec.gatilho.length) ev.push(['  gatilho(e, d, ctx) {', ...ind(sec.gatilho, 2), '  }']);
+    if (sec.colisao.length) ev.push(['  colisao(e, d, ctx) {', '    const dt = ctx.dt;', ...ind(sec.colisao, 2), '  }']);
+    if (sec.gatilho.length) ev.push(['  gatilho(e, d, ctx) {', '    const dt = ctx.dt;', ...ind(sec.gatilho, 2), '  }']);
     if (ev.length) { out.push('const eventos = {'); ev.forEach((l, i) => out.push(...(i < ev.length - 1 ? [...l.slice(0, -1), l[l.length - 1] + ','] : l))); out.push('};'); }
     return out.join('\n') + '\n';
   };
@@ -97,8 +117,9 @@
   E.novo = function (t) {
     if (HATS[t]) return { t, f: [] };
     const d = BLOCOS[t], b = { t };
+    if (d.filhos) b.f = []; if (t === 'se') b.s = [];
     for (const c of d.campos) if (c.n && c.padrao !== undefined) b[c.n] = JSON.parse(JSON.stringify(c.padrao));
-    if (t === 'se') { b.c = { k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } }; b.f = []; b.s = []; }
+    if (t === 'se') { b.c = { k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } }; }
     return b;
   };
 })(typeof window !== 'undefined' ? window : globalThis);

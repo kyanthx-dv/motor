@@ -15,7 +15,7 @@
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
       if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
       this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this);
-      this.input = opts.input || null; this.renderer = opts.renderer || null;
+      this.input = opts.input || null; this.renderer = opts.renderer || null; this.audio = opts.audio || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
       // Política de tempo (decisão do motor, não acidente): se o aparelho atrasa, o jogo NÃO tenta recuperar o tempo perdido.
@@ -65,12 +65,13 @@
       if (typeof dt !== 'number' || !isFinite(dt) || dt <= 0) throw new RangeError('passo(dt): dt precisa ser um número finito maior que 0 (recebeu ' + dt + ')');   // fronteira pública: testes e replays
       const ctx = this.ctx; ctx.dt = dt;
       ctx.tela = this.renderer ? { largura: this.renderer.largura, altura: this.renderer.altura } : { largura: 800, altura: 450 };
-      ctx.input = this.input ? this.input.poll() : SEM_INPUT();
+      ctx.input = this.input ? this.input.poll() : SEM_INPUT(); ctx.audio = this.audio;
       for (const e of this.scene.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; }
       this._emPasso = true;
       try { this._rodarSistemas(dt, ctx); this.events.flush(); this.scene.flush(); }
       finally { this._emPasso = false; }
       if (this._proxima) this._aplicarCena();
+      if (this._reiniciar) this._aplicarReinicio();
       this.tempo += dt; this.passos++;
     }
     // Scripts escritos no editor ficam na cena (scene.estado.scripts = { nome: { fonte } }) e viram scripts do motor aqui.
@@ -92,8 +93,14 @@
       }
       return erros;
     }
+    // Reinicia o jogo para o estado de quando iniciar() foi chamado (objetos, variáveis, tempo dos scripts). Dentro de um passo, vale no fim dele.
+    reiniciar() { if (this._emPasso) this._reiniciar = true; else this._aplicarReinicio(); }
+    _aplicarReinicio() {
+      this._reiniciar = false; if (!this._inicial || !C.Serializer) return;
+      C.Serializer.deJSON(this.scene, JSON.parse(this._inicial)); this.events.fila.length = 0;
+    }
     iniciar() {
-      if (this.rodando) return; this.compilarScripts(); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
+      if (this.rodando) return; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
       const quadro = agora => {
         if (!this.rodando) return;
         let delta = (agora - ultimo) / 1000; ultimo = agora;

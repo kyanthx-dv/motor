@@ -136,3 +136,7 @@ O editor só edita o **JSON da cena** e usa o próprio motor para validar (cria 
 ## 16. Blocos (E3b)
 
 `editor/gerador.js` (sem DOM) transforma blocos em código: um script de blocos é `{ blocos: [...], fonte }` em `estado.scripts`; `fonte` é sempre refeita a partir dos blocos e é o que o motor compila (o motor não conhece blocos). Blocos são dados: `{ t: 'tipo', ...campos }`; eventos (`evento_inicio`, `evento_quadro`, `evento_colisao`, `evento_gatilho`) contêm listas de blocos (`f`), e `se` tem `f` (então) e `s` (senão). Valores: número, texto, variável, x/y, velocidade, setas, tempo, nome do outro objeto. O gerador recusa bloco ou valor inválido (nome de variável, número, tecla) e escapa textos. A interface (`editor/blocos-ui.js`) é uma lista indentada com ↑ ↓ ✕ e menus "+ bloco" (sem arrastar, funciona igual no celular); "Converter em código" solta o texto para edição manual (sem volta).
+
+### Blocos v2 e motor
+
+Novos blocos: **criar objeto** (nome, forma, tamanho, cor, posição, velocidade, script opcional), **a cada N segundos** e **depois de N segundos (uma vez)** (contadores em `e.Script.estado`, entram no save), **tocar som** (`ctx.audio.efeito`: bip, moeda, pulo, acerto, explosao — sintetizados, sem arquivos) e **reiniciar o jogo**. Motor: `engine.reiniciar()` (volta ao estado de quando `iniciar()` foi chamado; dentro de um passo, vale no fim dele), `engine.audio`/`ctx.audio` (opcional) e `Audio.efeito(nome)`. Eventos e início dos scripts gerados também têm `dt` (`ctx.dt`). Fica para depois: trocar de cena (exige várias cenas no projeto).

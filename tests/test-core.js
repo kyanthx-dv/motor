@@ -151,6 +151,26 @@ const nova=()=>new C.Engine();
   ok(c('Z','down').includes('ctx.input.keys.has("z")')&&c(' ','pressed').includes('keysPressed.has(" ")'),'tecla livre gera keys/keysPressed (minúsculas, aceita espaço)');
   let f1=false,f2=false;try{c('','down');}catch(x){f1=true;}try{c('x'.repeat(21),'down');}catch(x){f2=true;}ok(f1&&f2,'tecla livre vazia ou longa demais é recusada');
   const e=nova();e.vars.declarar('n',0);e.registrarScript('t',{atualizar(en,dt,ctx){if(ctx.input.keys.has('z')||ctx.input.keysPressed.has('z'))ctx.vars.somar('n');}});e.scene.create({Script:{nome:'t'}});e.passo();ok(e.vars.ler('n')===0,'motor sem Input expõe keys/keysPressed vazios (sem erro)');}
+{ // blocos v2: criar objeto, temporizadores, som, reiniciar
+  const G=EditorBlocos,rodar=(blocos,n,pre)=>{const e=nova();e.vars.declarar('n',0);const s=G.gerar(blocos);e.scene.estado.scripts={b:{blocos,fonte:s}};if(pre)pre(e);const a=e.scene.create({nome:'a',Transform:{x:10,y:20},Velocity:{vx:0,vy:0},Script:{nome:'b'}});
+    ok(e.compilarScripts().length===0,'blocos v2 compilam');e.iniciar();e.parar();for(let i=0;i<n;i++)e.passo();return{e,a};};
+  const so=(t,f)=>({t,f});
+  { const {e}=rodar([so('evento_inicio',[Object.assign(G.novo('criar'),{nome:'tiro',vx:{k:'num',v:100}})])],3);const t=e.scene.find('tiro');
+    ok(t&&Math.abs(t.Transform.y-20)<0.01&&t.Transform.x>10&&t.Body.raio===8&&t.Sprite.cor==='#ffd23f','criar objeto: nasce na posição do criador, com corpo, sprite e velocidade'); }
+  { const cada=Object.assign(G.novo('a_cada'),{v:{k:'num',v:0.5},f:[Object.assign(G.novo('var_somar'),{var:'n'})]}),dep=Object.assign(G.novo('depois'),{v:{k:'num',v:1},f:[Object.assign(G.novo('var_somar'),{var:'n',v:{k:'num',v:100}})]});
+    const {e}=rodar([so('evento_quadro',[cada,dep])],150);ok(e.vars.ler('n')>=100+4&&e.vars.ler('n')<=100+6,'a cada 0,5 s repete e "depois de 1 s" roda uma única vez ('+e.vars.ler('n')+')'); }
+  { const ouvidos=[],{e}=rodar([so('evento_quadro',[Object.assign(G.novo('som'),{som:'moeda'})])],2,e=>{e.audio={efeito:n=>ouvidos.push(n)};});ok(ouvidos.length===2&&ouvidos[0]==='moeda','tocar som chama audio.efeito'); 
+    const {e:e2}=rodar([so('evento_quadro',[G.novo('som')])],2);ok(e2.passos===2,'sem áudio no motor o bloco de som não quebra'); }
+  { const se=Object.assign(G.novo('se'),{c:{k:'cmp',a:{k:'x'},op:'>',b:{k:'num',v:50}},f:[G.novo('reiniciar')]});
+    const {e,a}=rodar([so('evento_quadro',[Object.assign(G.novo('mover_x'),{v:{k:'num',v:600}}),Object.assign(G.novo('var_somar'),{var:'n'}),se])],0);
+    let maxN=0,voltou=0,ant=0;for(let i=0;i<30;i++){e.passo();const n=e.vars.ler('n');if(n<ant)voltou++;ant=n;maxN=Math.max(maxN,n);}
+    ok(maxN>=4&&voltou>=3&&e.scene.find('a').Transform.x<=50+0.01&&e.vars.ler('n')<30,'reiniciar volta objetos e variáveis ao estado inicial'); }
+  const ev=G.gerar([so('evento_colisao',[G.novo('mover_x')])]);ok(ev.includes('const dt = ctx.dt;'),'eventos e início também têm dt');
+  const f=b=>{try{G.gerar(b);return false;}catch(x){return true;}};
+  ok(f([so('evento_quadro',[Object.assign(G.novo('a_cada'),{v:{k:'num',v:0}})])])&&f([so('evento_quadro',[Object.assign(G.novo('criar'),{forma:'x'})])])&&f([so('evento_quadro',[Object.assign(G.novo('som'),{som:'zzz'})])])&&f([so('evento_quadro',[Object.assign(G.novo('criar'),{script:'a b'})])]),'gerador recusa tempo 0, forma, som e script inválidos');
+  vm.runInThisContext(fs.readFileSync(__dirname+'/../adapters/audio.js','utf8'));
+  const sons=[];globalThis.AudioContext=class{constructor(){this.state='running';this.currentTime=0;this.sampleRate=8000;this.destination={};}createGain(){return{gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}createOscillator(){return{frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},start(){sons.push('osc');},stop(){}};}createBuffer(c,n){return{getChannelData:()=>new Float32Array(n)};}createBufferSource(){return{connect(){},start(){sons.push('ruido');}};}};
+  const au=new C.Audio();ok(au.efeito('moeda')&&au.efeito('explosao')&&!au.efeito('nao-existe')&&sons.join()==='osc,osc,ruido','Audio.efeito sintetiza efeitos prontos e ignora nome desconhecido');delete globalThis.AudioContext;}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save

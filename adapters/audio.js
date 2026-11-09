@@ -25,6 +25,19 @@
         return buffer;
       }));
     }
+    // Efeitos prontos, gerados por código (sem arquivos): bip, moeda, pulo, acerto, explosao.
+    efeito(nome) {
+      if (!this.disponivel || !this.ctx || !Audio.EFEITOS[nome]) return false;
+      const c = this.ctx; if (c.state === 'suspended' && c.resume) c.resume().catch(() => {});
+      let t = c.currentTime || 0;
+      for (const p of Audio.EFEITOS[nome]) {
+        const g = c.createGain(); g.connect(c.destination); g.gain.setValueAtTime(p.vol || 0.15, t); g.gain.exponentialRampToValueAtTime(0.0001, t + p.dur);
+        if (p.ruido) { const n = Math.max(1, Math.floor(c.sampleRate * p.dur)), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; const s = c.createBufferSource(); s.buffer = b; s.connect(g); s.start(t); }
+        else { const o = c.createOscillator(); o.type = p.onda || 'square'; o.frequency.setValueAtTime(p.de, t); if (p.para) o.frequency.exponentialRampToValueAtTime(p.para, t + p.dur); o.connect(g); o.start(t); o.stop(t + p.dur); }
+        t += p.dur * (p.seq ? 1 : 0);
+      }
+      return true;
+    }
     tocar(nome, opcoes) {
       if (!this.disponivel || !this.ctx) return null;
       const buffer = this.m.get(nome); if (!buffer) return null;
@@ -38,5 +51,12 @@
       return source;
     }
   }
+  Audio.EFEITOS = {
+    bip: [{ de: 880, dur: 0.08 }],
+    moeda: [{ de: 988, dur: 0.07, seq: 1 }, { de: 1319, dur: 0.18 }],
+    pulo: [{ de: 280, para: 720, dur: 0.16, onda: 'sine', vol: 0.2 }],
+    acerto: [{ de: 220, para: 90, dur: 0.14, onda: 'triangle', vol: 0.25 }],
+    explosao: [{ ruido: true, dur: 0.35, vol: 0.3 }]
+  };
   C.Audio = Audio;
 })(typeof window !== 'undefined' ? window : globalThis);

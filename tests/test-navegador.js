@@ -133,6 +133,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   const antes = await p.evaluate(() => editor.engine.vars.ler('pontos')); await p.keyboard.down('x'); await p.waitForTimeout(300); await p.keyboard.up('x'); await p.waitForTimeout(100);
   const dep = await p.evaluate(() => editor.engine.vars.ler('pontos'));
   ok(antes === 0 && dep > 5, 'no Play, a tecla escolhida dispara o bloco (sem tecla = nada)'); await p.click('#e-parar');
+  // blocos v2 pela interface: a cada N segundos criar objeto + som, depois reiniciar
+  await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.fill('#sc-nome', 'atirar'); await p.click('#sc-novo-b');
+  await p.locator('#bl > select.add').selectOption('evento_quadro'); await p.locator('#bl .hat select.add').selectOption('a_cada'); await p.waitForTimeout(100);
+  await p.locator('#bl .bloco:not(.hat) > select.add').first().selectOption('criar'); await p.locator('#bl .bloco:not(.hat) > select.add').first().selectOption('som'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => { const t = document.getElementById('sc-fonte').value; return /s\[k\] >= n/.test(t) && /ctx\.scene\.create\(\{ nome: "tiro"/.test(t) && /audio\.efeito\("bip"\)/.test(t); }), 'interface monta a cada/criar objeto/som e gera o código');
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.click('#e-play'); await p.waitForTimeout(2300);
+  ok(await p.evaluate(() => editor.cena.findAll('tiro').length >= 2 && !!editor.engine.audio), 'Play: o script cria objetos a cada segundo e o áudio está ligado'); await p.click('#e-parar');
+  ok(await p.evaluate(() => !editor.cena.find('tiro') && !editor.engine.audio), 'Parar remove os objetos criados e desliga o áudio');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
