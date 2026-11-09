@@ -33,12 +33,14 @@
   }
   function restaurarSnapshot(valor) {
     historicoAplicando = true;
-    try { C.Serializer.deJSON(cena, JSON.parse(valor)); sel = cena.get(sel) ? sel : ([...cena.entities.values()].at(-1) || {}).id || null; selecionar(sel); variaveis(); json(false); redesenhar(); }
+    let ok = false;
+    try { C.Serializer.deJSON(cena, JSON.parse(valor)); ok = true; }
     catch (x) { msg('Não restaurou o histórico: ' + x.message, 'erro'); }
-    finally { historicoAplicando = false; atualizarHistorico(); }
+    if (ok) { if (!cena.get(sel)) sel = ([...cena.entities.values()].at(-1) || {}).id ?? null; selecionar(sel); variaveis(); json(false); redesenhar(); }
+    historicoAplicando = false; atualizarHistorico();
   }
-  function desfazer() { if (engine.rodando || desfazerHistorico.length < 2) return; refazerHistorico.push(desfazerHistorico.pop()); restaurarSnapshot(desfazerHistorico[desfazerHistorico.length - 1]); }
-  function refazer() { if (engine.rodando || !refazerHistorico.length) return; const valor = refazerHistorico.pop(); desfazerHistorico.push(valor); restaurarSnapshot(valor); }
+  function desfazer() { if (engine.rodando || arrastando || desfazerHistorico.length < 2) return; refazerHistorico.push(desfazerHistorico.pop()); restaurarSnapshot(desfazerHistorico[desfazerHistorico.length - 1]); }
+  function refazer() { if (engine.rodando || arrastando || !refazerHistorico.length) return; const valor = refazerHistorico.pop(); desfazerHistorico.push(valor); restaurarSnapshot(valor); }
 
   const PROJETOS_KEY = 'motor.editor.projetos.v1';
   function guardarProjetos() { localStorage.setItem(PROJETOS_KEY, JSON.stringify(projetos)); }
@@ -53,7 +55,7 @@
   }
   function criarProjeto() { const nome = $('projeto-nome').value.trim(); if (!nome) return msg('Dê um nome ao projeto.', 'erro'); if (projetos[nome]) return msg('Já existe um projeto com esse nome.', 'erro'); if (engine.rodando) parar(); persistirAtual(); projetos[nome] = cenaVazia(); guardarProjetos(); abrirProjeto(nome); }
   function renomearProjeto() { const nome = $('projeto-nome').value.trim(); if (!projetoAtual || !nome) return msg('Dê um nome ao projeto.', 'erro'); if (nome !== projetoAtual && projetos[nome]) return msg('Já existe um projeto com esse nome.', 'erro'); if (nome === projetoAtual) return; persistirAtual(); projetos[nome] = projetos[projetoAtual]; delete projetos[projetoAtual]; projetoAtual = nome; guardarProjetos(); atualizarProjetos(); msg('Projeto renomeado.', 'ok'); }
-  function apagarProjeto() { const alvo = $('projetos').value || projetoAtual; if (!alvo) return; if (Object.keys(projetos).length < 2) return msg('Mantenha pelo menos um projeto.', 'erro'); if (!window.confirm('Apagar o projeto "' + alvo + '"?')) return; delete projetos[alvo]; guardarProjetos(); if (alvo === projetoAtual) abrirProjeto(Object.keys(projetos).sort()[0]); else { atualizarProjetos(); msg('Projeto apagado.', 'ok'); } }
+  function apagarProjeto() { const alvo = $('projetos').value || projetoAtual; if (!alvo) return; if (Object.keys(projetos).length < 2) return msg('Mantenha pelo menos um projeto.', 'erro'); if (!window.confirm('Apagar o projeto "' + alvo + '"?')) return; delete projetos[alvo]; guardarProjetos(); if (alvo === projetoAtual) { historicoLimpar(); abrirProjeto(Object.keys(projetos).sort()[0]); } else { atualizarProjetos(); msg('Projeto apagado.', 'ok'); } }
   function inicializarProjetos() { projetos = lerProjetos(); const nomes = Object.keys(projetos).sort(); if (!nomes.length) { projetoAtual = 'Exemplo'; projetos[projetoAtual] = C.Serializer.paraJSON(cena); guardarProjetos(); } else abrirProjeto(nomes[0]); atualizarProjetos(); }
 
   // ---- lista de objetos
@@ -139,7 +141,7 @@
   });
   $('e-criar').addEventListener('click', criar); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
   $('e-play').addEventListener('click', play); $('e-parar').addEventListener('click', parar); $('e-jogar').addEventListener('click', jogar); $('e-sair-jogar').addEventListener('click', parar); $('e-desfazer').addEventListener('click', desfazer); $('e-refazer').addEventListener('click', refazer);
-  document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
+  document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey || ev.target.matches('input, textarea, select') || ev.target.isContentEditable) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
   $('projeto-criar').addEventListener('click', criarProjeto); $('projeto-abrir').addEventListener('click', () => abrirProjeto($('projetos').value)); $('projeto-renomear').addEventListener('click', renomearProjeto); $('projeto-apagar').addEventListener('click', apagarProjeto);
   document.addEventListener('fullscreenchange', () => { if (modoJogo && !document.fullscreenElement) parar(); });
 
