@@ -140,3 +140,7 @@ O editor só edita o **JSON da cena** e usa o próprio motor para validar (cria 
 ## 17. Mais blocos (E3c)
 
 Novos blocos: **criar objeto** (círculo ou quadrado; com física, parado ou sem colisão), **a cada N segundos** (temporizador: o tempo acumulado fica em `Script.estado`, chave `t0`, `t1`...), **tocar bipe** e o valor **aleatório entre…**. `engine.aleatorio(min, max)` é determinístico (mulberry32; semente em `estado.semente`, estado em `estado.rng`, vai e volta no save), então replays e testes são previsíveis. `ctx.audio` existe só quando o host fornece (`engine.audio`); o editor liga `Core.Audio` durante o Play. `Audio.bipe(freq, dur, vol)` limita os valores e é seguro sem `AudioContext`. Ainda não há troca de cena no editor (projeto = uma cena).
+
+## 18. Blocos de tempo, som pronto e reiniciar
+
+**depois de N segundos (uma vez)**; **tocar som pronto** (`ctx.audio.efeito`: bip, moeda, pulo, acerto, explosao, sintetizados, sem arquivos); **reiniciar o jogo** (`engine.reiniciar()` volta objetos e variáveis ao estado de quando `iniciar()` foi chamado; dentro de um passo vale no fim dele). Início e eventos dos scripts gerados também têm `dt` (para os blocos de movimento).

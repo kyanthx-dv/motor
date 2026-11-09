@@ -174,6 +174,20 @@ const nova=()=>new C.Engine();
   const osc=[],fakeCtx=class{constructor(){this.currentTime=0;this.destination={};this.state='running';}createOscillator(){const o={frequency:{value:0},connect(){},start(t){osc.push(['start',o.frequency.value]);},stop(){}};return o;}createGain(){return{gain:{value:0,setValueAtTime(){},linearRampToValueAtTime(){}},connect(){}};}};
   globalThis.AudioContext=fakeCtx;vm.runInThisContext(fs.readFileSync(__dirname+'/../adapters/audio.js','utf8'));const au=new C.Audio();
   au.bipe(99999,0.1);au.bipe(NaN,0.1);const r=au.bipe(440,0.1);delete globalThis.AudioContext;ok(osc.length===2&&osc[0][1]===20000&&r&&!new C.Audio().bipe(440,0.1),'Audio.bipe limita a frequência, recusa NaN e é seguro sem AudioContext');}
+{ // do blocos-v2: depois de N s, reiniciar, som pronto, dt em iniciar/eventos
+  const G=EditorBlocos,f=(t,ex)=>Object.assign(G.novo(t),ex||{});
+  const e=nova();e.vars.declarar('n',0);
+  const dep=f('depois',{v:{k:'num',v:1},f:[f('var_somar',{var:'n',v:{k:'num',v:100}})]});
+  e.scene.estado.scripts={d:{blocos:[{t:'evento_quadro',f:[dep]}],fonte:G.gerar([{t:'evento_quadro',f:[dep]}])}};e.scene.create({Script:{nome:'d'}});e.iniciar();e.parar();
+  for(let i=0;i<150;i++)e.passo();ok(e.vars.ler('n')===100,'"depois de 1 s" roda uma única vez');
+  const e2=nova();e2.vars.declarar('n',0);const bl=[{t:'evento_quadro',f:[f('var_somar',{var:'n',v:{k:'num',v:1}}),f('se',{c:{k:'cmp',a:{k:'var',n:'n'},op:'>',b:{k:'num',v:5}},f:[f('reiniciar')],s:[]})]}];
+  e2.scene.estado.scripts={r:{blocos:bl,fonte:G.gerar(bl)}};e2.scene.create({nome:'p',Transform:{x:0,y:0},Script:{nome:'r'}});e2.iniciar();e2.parar();let max=0;for(let i=0;i<30;i++){e2.passo();max=Math.max(max,e2.vars.ler('n'));}
+  ok(max===5&&e2.vars.ler('n')<=5&&e2.scene.find('p'),'reiniciar volta variáveis ao estado inicial (no fim do passo)');
+  ok(G.gerar([{t:'evento_colisao',f:[f('mover_x')]},{t:'evento_inicio',f:[f('mover_x')]}]).split('const dt = ctx.dt;').length===3,'início e eventos também têm dt (blocos de movimento não quebram)');
+  const sons=[],e3=nova(),bl3=[{t:'evento_quadro',f:[f('som',{som:'moeda'})]}];e3.scene.estado.scripts={s:{blocos:bl3,fonte:G.gerar(bl3)}};e3.scene.create({Script:{nome:'s'}});e3.audio={efeito:n=>sons.push(n)};e3.compilarScripts();e3.passo();e3.passo();ok(sons.join()==='moeda,moeda','tocar som pronto chama audio.efeito');
+  let ruim=false;try{G.gerar([{t:'evento_quadro',f:[f('som',{som:'x'})]}]);}catch(x){ruim=true;}ok(ruim,'som desconhecido é recusado');
+  const ops=[],FC=class{constructor(){this.currentTime=0;this.sampleRate=8000;this.destination={};this.state='running';}createOscillator(){return{type:'',frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},start(){ops.push('osc');},stop(){}};}createGain(){return{gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}createBuffer(c,n){return{getChannelData:()=>new Float32Array(n)};}createBufferSource(){return{connect(){},start(){ops.push('ruido');},stop(){}};}};
+  globalThis.AudioContext=FC;vm.runInThisContext(fs.readFileSync(__dirname+'/../adapters/audio.js','utf8'));const au=new C.Audio();ok(au.efeito('moeda')&&au.efeito('explosao')&&!au.efeito('x')&&ops.join()==='osc,osc,ruido','Audio.efeito sintetiza os sons prontos e ignora nome desconhecido');delete globalThis.AudioContext;}
 { // B4: cascata de eventos deixa rastro
   const ev=new C.Events();ev.on('x',()=>ev.emit('x'));ev.emit('x');ev.aoDescartar=()=>{};ev.flush();ok(ev.descartados>0&&ev.fila.length===0,'cascata acima do limite é contada ('+ev.descartados+')');}
 { // R3: campos de runtime não vão para o save

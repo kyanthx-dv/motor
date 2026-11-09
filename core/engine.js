@@ -71,6 +71,7 @@
       try { this._rodarSistemas(dt, ctx); this.events.flush(); this.scene.flush(); }
       finally { this._emPasso = false; }
       if (this._proxima) this._aplicarCena();
+      if (this._reiniciar) this._aplicarReinicio();
       this.tempo += dt; this.passos++;
     }
     // Scripts escritos no editor ficam na cena (scene.estado.scripts = { nome: { fonte } }) e viram scripts do motor aqui.
@@ -100,8 +101,14 @@
       let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
       return min + (((t ^ (t >>> 14)) >>> 0) / 4294967296) * (max - min);
     }
+    // Reinicia o jogo para o estado de quando iniciar() foi chamado (objetos, variáveis, tempo dos scripts). Dentro de um passo, vale no fim dele.
+    reiniciar() { if (this._emPasso) this._reiniciar = true; else this._aplicarReinicio(); }
+    _aplicarReinicio() {
+      this._reiniciar = false; if (!this._inicial || !C.Serializer) return;
+      C.Serializer.deJSON(this.scene, JSON.parse(this._inicial)); this.events.fila.length = 0;
+    }
     iniciar() {
-      if (this.rodando) return; this.compilarScripts(); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
+      if (this.rodando) return; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
       const quadro = agora => {
         if (!this.rodando) return;
         let delta = (agora - ultimo) / 1000; ultimo = agora;
