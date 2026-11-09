@@ -144,3 +144,7 @@ Novos blocos: **criar objeto** (círculo ou quadrado; com física, parado ou sem
 ## 18. Blocos de tempo, som pronto e reiniciar
 
 **depois de N segundos (uma vez)**; **tocar som pronto** (`ctx.audio.efeito`: bip, moeda, pulo, acerto, explosao, sintetizados, sem arquivos); **reiniciar o jogo** (`engine.reiniciar()` volta objetos e variáveis ao estado de quando `iniciar()` foi chamado; dentro de um passo vale no fim dele). Início e eventos dos scripts gerados também têm `dt` (para os blocos de movimento).
+
+## 19. Exemplo Pega-moedas (o que o jogo de teste revelou)
+
+`editor/exemplos.js` monta um jogo inteiro só com blocos: o jogador anda (Controller), moedas e bombas nascem a cada 1 s e 3 s (`a cada N segundos` + `criar objeto` com posição aleatória), a moeda soma ponto, toca som e some, a bomba reinicia o jogo, o placar é um sprite fixo de tela cujo texto vem do bloco `mudar o texto`. O teste automático roda o jogo ponta a ponta (nascer, coletar, explodir/reiniciar). **Lacunas encontradas e corrigidas:** `criar objeto` ganhou **nome**, **sensor (atravessável)** e **script do objeto criado** (sem isso a moeda não conseguia reagir); `mudar o texto` (usa `Sprite.rotulo`) e os campos de texto do Sprite no painel de propriedades. **Ainda faltam:** criar objeto de texto/placar pela interface, tela de fim de jogo, vidas/tempo como exemplos, imagens e sons de arquivo, várias cenas.
