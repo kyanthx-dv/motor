@@ -70,6 +70,10 @@
     temporizador: { cat: 'Controle', menu: 'a cada … segundos', campos: [{ t: 'a cada' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'segundos faça' }], filhos: ['f'],
       ger: (b, g) => { const k = JSON.stringify('t' + g.id()); return ['{', '  const st = e.Script.estado, iv = ' + valor(b.v) + ';', '  st[' + k + '] = (st[' + k + '] || 0) + dt;', '  if (iv > 0 && st[' + k + '] >= iv) {', '    st[' + k + '] = 0;', ...g.lista(b.f).map(l => '  ' + l), '  }', '}']; } },
     bipe: { cat: 'Som', menu: 'tocar bipe', campos: [{ t: 'tocar bipe de' }, { n: 'hz', tipo: 'valor', padrao: N(440) }, { t: 'Hz por' }, { n: 's', tipo: 'valor', padrao: N(0.15) }, { t: 's' }], ger: b => ['if (ctx.audio) ctx.audio.bipe(' + valor(b.hz) + ', ' + valor(b.s) + ');'] },
+    depois: { cat: 'Controle', menu: 'depois de … segundos (uma vez)', campos: [{ t: 'depois de' }, { n: 'v', tipo: 'valor', padrao: N(2) }, { t: 'segundos, fazer uma vez' }], filhos: ['f'],
+      ger: (b, g) => { const k = JSON.stringify('t' + g.id()); return ['{', '  const st = e.Script.estado, n = ' + valor(b.v) + ';', '  if (!st[' + k + ' + "f"]) {', '    st[' + k + '] = (st[' + k + '] || 0) + dt;', '    if (st[' + k + '] >= n) {', '      st[' + k + ' + "f"] = true;', ...g.lista(b.f).map(l => '    ' + l), '    }', '  }', '}']; } },
+    som: { cat: 'Som', menu: 'tocar som pronto', campos: [{ t: 'tocar som' }, { n: 'som', tipo: 'sel', ops: ['bip', 'moeda', 'pulo', 'acerto', 'explosao'], padrao: 'moeda' }], ger: b => { if (!['bip', 'moeda', 'pulo', 'acerto', 'explosao'].includes(b.som)) throw erro('som desconhecido: ' + b.som); return ['if (ctx.audio) ctx.audio.efeito(' + JSON.stringify(b.som) + ');']; } },
+    reiniciar: { cat: 'Controle', menu: 'reiniciar o jogo', campos: [{ t: 'reiniciar o jogo' }], ger: () => ['ctx.engine.reiniciar();'] },
     remover: { cat: 'Objeto', campos: [{ t: 'remover este objeto' }], ger: () => ['ctx.scene.destroy(e.id);'] },
     remover_outro: { cat: 'Objeto', campos: [{ t: 'remover o outro objeto (em colisão/gatilho)' }], ger: () => ["if (typeof d !== 'undefined' && d) ctx.scene.destroy(d.outro);"] }
   };
@@ -97,11 +101,11 @@
     const sec = { inicio: [], quadro: [], colisao: [], gatilho: [] };
     for (const h of blocos) { const d = h && HATS[h.t]; if (!d) throw erro('comece com um bloco de evento'); sec[d.sec].push(...lista(h.f || [], 0)); }
     const out = ['// Gerado pelos blocos. Edite os blocos: este texto é refeito a cada mudança.'];
-    if (sec.inicio.length) out.push('function iniciar(e, ctx) {', ...ind(sec.inicio, 1), '}');
+    if (sec.inicio.length) out.push('function iniciar(e, ctx) {', '  const dt = ctx.dt;', ...ind(sec.inicio, 1), '}');
     if (sec.quadro.length) out.push('function atualizar(e, dt, ctx) {', ...ind(sec.quadro, 1), '}');
     const ev = [];
-    if (sec.colisao.length) ev.push(['  colisao(e, d, ctx) {', ...ind(sec.colisao, 2), '  }']);
-    if (sec.gatilho.length) ev.push(['  gatilho(e, d, ctx) {', ...ind(sec.gatilho, 2), '  }']);
+    if (sec.colisao.length) ev.push(['  colisao(e, d, ctx) {', '    const dt = ctx.dt;', ...ind(sec.colisao, 2), '  }']);
+    if (sec.gatilho.length) ev.push(['  gatilho(e, d, ctx) {', '    const dt = ctx.dt;', ...ind(sec.gatilho, 2), '  }']);
     if (ev.length) { out.push('const eventos = {'); ev.forEach((l, i) => out.push(...(i < ev.length - 1 ? [...l.slice(0, -1), l[l.length - 1] + ','] : l))); out.push('};'); }
     return out.join('\n') + '\n';
   };
