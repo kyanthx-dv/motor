@@ -20,6 +20,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [x] **M7 (E2)** `editor/editor.js`: arrastar o objeto selecionado no canvas para mover (atualiza Transform.x/y e o painel); botão "Novo objeto" (círculo ou retângulo, com Transform, Body e Sprite válidos); botão "Remover" e "Duplicar"; botões Play/Parar (Play: salva o JSON, roda `engine.iniciar()`; Parar: `engine.parar()` e recarrega o JSON salvo). Testes no `tests/test-navegador.js`. NÃO mexer em `core/`. Use sempre `aplicar()`/validação do motor, sem regras próprias.
 - [x] **M8** `editor/editor.js`: criar `Core.Input` somente no Play, atribuir a `engine.input`, destruir no Parar e testar seta movendo o jogador com Controller.
 - [x] **M11** `editor/`: lista de projetos em `localStorage` com criar/abrir/renomear/apagar e botão Jogar em tela cheia com entrada ligada. Sem alterar o core.
+- [x] **M12** `editor/`: desfazer/refazer por Ctrl+Z/Ctrl+Y e botões, com snapshots JSON de até 50 níveis para mudanças do editor e sem registrar durante o Play. Sem alterar o core.
 
 ## Só o Claude faz (não pegar)
 (nada pendente: a revisão 2 foi toda corrigida).
@@ -49,6 +50,9 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - Testado: `node tests/test-core.js`, `node tests/test-navegador.js`, `node --check adapters/audio.js` e `node --check tests/test-navegador.js` (todos passaram).
 - Dúvidas: nenhuma.
 - M11 concluída: editor com projetos persistidos em localStorage, operações de ciclo de vida e modo Jogar em tela cheia com Input ativo.
+- Testado: `node tests/test-core.js`, `node tests/test-navegador.js`, `node --check editor/editor.js` e validação de conflitos/diff (todos passaram).
+- Dúvidas: nenhuma.
+- M12 concluída: histórico JSON de desfazer/refazer com 50 snapshots, botões e atalhos, agrupando cada arrasto e suspendendo registros durante o Play.
 - Testado: `node tests/test-core.js`, `node tests/test-navegador.js`, `node --check editor/editor.js` e validação de conflitos/diff (todos passaram).
 - Dúvidas: nenhuma.
 
