@@ -30,3 +30,5 @@
 
 - [x] Variáveis no motor (`engine.vars`) · [x] Editor E1 (`editor/index.html`)
 - [ ] Editor E2: mover/criar/remover/Play (Manus, M7) · E3a: scripts JS na cena [x] · E3b: blocos gerando esse JS [x]; depois: arrastar e soltar, mais blocos (criar objeto, esperar, repetir), Flux por nós como 2º modo · isolar código de terceiros (Worker/iframe) antes de abrir projetos alheios
+
+- [x] Blocos: criar objeto, temporizador, aleatório, bipe · [ ] Projeto com várias cenas + bloco 'ir para cena' · [ ] Sons por arquivo no editor · [ ] Flutter (WebView + projetos no aparelho)

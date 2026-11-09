@@ -13,10 +13,11 @@
     const vars = () => opc.vars(), mudou = () => opc.aoMudar(), redesenhar = () => { render(); mudou(); };
     function campoValor(obj, nome, rotulo) {
       const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val');
-      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : { k }; redesenhar(); }, rotulo));
+      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : { k }; redesenhar(); }, rotulo));
       if (v.k === 'num') w.append(entrada('number', v.v, x => { v.v = x === '' ? 0 : +x; mudou(); }, rotulo + ' (número)'));
       if (v.k === 'txt') w.append(entrada('text', v.v, x => { v.v = x; mudou(); }, rotulo + ' (texto)'));
       if (v.k === 'var') w.append(campoVar(v, 'n'));
+      if (v.k === 'rand') w.append(entrada('number', v.min, x => { v.min = +x; mudou(); }, rotulo + ' mínimo'), el('span', null, 'e'), entrada('number', v.max, x => { v.max = +x; mudou(); }, rotulo + ' máximo'));
       return w;
     }
     function campoVar(obj, nome) {
@@ -46,7 +47,7 @@
       const s = el('select', 'add'), o0 = el('option', null, hat ? '+ evento…' : '+ bloco…'); o0.value = ''; s.append(o0); s.setAttribute('aria-label', hat ? 'Adicionar evento' : 'Adicionar bloco');
       if (hat) for (const [t, d] of Object.entries(B.HATS)) { const o = el('option', null, d.rotulo); o.value = t; s.append(o); }
       else { const grupos = {}; for (const [t, d] of Object.entries(B.BLOCOS)) { (grupos[d.cat] = grupos[d.cat] || []).push([t, d]); }
-        for (const g in grupos) { const og = el('optgroup'); og.label = g; for (const [t, d] of grupos[g]) { const o = el('option', null, d.campos.map(c => c.t || '…').join(' ').replace(/\s+/g, ' ')); o.value = t; og.append(o); } s.append(og); } }
+        for (const g in grupos) { const og = el('optgroup'); og.label = g; for (const [t, d] of grupos[g]) { const o = el('option', null, d.menu || d.campos.map(c => c.t || '…').join(' ').replace(/\s+/g, ' ')); o.value = t; og.append(o); } s.append(og); } }
       s.addEventListener('change', () => { if (s.value) { arr.push(B.novo(s.value)); redesenhar(); } }); return s;
     }
     function botoes(arr, i) {
@@ -65,12 +66,13 @@
           if (c.t) topo.append(el('span', null, c.t));
           else if (c.tipo === 'valor') topo.append(campoValor(b, c.n, c.n));
           else if (c.tipo === 'var') topo.append(campoVar(b, c.n));
+          else if (c.tipo === 'sel') topo.append(sel(c.ops, b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
           else if (c.tipo === 'cond') topo.append(campoCond(b));
           else if (c.tipo === 'cor') topo.append(entrada('color', /^#[0-9a-f]{6}$/i.test(b.cor) ? b.cor : '#ff5555', x => { b.cor = x; mudou(); }, 'cor'));
         }
         topo.append(botoes(arr, i)); linha.append(topo);
         if (hat) { linha.append(pilha(b.f, false), menu(b.f, false)); }
-        else if (def.filhos) { linha.append(el('div', 'rot', 'então'), pilha(b.f, false), menu(b.f, false), el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); }
+        else if (def.filhos) { const dois = def.filhos.length > 1; linha.append(el('div', 'rot', dois ? 'então' : 'faça'), pilha(b.f, false), menu(b.f, false)); if (dois) linha.append(el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); }
         p.append(linha);
       });
       return p;

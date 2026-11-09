@@ -8,7 +8,7 @@
   const OPS = ['<', '<=', '=', '!=', '>=', '>'];
   const erro = m => new Error(m);
   E.ACOES = ACOES; E.OPS = OPS;
-  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', outro: 'nome do outro objeto' };
+  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto' };
 
   function nomeVar(n) { if (typeof n !== 'string' || !NOME.test(n)) throw erro('escolha uma variável válida'); return JSON.stringify(n); }
   function valor(v) {
@@ -24,6 +24,7 @@
       case 'eixoX': return 'ctx.input.axes.x';
       case 'eixoY': return 'ctx.input.axes.y';
       case 'tempo': return 'ctx.engine.tempo';
+      case 'rand': { const a = Number(v.min), b = Number(v.max); if (!isFinite(a) || !isFinite(b)) throw erro('aleatório: mínimo e máximo precisam ser números'); return 'ctx.engine.aleatorio(' + a + ', ' + b + ')'; }
       case 'outro': return "(typeof d !== 'undefined' && d && ctx.scene.get(d.outro) ? ctx.scene.get(d.outro).nome : '')";
     }
     throw erro('tipo de valor desconhecido: ' + v.k);
@@ -59,6 +60,16 @@
     var_somar: { cat: 'Variáveis', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'var', tipo: 'var' }], ger: b => ['ctx.vars.somar(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
     se: { cat: 'Controle', campos: [{ t: 'se' }, { n: 'c', tipo: 'cond' }], filhos: ['f', 's'], ger: (b, g) => ['if (' + cond(b.c) + ') {', ...g.lista(b.f), ...(b.s && b.s.length ? ['} else {', ...g.lista(b.s)] : []), '}'] },
     cor: { cat: 'Aparência', campos: [{ t: 'mudar a cor para' }, { n: 'cor', tipo: 'cor', padrao: '#ff5555' }], ger: b => ['if (e.Sprite) e.Sprite.cor = ' + JSON.stringify(String(b.cor || '#ffffff')) + ';'] },
+    criar: { cat: 'Objeto', menu: 'criar objeto', campos: [{ t: 'criar' }, { n: 'forma', tipo: 'sel', ops: [['circulo', 'círculo'], ['retangulo', 'quadrado']], padrao: 'circulo' }, { t: 'de tamanho' }, { n: 'tam', tipo: 'valor', padrao: N(16) }, { t: 'em x' }, { n: 'vx', tipo: 'valor', padrao: { k: 'x' } }, { t: 'y' }, { n: 'vy', tipo: 'valor', padrao: { k: 'y' } }, { t: 'cor' }, { n: 'cor', tipo: 'cor', padrao: '#44ddaa' }, { n: 'tipo', tipo: 'sel', ops: [['dinamico', 'com física'], ['parado', 'parado (sólido)'], ['sem', 'sem colisão']], padrao: 'dinamico' }],
+      ger: b => {
+        const forma = b.forma === 'retangulo' ? 'retangulo' : 'circulo', tipo = ['dinamico', 'parado', 'sem'].includes(b.tipo) ? b.tipo : 'dinamico', cor = JSON.stringify(String(b.cor || '#44ddaa'));
+        const dim = forma === 'circulo' ? 'raio: t' : 'w: 2 * t, h: 2 * t';
+        const corpo = tipo === 'sem' ? [] : ['  Body: { forma: ' + JSON.stringify(forma) + ', ' + dim + ', massa: ' + (tipo === 'parado' ? 0 : 1) + ', elasticidade: 0.5 },'];
+        return ['{', '  const t = ' + valor(b.tam) + ';', '  ctx.scene.create({', '  nome: "criado",', '  Transform: { x: ' + valor(b.vx) + ', y: ' + valor(b.vy) + ' },', ...corpo, '  Sprite: { ' + (forma === 'circulo' ? 'forma: "circulo", raio: t' : 'w: 2 * t, h: 2 * t') + ', cor: ' + cor + ' }', '  });', '}'];
+      } },
+    temporizador: { cat: 'Controle', menu: 'a cada … segundos', campos: [{ t: 'a cada' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'segundos faça' }], filhos: ['f'],
+      ger: (b, g) => { const k = JSON.stringify('t' + g.id()); return ['{', '  const st = e.Script.estado, iv = ' + valor(b.v) + ';', '  st[' + k + '] = (st[' + k + '] || 0) + dt;', '  if (iv > 0 && st[' + k + '] >= iv) {', '    st[' + k + '] = 0;', ...g.lista(b.f).map(l => '  ' + l), '  }', '}']; } },
+    bipe: { cat: 'Som', menu: 'tocar bipe', campos: [{ t: 'tocar bipe de' }, { n: 'hz', tipo: 'valor', padrao: N(440) }, { t: 'Hz por' }, { n: 's', tipo: 'valor', padrao: N(0.15) }, { t: 's' }], ger: b => ['if (ctx.audio) ctx.audio.bipe(' + valor(b.hz) + ', ' + valor(b.s) + ');'] },
     remover: { cat: 'Objeto', campos: [{ t: 'remover este objeto' }], ger: () => ['ctx.scene.destroy(e.id);'] },
     remover_outro: { cat: 'Objeto', campos: [{ t: 'remover o outro objeto (em colisão/gatilho)' }], ger: () => ["if (typeof d !== 'undefined' && d) ctx.scene.destroy(d.outro);"] }
   };
@@ -70,18 +81,19 @@
   };
   E.BLOCOS = BLOCOS; E.HATS = HATS;
 
+  let contador = 0;   // numera os temporizadores de uma geração (chave do estado de cada um)
   const ind = (linhas, n) => linhas.map(l => '  '.repeat(n) + l);
   function lista(arr, nivel) {
     if (!Array.isArray(arr)) throw erro('lista de blocos inválida');
     const out = [];
     for (const b of arr) {
       const def = b && BLOCOS[b.t]; if (!def) throw erro('bloco desconhecido: ' + (b && b.t));
-      out.push(...def.ger(b, { lista: l => ind(lista(l, 0), 1) }));
+      out.push(...def.ger(b, { lista: l => ind(lista(l, 0), 1), id: () => contador++ }));
     }
     return ind(out, nivel);
   }
   E.gerar = function (blocos) {
-    if (!Array.isArray(blocos)) throw erro('blocos inválidos');
+    if (!Array.isArray(blocos)) throw erro('blocos inválidos'); contador = 0;
     const sec = { inicio: [], quadro: [], colisao: [], gatilho: [] };
     for (const h of blocos) { const d = h && HATS[h.t]; if (!d) throw erro('comece com um bloco de evento'); sec[d.sec].push(...lista(h.f || [], 0)); }
     const out = ['// Gerado pelos blocos. Edite os blocos: este texto é refeito a cada mudança.'];
@@ -98,6 +110,7 @@
     if (HATS[t]) return { t, f: [] };
     const d = BLOCOS[t], b = { t };
     for (const c of d.campos) if (c.n && c.padrao !== undefined) b[c.n] = JSON.parse(JSON.stringify(c.padrao));
+    if (d.filhos && t !== 'se') b.f = [];
     if (t === 'se') { b.c = { k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } }; b.f = []; b.s = []; }
     return b;
   };
