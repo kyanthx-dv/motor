@@ -212,6 +212,14 @@ const nova=()=>new C.Engine();
   const e=nova();e.scene.create({Transform:{x:300,y:0},Body:{forma:'retangulo',w:4,h:200,massa:0}});
   const b=e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1500,vy:0},Body:{raio:6,massa:1,elasticidade:.5}});
   for(let i=0;i<30;i++)e.passo();ok(b.Transform.x<300,'bola a 1500 px/s não atravessa parede de 4 px (x '+b.Transform.x.toFixed(0)+')');}
+// 9b) blocos genéricos: atributo de objeto, contas e lógica
+{const G=EditorBlocos,e=nova(),f=(t,o)=>Object.assign(G.novo(t),o),n=x=>({k:'num',v:x});
+ const alvo=e.scene.create({nome:'alvo',Transform:{x:10,y:0},Sprite:{forma:'circulo',raio:5,cor:'#fff'}});
+ const bl=[{t:'evento_quadro',f:[f('mudar_attr',{o:'n:alvo',a:'vx',v:{k:'op',a:{k:'attr',o:'proprio',a:'x'},o:'*',b:n(2)}}),f('somar_attr',{o:'n:alvo',a:'y',v:n(3)}),f('mudar_attr',{o:'n:alvo',a:'texto',v:{k:'txt',v:'oi'}}),f('se',{c:{k:'e',a:{k:'cmp',a:{k:'x'},op:'>=',b:n(0)},b:{k:'nao',a:{k:'cmp',a:{k:'x'},op:'>',b:n(5)}}},f:[f('mudar_attr',{o:'proprio',a:'cor',v:{k:'txt',v:'#123456'}})],s:[]})]}];
+ e.scene.estado.scripts={s:{blocos:bl,fonte:G.gerar(bl)}};const dono=e.scene.create({Transform:{x:3,y:0},Sprite:{forma:'circulo',raio:5,cor:'#fff'},Script:{nome:'s'}});
+ ok(e.compilarScripts().length===0,'blocos de atributo compilam');e.passo();
+ ok(alvo.Velocity&&alvo.Velocity.vx===6&&alvo.Transform.y===3&&alvo.Sprite.rotulo==='oi'&&dono.Sprite.cor==='#123456','mudar/somar atributo, contas e lógica e/não funcionam');
+ let msg='';try{G.gerar([{t:'evento_quadro',f:[f('mudar_attr',{a:'inexistente'})]}])}catch(x){msg=x.message}ok(/desconhecido/.test(msg),'atributo inexistente é recusado');}
 // 10) perfil por sistema
 {const e=nova();e.perfil=true;e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1,vy:0}});for(let i=0;i<5;i++)e.passo();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');
