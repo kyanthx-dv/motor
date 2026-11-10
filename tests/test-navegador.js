@@ -151,6 +151,8 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.locator('#bl > select.add').selectOption('evento_quadro'); await p.locator('#bl .hat select.add').selectOption('temporizador'); await p.waitForTimeout(100);
   await p.locator('#bl .bloco.cat-Controle select.add').first().selectOption('criar'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => /st\["t0"\]/.test(document.getElementById('sc-fonte').value) && /ctx\.scene\.create/.test(document.getElementById('sc-fonte').value)), 'temporizador com "criar objeto" dentro gera o código');
+  await p.fill('#sc-nome', 'orfao'); await p.click('#sc-novo'); await p.selectOption('#sc-lista', 'chuva'); await p.locator('select[aria-label="script do objeto criado"]').selectOption('orfao'); await p.selectOption('#sc-lista', 'orfao'); await p.click('#sc-remover'); await p.selectOption('#sc-lista', 'chuva'); await p.waitForTimeout(100);
+  ok(await p.locator('select[aria-label="script do objeto criado"]').evaluate(s => s.style.borderColor === 'red' && s.title === 'script não existe'), 'bloco criar marca script órfão');
   await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); const antesN = await p.evaluate(() => editor.cena.entities.size); await p.click('#sc-anexar'); await p.click('#e-play'); await p.waitForTimeout(1500);
   const criados = await p.evaluate(() => [...editor.cena.entities.values()].filter(x => x.nome === 'criado').length);
   ok(criados >= 1, 'Play: o temporizador cria objetos durante o jogo (' + criados + ')');
