@@ -107,8 +107,10 @@
     }
     function campoCond(h, n) {
       const c = h[n], w = el('span', 'val'), cmp0 = () => ({ k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } });
-      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : cmp0(); redesenhar(); }, 'tipo de condição'));
+      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : k === 'mouse' ? { k, modo: 'pressed' } : k === 'sobre' ? { k, o: 'proprio' } : cmp0(); redesenhar(); }, 'tipo de condição'));
       if (c.k === 'e' || c.k === 'ou') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, c.k === 'e' ? 'E' : 'OU'), campoCond(c, 'b'), el('span', null, ')'));
+      if (c.k === 'mouse') w.append(sel([['pressed', 'clicou agora'], ['down', 'está apertado']], c.modo || 'pressed', x => { c.modo = x; mudou(); }, 'modo do mouse'));
+      if (c.k === 'sobre') w.append(el('span', null, 'está sobre'), campoObj(c, 'o'));
       if (c.k === 'etiq') w.append(campoObj(c, 'o'), el('span', null, 'tem a etiqueta'), entrada('text', c.tag || '', x => { c.tag = x; mudou(); }, 'etiqueta'));
       if (c.k === 'nao') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, ')'));
       if (c.k === 'tecla') {
@@ -159,6 +161,7 @@
           else if (c.tipo === 'cond') topo.append(campoCond(b, 'c'));
           else if (c.tipo === 'obj') topo.append(campoObj(b, c.n));
           else if (c.tipo === 'attr') topo.append(campoAttr(b, c.n));
+          else if (c.tipo === 'cena') { const cs = opc.cenas ? opc.cenas() : []; topo.append(cs.length ? sel([['', '(escolha)'], ...cs.map(x => [x, x])], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'cena') : entrada('text', b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'nome da cena')); }
           else if (c.tipo === 'objn') { const ns = opc.objetos ? opc.objetos() : []; topo.append(sel([['', '(escolha)'], ...ns.map(x => [x, x])], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'objeto a copiar')); }
           else if (c.tipo === 'cor') topo.append(entrada('color', /^#[0-9a-f]{6}$/i.test(b.cor) ? b.cor : '#ff5555', x => { b.cor = x; mudou(); }, 'cor'));
         }

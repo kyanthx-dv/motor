@@ -24,7 +24,7 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, get audio() { return this.engine.audio; }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, get audio() { return this.engine.audio; }, sobre(e) { return C.Systems.ui.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts); this.usar('fisica', C.Systems.fisica);
         this.usar('animacao', C.Systems.animacao); this.usar('camera', C.Systems.camera);
@@ -57,6 +57,16 @@
       const vars = this.scene.estado.vars; this.scene.clear(); this.events.fila.length = 0; if (vars) this.scene.estado.vars = vars;   // variáveis atravessam a troca de cena
       this.scene.estado.cena = nome;   // o nome da cena é salvo junto
       this.cenas[nome].montar(this, dados);
+    }
+    // Registra uma cena a partir do JSON salvo pelo editor. Ao entrar: carrega os objetos, mantém as variáveis que já existiam
+    // (as da cena nova só entram se ainda não existirem) e religa os scripts da cena.
+    registrarCenaJSON(nome, json) {
+      return this.registrarCena(nome, { montar: eng => {
+        const antes = eng.scene.estado.vars || {};
+        C.Serializer.deJSON(eng.scene, typeof json === 'string' ? JSON.parse(json) : JSON.parse(JSON.stringify(json)));
+        const novas = eng.scene.estado.vars || {}; eng.scene.estado.vars = Object.assign({}, novas, antes); eng.scene.estado.cena = nome;
+        eng.compilarScripts();
+      } });
     }
     usar(nome, fn) { this.systems.push({ nome, fn }); return this; }
     registrarScript(nome, def) { this.scripts[nome] = def; return this; }
