@@ -151,3 +151,10 @@ Novos blocos: **criar objeto** (círculo ou quadrado; com física, parado ou sem
 
 ## 20. Blocos genéricos de atributo
 Em vez de um bloco por ação, há blocos com menus: **mudar / somar [objeto ▾] [atributo ▾]**, valor **atributo de um objeto**, **conta** (`+ − × ÷ resto menor maior`) e lógica **e / ou / não** nas condições (aninháveis). Objeto = este, o outro (colisão/gatilho) ou um objeto pelo nome (`n:nome`); objeto ausente é ignorado sem erro. Atributos: `x y vx vy cor texto corTexto raio` (tabela `EditorBlocos.ATTRS`; para ganhar um atributo novo basta uma linha). `vx/vy` criam `Velocity` se faltar. Tudo continua gerando JavaScript comum; o motor não conhece blocos.
+
+## 21. Fase A: atributos próprios, etiquetas, modelos e controle
+- **Componentes novos (core/scene.js, validados):** `Attr` (atributos próprios `{vida: 3}`: número, texto ≤200 ou booleano, até 50), `Etiquetas` (lista de até 20 textos) e `Modelo` (marca um objeto como molde).
+- **Modelo:** durante o jogo (`scene.jogando`, ligado por `engine.passo`, desligado em `parar`/`clear`) `scene.query` ignora objetos com `Modelo`; no editor eles aparecem normalmente. `scene.clonar(origem, {x, y})` copia sem id e sem a marca.
+- **Objetos nos blocos:** este, o outro, `cada` (dentro de "para cada"), o mais próximo com etiqueta, ou pelo nome. Atributos: os fixos + os próprios (`a:nome`, criados com "+ novo atributo…").
+- **Blocos:** dar etiqueta, criar cópia (modelo), para cada objeto com etiqueta, repetir N (máx. 1000), repetir enquanto (máx. 10000 voltas), % de chance, sair do script, observar valor (`engine.observar`, aparece no editor durante o Play) e comentário. Valor "quantos com etiqueta" e condição "tem etiqueta".
+- **Editor:** grupo "Marcas" no painel de propriedades (etiquetas, atributos `nome=valor`, caixa "modelo").

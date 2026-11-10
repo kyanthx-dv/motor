@@ -36,8 +36,15 @@
   $('sc-anexar').disabled = !atual || !e; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
     $('sc-info').textContent = (e ? 'Objeto selecionado: ' + (e.nome || '#' + e.id) + ' · script: ' + (tem || 'nenhum') : 'Nenhum objeto selecionado.') + (atual ? ' · "' + atual + '" usado por ' + usos(atual).length + ' objeto(s)' : '');
     const bl = $('bl'), com = usaBlocos(atual); bl.hidden = !com; $('sc-conv').hidden = !com; f.readOnly = com;
-    if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), objetos: () => [...ed.cena.entities.values()].map(x => x.nome).filter(Boolean), aoMudar: regerar }); }
+    if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), etiquetas: () => coletar().tags, atributos: () => coletar().attrs, objetos: () => [...ed.cena.entities.values()].map(x => x.nome).filter(Boolean), aoMudar: regerar }); }
     verificar();
+  }
+  const varrer = (x, f) => { if (Array.isArray(x)) x.forEach(y => varrer(y, f)); else if (x && typeof x === 'object') for (const k in x) { f(k, x[k]); varrer(x[k], f); } };
+  function coletar() {   // etiquetas e atributos próprios conhecidos (da cena e dos blocos), para os menus
+    const tags = new Set(), attrs = new Set();
+    for (const e of ed.cena.entities.values()) { (e.Etiquetas || []).forEach(t => tags.add(t)); Object.keys(e.Attr || {}).forEach(a => attrs.add(a)); }
+    for (const sc of Object.values(fontes())) varrer(sc.blocos, (k, v) => { if (k === 'tag' && typeof v === 'string' && v) tags.add(v); if (k === 'a' && typeof v === 'string' && v.startsWith('a:')) attrs.add(v.slice(2)); });
+    return { tags: [...tags], attrs: [...attrs] };
   }
   $('sc-lista').addEventListener('change', () => { atual = $('sc-lista').value; $('sc-fonte').value = fontes()[atual].fonte; atualizar(); });
   $('sc-fonte').addEventListener('input', () => { if (!atual) return; fontes()[atual].fonte = $('sc-fonte').value; verificar(); ed.json(); });
