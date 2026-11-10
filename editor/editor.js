@@ -143,7 +143,7 @@
   });
   $('e-criar').addEventListener('click', criar); $('e-texto').addEventListener('click', criarTexto); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
   $('e-play').addEventListener('click', play); $('e-parar').addEventListener('click', parar); $('e-jogar').addEventListener('click', jogar); $('e-sair-jogar').addEventListener('click', parar); $('e-desfazer').addEventListener('click', desfazer); $('e-refazer').addEventListener('click', refazer);
-  document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey || ev.target.matches('input, textarea, select') || ev.target.isContentEditable) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
+  document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey || ev.target.closest?.('input,textarea') || ev.target.matches('select') || ev.target.isContentEditable) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
   // Exemplo pronto vira um projeto novo (nunca sobrescreve o seu).
   $('p-exemplo').addEventListener('click', () => {
     if (engine.rodando) parar(); const base = 'Pega-moedas'; let nome = base, i = 2; while (projetos[nome]) nome = base + ' ' + i++;

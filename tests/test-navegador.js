@@ -101,7 +101,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(() => editor.cena.find('bola').Script.nome === 'andar' && JSON.parse(document.getElementById('json').value).estado.scripts.andar.fonte.includes('100 * dt')), 'criar e anexar script grava no JSON da cena');
   await p.click('#e-desfazer'); await p.waitForTimeout(60); ok(await p.evaluate(() => !editor.cena.find('bola').Script), 'M12 desfaz anexação de script'); await p.click('#e-refazer'); await p.waitForTimeout(60); ok(await p.evaluate(() => editor.cena.find('bola').Script && editor.cena.find('bola').Script.nome === 'andar'), 'M12 refaz anexação de script');
   const fonteAntesUndo = await p.inputValue('#sc-fonte'); const cenaAntesUndo = await p.evaluate(() => JSON.stringify(Core.Serializer.paraJSON(editor.cena))); await p.locator('#sc-fonte').press('End'); await p.keyboard.type('X'); await p.keyboard.press('Control+Z'); await p.waitForTimeout(60); ok(await p.inputValue('#sc-fonte') === fonteAntesUndo && await p.evaluate(x => JSON.stringify(Core.Serializer.paraJSON(editor.cena)) === x, cenaAntesUndo), 'Ctrl+Z em #sc-fonte usa o desfazer nativo e não o histórico da cena');
-  const jsonAntesUndo = await p.inputValue('#json'); await p.locator('#json').press('End'); await p.keyboard.type('X'); await p.keyboard.press('Control+Z'); await p.waitForTimeout(60); ok(await p.inputValue('#json') === jsonAntesUndo && await p.evaluate(x => JSON.stringify(Core.Serializer.paraJSON(editor.cena)) === x, cenaAntesUndo), 'Ctrl+Z em #json usa o desfazer nativo e não o histórico da cena');
+  await p.locator('#json').press('End'); const jsonAntesUndo = await p.inputValue('#json'); await p.keyboard.type('X'); await p.keyboard.press('Control+Z'); await p.waitForTimeout(60); ok(await p.inputValue('#json') === jsonAntesUndo && await p.evaluate(x => JSON.stringify(Core.Serializer.paraJSON(editor.cena)) === x, cenaAntesUndo), 'Ctrl+Z em #json usa o desfazer nativo e não o histórico da cena');
   await p.click('#e-play'); await p.waitForTimeout(600);
   ok(await p.evaluate(() => editor.cena.find('bola').Transform.x > 360 && editor.engine.vars.ler('pontos') > 10), 'Play compila e roda o script (move o objeto e usa variáveis)');
   await p.click('#e-parar'); await p.waitForTimeout(150);
@@ -159,10 +159,13 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#e-parar'); await p.waitForTimeout(150);
   ok(await p.evaluate(n => editor.cena.entities.size === n, antesN), 'Parar descarta os objetos criados durante o jogo');
   // exemplo pelo editor: abre, roda, moedas nascem
-  await p.goto(url('editor/index')); await p.waitForTimeout(400); await p.click('#p-exemplo'); await p.waitForTimeout(300);
-  ok(await p.evaluate(() => !!editor.cena.find('jogador') && editor.cena.estado.scripts.moeda && document.getElementById('projetos').value.startsWith('Pega-moedas')), 'botão abre o exemplo Pega-moedas como projeto novo');
-  await p.click('#e-play'); await p.waitForTimeout(1600);
-  ok(await p.evaluate(() => [...editor.cena.entities.values()].some(x => x.nome === 'moeda') && /Pontos/.test(editor.cena.find('placar').Sprite.rotulo)), 'exemplo roda no navegador: moedas nascem e o placar aparece');
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400); await p.click('#p-exemplo'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => !!editor.cena.find('jogador') && editor.cena.estado.scripts.moeda && document.getElementById('projetos').value === 'Pega-moedas'), 'botão abre o exemplo Pega-moedas como projeto novo');
+  await p.click('#e-play'); await p.waitForTimeout(1200); const encontrouMoeda = await p.evaluate(() => { const m = [...editor.cena.entities.values()].find(x => x.nome === 'moeda'), j = editor.cena.find('jogador'); if (!m || !j) return false; j.Transform.x = m.Transform.x; j.Transform.y = m.Transform.y; return true; }); await p.waitForTimeout(300);
+  const placar = await p.evaluate(moeda => ({ moeda, pontos: editor.engine.vars.ler('pontos'), texto: editor.cena.find('placar').Sprite.rotulo }), encontrouMoeda);
+  ok(placar.moeda && placar.pontos >= 1 && /Pontos: [1-9]/.test(placar.texto), 'exemplo coleta uma moeda e atualiza o placar');
+  const pixelsPlacar = await p.evaluate(() => { const c = document.getElementById('tela'), g = c.getContext('2d'), d = g.getImageData(0, 0, Math.min(c.width, 240), Math.min(c.height, 80)).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 220 && d[i + 1] > 220 && d[i + 2] > 220 && d[i + 3] > 0) n++; return n; });
+  ok(pixelsPlacar > 0, 'exemplo desenha pixels do texto do placar');
   await p.screenshot({ path: process.env.EX_PNG || '/tmp/ex.png' }); await p.click('#e-parar');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);

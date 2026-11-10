@@ -23,6 +23,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [x] **M12** `editor/`: desfazer/refazer por Ctrl+Z/Ctrl+Y e botões, com snapshots JSON de até 50 níveis para mudanças do editor e sem registrar durante o Play. Sem alterar o core.
 - [x] **Tarefa 1** `editor/`: botão Novo texto cria e seleciona uma entidade de texto/placar sem Body, integrada a desfazer/refazer.
 - [x] **Tarefa 2** `editor/blocos-ui.js`: marcar campo script órfão do bloco criar com borda vermelha e título "script não existe".
+- [x] **Tarefa 3** `tests/test-navegador.js`: reforçar o exemplo Pega-moedas com localStorage limpo, coleta, pixels do placar e guarda robusta do atalho.
 
 ## Só o Claude faz (não pegar)
 (nada pendente: a revisão 2 foi toda corrigida).
@@ -59,6 +60,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - Dúvidas: nenhuma.
 - Tarefa 1 concluída: botão Novo texto cria Sprite fixo com rótulo, cor e tamanho solicitados e integra o histórico.
 - Tarefa 2 concluída: campo script do bloco criar identifica nomes ausentes em estado.scripts sem alterar o gerador.
+- Tarefa 3 concluída: teste do Pega-moedas confirma projeto exato, coleta e pixels do texto; JSON é capturado antes da digitação e o atalho usa closest.
 - Testado: `npm test`, `node tests/test-navegador.js`, `node --check` e `git diff --check` (todos passaram).
 - Dúvidas: nenhuma.
 
