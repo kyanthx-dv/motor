@@ -36,7 +36,7 @@
   $('sc-anexar').disabled = !atual || !e; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
     $('sc-info').textContent = (e ? 'Objeto selecionado: ' + (e.nome || '#' + e.id) + ' · script: ' + (tem || 'nenhum') : 'Nenhum objeto selecionado.') + (atual ? ' · "' + atual + '" usado por ' + usos(atual).length + ' objeto(s)' : '');
     const bl = $('bl'), com = usaBlocos(atual); bl.hidden = !com; $('sc-conv').hidden = !com; f.readOnly = com;
-    if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), etiquetas: () => coletar().tags, atributos: () => coletar().attrs, objetos: () => [...ed.cena.entities.values()].map(x => x.nome).filter(Boolean), aoMudar: regerar }); }
+    if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), cenas: () => window.EditorCenas ? EditorCenas.nomes() : [], etiquetas: () => coletar().tags, atributos: () => coletar().attrs, objetos: () => [...ed.cena.entities.values()].map(x => x.nome).filter(Boolean), aoMudar: regerar }); }
     verificar();
   }
   const varrer = (x, f) => { if (Array.isArray(x)) x.forEach(y => varrer(y, f)); else if (x && typeof x === 'object') for (const k in x) { f(k, x[k]); varrer(x[k], f); } };

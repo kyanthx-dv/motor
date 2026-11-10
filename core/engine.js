@@ -66,6 +66,7 @@
         C.Serializer.deJSON(eng.scene, typeof json === 'string' ? JSON.parse(json) : JSON.parse(JSON.stringify(json)));
         const novas = eng.scene.estado.vars || {}; eng.scene.estado.vars = Object.assign({}, novas, antes); eng.scene.estado.cena = nome;
         eng.compilarScripts();
+        eng._inicial = JSON.stringify(C.Serializer.paraJSON(eng.scene));   // "reiniciar" volta para o começo da cena em que o jogador está
       } });
     }
     usar(nome, fn) { this.systems.push({ nome, fn }); return this; }
