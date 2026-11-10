@@ -36,7 +36,7 @@
   $('sc-anexar').disabled = !atual || !e; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
     $('sc-info').textContent = (e ? 'Objeto selecionado: ' + (e.nome || '#' + e.id) + ' · script: ' + (tem || 'nenhum') : 'Nenhum objeto selecionado.') + (atual ? ' · "' + atual + '" usado por ' + usos(atual).length + ' objeto(s)' : '');
     const bl = $('bl'), com = usaBlocos(atual); bl.hidden = !com; $('sc-conv').hidden = !com; f.readOnly = com;
-    if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), aoMudar: regerar }); }
+    if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), objetos: () => [...ed.cena.entities.values()].map(x => x.nome).filter(Boolean), aoMudar: regerar }); }
     verificar();
   }
   $('sc-lista').addEventListener('change', () => { atual = $('sc-lista').value; $('sc-fonte').value = fontes()[atual].fonte; atualizar(); });
