@@ -179,6 +179,14 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#e-play'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => /Erro no script "quebra"/.test(document.getElementById('msg').textContent)), 'erro de script aparece na mensagem do editor');
   await p.click('#e-parar');
+  // arrastar: soltar fora do lugar não pode quebrar o script (bloco comum no topo / evento dentro de evento)
+  await p.evaluate(() => { document.getElementById('bl-teste')?.remove(); const d = document.createElement('div'); d.id = 'bl-teste'; d.style.cssText = 'position:fixed;left:10px;top:10px;width:700px;height:420px;background:#111;z-index:5000;overflow:auto'; document.body.append(d); window.__sc = { blocos: [{ t: 'evento_inicio', f: [EditorBlocos.novo('reiniciar')] }, { t: 'evento_quadro', f: [] }] }; EditorBlocos.montar(d, window.__sc, { vars: () => [], scripts: () => [], aoMudar() {} }); });
+  const caixa = async sel => (await p.locator(sel).first().boundingBox());
+  const bl0 = await caixa('#bl-teste .bloco:not(.hat)'); await p.mouse.move(bl0.x + 4, bl0.y + 4); await p.mouse.down(); await p.mouse.move(bl0.x + 4, bl0.y + 300, { steps: 6 }); await p.mouse.move(700, 410, { steps: 4 }); await p.mouse.up(); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => window.__sc.blocos.every(b => EditorBlocos.HATS[b.t]) && window.__sc.blocos.length === 2 && document.querySelectorAll('#bl-teste .bloco').length >= 3), 'soltar fora de um evento não quebra nem apaga o script');
+  const hats = await p.locator('#bl-teste .bloco.hat').all(); const h2 = await hats[1].boundingBox(); const b1 = await caixa('#bl-teste .bloco:not(.hat)'); await p.mouse.move(b1.x + 4, b1.y + 4); await p.mouse.down(); await p.mouse.move(h2.x + 40, h2.y + 8, { steps: 8 }); await p.mouse.up(); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => window.__sc.blocos[0].f.length === 0 && window.__sc.blocos[1].f.length === 1 && window.__sc.blocos[1].f[0].t === 'reiniciar'), 'soltar sobre a barra de outro evento move o bloco para dentro dele');
+  await p.evaluate(() => document.getElementById('bl-teste').remove());
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
