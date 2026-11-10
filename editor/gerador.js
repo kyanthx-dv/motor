@@ -8,19 +8,22 @@
   const OPS = ['<', '<=', '=', '!=', '>=', '>'];
   const erro = m => new Error(m);
   E.ACOES = ACOES; E.OPS = OPS;
-  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)' };
+  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta' };
   E.CONTAS = [['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷'], ['%', 'resto'], ['min', 'menor de'], ['max', 'maior de']];
-  E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não']];
+  E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não'], ['etiq', 'tem etiqueta']];
   // Atributos que os blocos genéricos sabem ler/mudar: componente, propriedade e tipo
   const ATTRS = E.ATTRS = { x: { c: 'Transform', p: 'x', t: 'num' }, y: { c: 'Transform', p: 'y', t: 'num' }, vx: { c: 'Velocity', p: 'vx', t: 'num' }, vy: { c: 'Velocity', p: 'vy', t: 'num' }, cor: { c: 'Sprite', p: 'cor', t: 'txt' }, texto: { c: 'Sprite', p: 'rotulo', t: 'txt' }, corTexto: { c: 'Sprite', p: 'corTexto', t: 'txt' }, raio: { c: 'Sprite', p: 'raio', t: 'num' } };
   E.ATTR_NOMES = [['x', 'x'], ['y', 'y'], ['vx', 'velocidade x'], ['vy', 'velocidade y'], ['cor', 'cor'], ['texto', 'texto'], ['corTexto', 'cor do texto'], ['raio', 'raio (visual)']];
   function objExpr(o) {
     if (o === 'proprio' || o === undefined) return 'e';
     if (o === 'outro') return "(typeof d !== 'undefined' && d ? ctx.scene.get(d.outro) : null)";
+    if (o === 'cada') return 'it';
+    if (typeof o === 'string' && o.startsWith('p:') && o.length > 2 && o.length < 35) return '((tag) => { let m = null, dm = Infinity; for (const o of ctx.scene.query("Etiquetas", "Transform")) { if (o !== e && o.Etiquetas.includes(tag)) { const dx = o.Transform.x - e.Transform.x, dy = o.Transform.y - e.Transform.y, dd = dx * dx + dy * dy; if (dd < dm) { dm = dd; m = o; } } } return m; })(' + JSON.stringify(o.slice(2)) + ')';
     if (typeof o === 'string' && o.startsWith('n:') && o.length > 2 && o.length < 45) return 'ctx.scene.find(' + JSON.stringify(o.slice(2)) + ')';
     throw erro('objeto inválido: ' + o);
   }
-  function attrDef(a) { const d = ATTRS[a]; if (!d) throw erro('atributo desconhecido: ' + a); return d; }
+  function tagStr(t) { if (typeof t !== 'string' || t.length < 1 || t.length > 30) throw erro('escreva uma etiqueta (1 a 30 letras)'); return JSON.stringify(t); }
+  function attrDef(a) { if (typeof a === 'string' && a.startsWith('a:')) { if (!NOME.test(a.slice(2))) throw erro('nome de atributo inválido: ' + a.slice(2)); return { c: 'Attr', p: a.slice(2), t: 'any' }; } const d = ATTRS[a]; if (!d) throw erro('atributo desconhecido: ' + a); return d; }
 
   function nomeVar(n) { if (typeof n !== 'string' || !NOME.test(n)) throw erro('escolha uma variável válida'); return JSON.stringify(n); }
   function valor(v) {
@@ -38,7 +41,8 @@
       case 'tempo': return 'ctx.engine.tempo';
       case 'rand': { const a = Number(v.min), b = Number(v.max); if (!isFinite(a) || !isFinite(b)) throw erro('aleatório: mínimo e máximo precisam ser números'); return 'ctx.engine.aleatorio(' + a + ', ' + b + ')'; }
       case 'outro': return "(typeof d !== 'undefined' && d && ctx.scene.get(d.outro) ? ctx.scene.get(d.outro).nome : '')";
-      case 'attr': { const d = attrDef(v.a); return '((o) => (o && o.' + d.c + ' ? o.' + d.c + '.' + d.p + ' : ' + (d.t === 'num' ? '0' : "''") + '))(' + objExpr(v.o) + ')'; }
+      case 'attr': { const d = attrDef(v.a); if (d.t === 'any') return '((o) => (o && o.' + d.c + ' && o.' + d.c + '.' + d.p + ' !== undefined ? o.' + d.c + '.' + d.p + ' : 0))(' + objExpr(v.o) + ')'; return '((o) => (o && o.' + d.c + ' ? o.' + d.c + '.' + d.p + ' : ' + (d.t === 'num' ? '0' : "''") + '))(' + objExpr(v.o) + ')'; }
+      case 'contar': return 'ctx.scene.query("Etiquetas").filter(o => o.Etiquetas.includes(' + tagStr(v.tag) + ')).length';
       case 'op': {
         const o = v.o, a = valor(v.a), b = valor(v.b);
         if (['+', '-', '*', '/', '%'].includes(o)) return '(' + a + ' ' + o + ' ' + b + ')';
@@ -63,11 +67,13 @@
       return '(' + valor(c.a) + ' ' + (c.op === '=' ? '===' : c.op === '!=' ? '!==' : c.op) + ' ' + valor(c.b) + ')';
     }
     if (c.k === 'e' || c.k === 'ou') return '(' + cond(c.a) + (c.k === 'e' ? ' && ' : ' || ') + cond(c.b) + ')';
+    if (c.k === 'etiq') return '((o) => !!(o && o.Etiquetas && o.Etiquetas.includes(' + tagStr(c.tag) + ')))(' + objExpr(c.o) + ')';
     if (c.k === 'nao') return '(!' + cond(c.a) + ')';
     throw erro('condição desconhecida: ' + c.k);
   }
   // Nome amigável de uma tecla para a interface
   E.nomeTecla = k => ({ ' ': 'Espaço', arrowleft: '←', arrowright: '→', arrowup: '↑', arrowdown: '↓', enter: 'Enter', escape: 'Esc', shift: 'Shift', control: 'Ctrl', alt: 'Alt', tab: 'Tab', backspace: 'Apagar' }[k] || (k.length === 1 ? k.toUpperCase() : k));
+  const INI = { Velocity: 'if (!o.Velocity) o.Velocity = { vx: 0, vy: 0 }; ', Attr: 'if (!o.Attr) o.Attr = {}; ' };
   const N = (x, d) => ({ k: 'num', v: x });
   // Definição dos blocos: cat (menu), campos (como o editor desenha), ger (linhas de código). Filhos: f (então/dentro) e s (senão).
   const BLOCOS = {
@@ -78,11 +84,25 @@
     vel_x: { cat: 'Movimento', campos: [{ t: 'velocidade x =' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => ['if (e.Velocity) e.Velocity.vx = ' + valor(b.v) + ';'] },
     vel_y: { cat: 'Movimento', campos: [{ t: 'velocidade y =' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => ['if (e.Velocity) e.Velocity.vy = ' + valor(b.v) + ';'] },
     mudar_attr: { cat: 'Objeto', menu: 'mudar atributo de um objeto', campos: [{ t: 'mudar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(0) }],
-      ger: b => { const d = attrDef(b.a), v = valor(b.v), ini = d.c === 'Velocity' ? 'if (!o.Velocity) o.Velocity = { vx: 0, vy: 0 }; ' : '';
-        return ['{', '  const o = ' + objExpr(b.o) + ', v = ' + v + ';', '  if (o && (o.' + d.c + (d.c === 'Velocity' ? ' || true' : '') + ')' + (d.t === 'num' ? ' && isFinite(Number(v))' : '') + ') { ' + ini + 'o.' + d.c + '.' + d.p + ' = ' + (d.t === 'num' ? 'Number(v)' : 'String(v)') + '; }', '}']; } },
+      ger: b => { const d = attrDef(b.a), v = valor(b.v), ini = INI[d.c] || '', ok = (INI[d.c] ? 'true' : 'o.' + d.c);
+        const atrib = d.t === 'num' ? 'Number(v)' : d.t === 'any' ? "(typeof v === 'number' || typeof v === 'boolean' ? v : String(v))" : 'String(v)';
+        return ['{', '  const o = ' + objExpr(b.o) + ', v = ' + v + ';', '  if (o && ' + ok + (d.t === 'num' ? ' && isFinite(Number(v))' : '') + ') { ' + ini + 'o.' + d.c + '.' + d.p + ' = ' + atrib + '; }', '}']; } },
     somar_attr: { cat: 'Objeto', menu: 'somar a um atributo de um objeto', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }],
-      ger: b => { const d = attrDef(b.a); if (d.t !== 'num') throw erro('só dá para somar em atributos numéricos'); const ini = d.c === 'Velocity' ? 'if (!o.Velocity) o.Velocity = { vx: 0, vy: 0 }; ' : '';
-        return ['{', '  const o = ' + objExpr(b.o) + ', v = Number(' + valor(b.v) + ');', '  if (o && isFinite(v) && (o.' + d.c + (d.c === 'Velocity' ? ' || true' : '') + ')) { ' + ini + 'o.' + d.c + '.' + d.p + ' = (Number(o.' + d.c + '.' + d.p + ') || 0) + v; }', '}']; } },
+      ger: b => { const d = attrDef(b.a); if (d.t === 'txt') throw erro('só dá para somar em atributos numéricos'); const ini = INI[d.c] || '', ok = (INI[d.c] ? 'true' : 'o.' + d.c);
+        return ['{', '  const o = ' + objExpr(b.o) + ', v = Number(' + valor(b.v) + ');', '  if (o && isFinite(v) && ' + ok + ') { ' + ini + 'o.' + d.c + '.' + d.p + ' = (Number(o.' + d.c + '.' + d.p + ') || 0) + v; }', '}']; } },
+    etiquetar: { cat: 'Objeto', menu: 'dar etiqueta a um objeto', campos: [{ t: 'dar a' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { t: 'a etiqueta' }, { n: 'tag', tipo: 'txt', padrao: 'inimigo' }], ger: b => ['{', '  const o = ' + objExpr(b.o) + ', t = ' + tagStr(b.tag) + ';', '  if (o) { if (!o.Etiquetas) o.Etiquetas = []; if (!o.Etiquetas.includes(t) && o.Etiquetas.length < 20) o.Etiquetas.push(t); }', '}'] },
+    clonar: { cat: 'Objeto', menu: 'criar cópia de um objeto (modelo)', campos: [{ t: 'criar cópia de' }, { n: 'nome', tipo: 'objn', padrao: '' }, { t: 'em x' }, { n: 'vx', tipo: 'valor', padrao: { k: 'x' } }, { t: 'y' }, { n: 'vy', tipo: 'valor', padrao: { k: 'y' } }],
+      ger: b => { if (typeof b.nome !== 'string' || !b.nome) throw erro('escolha o objeto a copiar'); return ['{', '  const src = ctx.scene.find(' + JSON.stringify(b.nome) + ');', '  if (src) ctx.scene.clonar(src, { x: ' + valor(b.vx) + ', y: ' + valor(b.vy) + ' });', '}']; } },
+    para_cada: { cat: 'Controle', menu: 'para cada objeto com etiqueta', campos: [{ t: 'para cada objeto com a etiqueta' }, { n: 'tag', tipo: 'txt', padrao: 'inimigo' }, { t: 'faça (use "cada objeto")' }], filhos: ['f'],
+      ger: (b, g) => ['for (const it of ctx.scene.query("Etiquetas")) {', '  if (!it.Etiquetas.includes(' + tagStr(b.tag) + ') || !ctx.scene.get(it.id)) continue;', ...g.lista(b.f), '}'] },
+    repetir: { cat: 'Controle', menu: 'repetir N vezes', campos: [{ t: 'repetir' }, { n: 'n', tipo: 'valor', padrao: N(3) }, { t: 'vezes (máx. 1000)' }], filhos: ['f'],
+      ger: (b, g) => { const k = '_i' + g.id(); return ['for (let ' + k + ' = 0, ' + k + 'n = Math.min(Math.floor(Number(' + valor(b.n) + ')) || 0, 1000); ' + k + ' < ' + k + 'n; ' + k + '++) {', ...g.lista(b.f), '}']; } },
+    enquanto: { cat: 'Controle', menu: 'repetir enquanto', campos: [{ t: 'repetir enquanto' }, { n: 'c', tipo: 'cond' }], filhos: ['f'],
+      ger: (b, g) => { const k = '_g' + g.id(); return ['{', '  let ' + k + ' = 0;', '  while (' + cond(b.c) + ' && ' + k + '++ < 10000) {', ...g.lista(b.f).map(l => '  ' + l), '  }', '}']; } },
+    chance: { cat: 'Controle', menu: '% de chance de', campos: [{ t: '' }, { n: 'p', tipo: 'valor', padrao: N(50) }, { t: '% de chance de' }], filhos: ['f', 's'], ger: (b, g) => ['if (ctx.engine.aleatorio(0, 100) < ' + valor(b.p) + ') {', ...g.lista(b.f), ...(b.s && b.s.length ? ['} else {', ...g.lista(b.s)] : []), '}'] },
+    sair: { cat: 'Controle', menu: 'sair do script (parar aqui)', campos: [{ t: 'sair do script' }], ger: () => ['return;'] },
+    observar: { cat: 'Ferramentas', menu: 'observar valor', campos: [{ t: 'observar' }, { n: 'rot', tipo: 'txt', padrao: 'valor' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => { if (typeof b.rot !== 'string' || !b.rot) throw erro('dê um nome ao valor observado'); return ['ctx.engine.observar(' + JSON.stringify(b.rot.slice(0, 30)) + ', ' + valor(b.v) + ');']; } },
+    comentario: { cat: 'Ferramentas', menu: 'comentário', campos: [{ t: 'comentário:' }, { n: 'txt', tipo: 'txt', padrao: '' }], ger: b => ['// ' + String(b.txt == null ? '' : b.txt).replace(/[\r\n\u2028\u2029]+/g, ' ').slice(0, 200)] },
     var_definir: { cat: 'Variáveis', campos: [{ t: 'definir' }, { n: 'var', tipo: 'var' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => ['ctx.vars.definir(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
     var_somar: { cat: 'Variáveis', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'var', tipo: 'var' }], ger: b => ['ctx.vars.somar(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
     se: { cat: 'Controle', campos: [{ t: 'se' }, { n: 'c', tipo: 'cond' }], filhos: ['f', 's'], ger: (b, g) => ['if (' + cond(b.c) + ') {', ...g.lista(b.f), ...(b.s && b.s.length ? ['} else {', ...g.lista(b.s)] : []), '}'] },
@@ -144,8 +164,9 @@
     if (HATS[t]) return { t, f: [] };
     const d = BLOCOS[t], b = { t };
     for (const c of d.campos) if (c.n && c.padrao !== undefined) b[c.n] = JSON.parse(JSON.stringify(c.padrao));
-    if (d.filhos && t !== 'se') b.f = [];
-    if (t === 'se') { b.c = { k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } }; b.f = []; b.s = []; }
+    if (d.filhos) b.f = [];
+    if (d.filhos && d.filhos.includes('s')) b.s = [];
+    if (t === 'se' || t === 'enquanto') b.c = { k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } };
     return b;
   };
 })(typeof window !== 'undefined' ? window : globalThis);

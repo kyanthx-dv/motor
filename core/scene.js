@@ -16,6 +16,17 @@
       if (!d || !Number.isInteger(d.quadros) || d.quadros < 1) throw new Error('entidade "' + n + '": Animacao "' + nome + '": quadros precisa ser inteiro >= 1');
       if (d.fps !== undefined) { num(d.fps, n, 'Animacao.' + nome + '.fps'); if (d.fps <= 0) throw new Error('entidade "' + n + '": Animacao "' + nome + '": fps precisa ser maior que 0'); }
     }
+    if (e.Attr !== undefined) {
+      if (e.Attr === null || typeof e.Attr !== 'object' || Array.isArray(e.Attr)) throw new Error('entidade "' + n + '": Attr precisa ser um objeto');
+      const ks = Object.keys(e.Attr); if (ks.length > 50) throw new Error('entidade "' + n + '": Attr aceita até 50 atributos');
+      for (const k of ks) {
+        const v = e.Attr[k];
+        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)) throw new Error('entidade "' + n + '": nome de atributo inválido: ' + k);
+        if (!((typeof v === 'number' && isFinite(v)) || typeof v === 'boolean' || (typeof v === 'string' && v.length <= 200))) throw new Error('entidade "' + n + '": Attr.' + k + ' precisa ser número, texto (até 200) ou verdadeiro/falso');
+      }
+    }
+    if (e.Etiquetas !== undefined && !(Array.isArray(e.Etiquetas) && e.Etiquetas.length <= 20 && e.Etiquetas.every(t => typeof t === 'string' && t.length >= 1 && t.length <= 30))) throw new Error('entidade "' + n + '": Etiquetas precisa ser uma lista de até 20 textos (1 a 30 letras)');
+    if (e.Modelo !== undefined && (e.Modelo === null || typeof e.Modelo !== 'object')) throw new Error('entidade "' + n + '": Modelo precisa ser um objeto');
     if (e.Body) {
       const b = e.Body, circ = b.forma === 'circulo' || (!b.forma && b.raio !== undefined);
       if (!e.Transform) throw new Error('entidade "' + n + '": Body precisa de Transform');
@@ -30,7 +41,7 @@
     }
   }
   class Scene {
-    constructor() { this.entities = new Map(); this.nextId = 1; this.estado = {}; this._remover = new Set(); }
+    constructor() { this.entities = new Map(); this.nextId = 1; this.estado = {}; this._remover = new Set(); this.jogando = false; }
     create(dados = {}) {
       if (dados === null || typeof dados !== 'object') throw new Error('create precisa de um objeto');
       if (dados.id != null && (!Number.isInteger(dados.id) || dados.id < 0)) throw new Error('id de entidade precisa ser um inteiro >= 0: ' + dados.id);
@@ -49,16 +60,25 @@
     // Marca para remover no fim do passo (remover no meio quebraria os laços dos sistemas).
     destroy(id) { this._remover.add(id); }
     flush() { for (const id of this._remover) this.entities.delete(id); this._remover.clear(); }
+    // Cria uma cópia de uma entidade (usada com objetos "Modelo"): sem id, sem a marca Modelo, na posição pedida.
+    clonar(origem, ajustes = {}) {
+      const src = typeof origem === 'number' ? this.get(origem) : origem;
+      if (!src) throw new Error('clonar: objeto de origem não existe');
+      const c = clone(src); delete c.id; delete c.Modelo;
+      if (c.Transform) { if (ajustes.x !== undefined) c.Transform.x = ajustes.x; if (ajustes.y !== undefined) c.Transform.y = ajustes.y; }
+      return this.create(c);
+    }
     query(...componentes) {
       const r = [];
       for (const e of this.entities.values()) {
+        if (this.jogando && e.Modelo !== undefined) continue;   // modelos não existem durante o jogo, só servem de molde
         let ok = true;
         for (const c of componentes) if (e[c] === undefined) { ok = false; break; }
         if (ok) r.push(e);
       }
       return r;
     }
-    clear() { this.entities.clear(); this._remover.clear(); this.nextId = 1; this.estado = {}; }
+    clear() { this.entities.clear(); this._remover.clear(); this.nextId = 1; this.estado = {}; this.jogando = false; }
   }
   C.Scene = Scene;
 })(typeof window !== 'undefined' ? window : globalThis);

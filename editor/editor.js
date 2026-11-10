@@ -17,7 +17,8 @@
   // O renderer interpola com px/py (runtime). Parado, desenhamos sempre na posição atual.
   const sincronizar = () => { for (const e of cena.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; } };
   const redesenhar = () => { sujo = true; };
-  function loop() { if (sujo) { sujo = false; sincronizar(); renderer.selecionada = sel; renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
+  function obsTexto() { const n = $('obs'); if (!n) return; const t = engine.rodando ? Object.entries(engine.observados || {}).map(([k, v]) => k + ' = ' + v).join('  ·  ') : ''; if (n.textContent !== t) n.textContent = t; n.hidden = !t; }
+  function loop() { obsTexto(); if (sujo) { sujo = false; sincronizar(); renderer.selecionada = sel; renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
   new ResizeObserver(redesenhar).observe(tela);   // registrado depois do observer do renderer: ele redimensiona primeiro
 
   const msg = (t, tipo) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (tipo || ''); };
@@ -104,6 +105,24 @@
       }
       box.append(g);
     }
+    const m = el('div', 'grupo'); m.append(el('b', null, 'Marcas'));
+    const et = el('input'); et.value = (e.Etiquetas || []).join(', '); et.placeholder = 'inimigo, moeda'; et.addEventListener('change', () => definir('Etiquetas', et.value.split(',').map(x => x.trim()).filter(Boolean)));
+    const at = el('input'); at.value = Object.entries(e.Attr || {}).map(([k, v]) => k + '=' + v).join(', '); at.placeholder = 'vida=3, nome=Zé';
+    at.addEventListener('change', () => {
+      const o = {};
+      try { for (const p of at.value.split(',').map(x => x.trim()).filter(Boolean)) { const i = p.indexOf('='); if (i < 1) throw new Error('Atributos: use nome=valor, separados por vírgula.'); const k = p.slice(0, i).trim(), v = p.slice(i + 1).trim(); o[k] = v !== '' && isFinite(+v) ? +v : v === 'verdadeiro' ? true : v === 'falso' ? false : v; } } catch (x) { msg(x.message, 'erro'); props(); return; }
+      definir('Attr', o);
+    });
+    const mo = el('input'); mo.type = 'checkbox'; mo.checked = e.Modelo !== undefined; mo.style.width = 'auto'; mo.addEventListener('change', () => definir('Modelo', mo.checked ? {} : undefined));
+    m.append(campo('etiquetas', et), campo('atributos', at), campo('modelo (só molde)', mo)); box.append(m);
+  }
+  // Troca um componente inteiro (ou remove, se vazio/undefined); o motor valida numa cópia antes.
+  function definir(comp, valor) {
+    const e = cena.get(sel); if (!e) return; const copia = JSON.parse(JSON.stringify(e)), vazio = valor === undefined || (Array.isArray(valor) && !valor.length) || (comp === 'Attr' && !Object.keys(valor).length);
+    if (vazio) delete copia[comp]; else copia[comp] = valor;
+    try { new C.Scene().create(copia); } catch (x) { msg(x.message, 'erro'); props(); return; }
+    if (vazio) delete e[comp]; else e[comp] = valor;
+    msg('', ''); listar(); props(); redesenhar(); json();
   }
   // Valida com o próprio motor numa cópia; só aplica se o motor aceitar.
   function aplicar(comp, k, valor) {

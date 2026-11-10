@@ -14,7 +14,7 @@
     constructor(opts = {}) {
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
       if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
-      this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this);
+      this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this); this.observados = {};
       this.input = opts.input || null; this.renderer = opts.renderer || null; this.audio = opts.audio || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
@@ -62,7 +62,8 @@
     registrarScript(nome, def) { this.scripts[nome] = def; return this; }
     // Um passo de lógica. Público de propósito: testes e replays chamam direto.
     passo(dt = this.dt) {
-      if (typeof dt !== 'number' || !isFinite(dt) || dt <= 0) throw new RangeError('passo(dt): dt precisa ser um número finito maior que 0 (recebeu ' + dt + ')');   // fronteira pública: testes e replays
+      if (typeof dt !== 'number' || !isFinite(dt) || dt <= 0) throw new RangeError('passo(dt): dt precisa ser um número finito maior que 0 (recebeu ' + dt + ')');
+      this.scene.jogando = true;   // fronteira pública: testes e replays
       const ctx = this.ctx; ctx.dt = dt;
       ctx.tela = this.renderer ? { largura: this.renderer.largura, altura: this.renderer.altura } : { largura: 800, altura: 450 };
       ctx.input = this.input ? this.input.poll() : SEM_INPUT();
@@ -108,7 +109,7 @@
       C.Serializer.deJSON(this.scene, JSON.parse(this._inicial)); this.events.fila.length = 0;
     }
     iniciar() {
-      if (this.rodando) return; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
+      if (this.rodando) return; this.observados = {}; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
       const quadro = agora => {
         if (!this.rodando) return;
         let delta = (agora - ultimo) / 1000; ultimo = agora;
@@ -124,7 +125,9 @@
       };
       this._raf = ag.pedir(quadro);
     }
-    parar() { this.rodando = false; if (this._raf != null) this.agendador.cancelar(this._raf); }
+    // Mostra um valor com nome no painel do editor (depuração). Limitado para não crescer sem fim.
+    observar(rotulo, valor) { const r = String(rotulo).slice(0, 30); if (!(r in this.observados) && Object.keys(this.observados).length >= 30) return; this.observados[r] = typeof valor === 'number' ? Math.round(valor * 1000) / 1000 : String(valor).slice(0, 60); }
+    parar() { this.scene.jogando = false; this.rodando = false; if (this._raf != null) this.agendador.cancelar(this._raf); }
   }
   C.Engine = Engine;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -13,19 +13,30 @@
     const vars = () => opc.vars(), mudou = () => opc.aoMudar(), redesenhar = () => { render(); mudou(); };
     function campoValor(obj, nome, rotulo) {
       const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val');
-      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : { k }; redesenhar(); }, rotulo));
+      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : { k }; redesenhar(); }, rotulo));
       if (v.k === 'num') w.append(entrada('number', v.v, x => { v.v = x === '' ? 0 : +x; mudou(); }, rotulo + ' (número)'));
       if (v.k === 'txt') w.append(entrada('text', v.v, x => { v.v = x; mudou(); }, rotulo + ' (texto)'));
       if (v.k === 'var') w.append(campoVar(v, 'n'));
-      if (v.k === 'attr') w.append(campoObj(v, 'o'), sel(B.ATTR_NOMES, v.a, x => { v.a = x; mudou(); }, 'atributo'));
+      if (v.k === 'attr') w.append(campoObj(v, 'o'), campoAttr(v, 'a'));
+      if (v.k === 'contar') w.append(entrada('text', v.tag || '', x => { v.tag = x; mudou(); }, 'etiqueta'));
       if (v.k === 'op') w.append(el('span', null, '('), campoValor(v, 'a', 'A'), sel(B.CONTAS, v.o, x => { v.o = x; mudou(); }, 'conta'), campoValor(v, 'b', 'B'), el('span', null, ')'));
       if (v.k === 'rand') w.append(entrada('number', v.min, x => { v.min = +x; mudou(); }, rotulo + ' mínimo'), el('span', null, 'e'), entrada('number', v.max, x => { v.max = +x; mudou(); }, rotulo + ' máximo'));
       return w;
     }
     function campoObj(h, n) {
-      const nomes = opc.objetos ? opc.objetos() : [], ops = [['proprio', 'este objeto'], ['outro', 'o outro objeto'], ...nomes.map(x => ['n:' + x, x])];
+      const nomes = opc.objetos ? opc.objetos() : [], ops = [['proprio', 'este objeto'], ['outro', 'o outro objeto'], ['cada', 'cada objeto (dentro de "para cada")'], ...(opc.etiquetas ? opc.etiquetas() : []).map(t => ['p:' + t, 'o mais próximo com etiqueta ' + t]), ...nomes.map(x => ['n:' + x, x])];
       if (!ops.some(o => o[0] === h[n])) ops.push([h[n], (h[n] || '').replace(/^n:/, '') + ' (não existe)']);
       return sel(ops, h[n] === undefined ? 'proprio' : h[n], x => { h[n] = x; mudou(); }, 'objeto');
+    }
+    function campoAttr(h, n) {
+      const ex = opc.atributos ? opc.atributos() : [], ops = [...B.ATTR_NOMES, ...ex.map(a => ['a:' + a, a + ' (do objeto)']), ['__novo', '+ novo atributo…']];
+      if (!ops.some(o => o[0] === h[n])) ops.push([h[n], String(h[n]).replace(/^a:/, '')]);
+      return sel(ops, h[n], x => {
+        if (x !== '__novo') { h[n] = x; mudou(); return; }
+        const nome = (window.prompt('Nome do novo atributo (letras, números e _):') || '').trim();
+        if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(nome)) h[n] = 'a:' + nome;
+        redesenhar();
+      }, 'atributo');
     }
     function campoVar(obj, nome) {
       const nomes = vars(); if (!nomes.length) { const s = el('em', 'aviso-mini', '(crie uma variável antes)'); return s; }
@@ -34,8 +45,9 @@
     }
     function campoCond(h, n) {
       const c = h[n], w = el('span', 'val'), cmp0 = () => ({ k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } });
-      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : cmp0(); redesenhar(); }, 'tipo de condição'));
+      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : cmp0(); redesenhar(); }, 'tipo de condição'));
       if (c.k === 'e' || c.k === 'ou') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, c.k === 'e' ? 'E' : 'OU'), campoCond(c, 'b'), el('span', null, ')'));
+      if (c.k === 'etiq') w.append(campoObj(c, 'o'), el('span', null, 'tem a etiqueta'), entrada('text', c.tag || '', x => { c.tag = x; mudou(); }, 'etiqueta'));
       if (c.k === 'nao') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, ')'));
       if (c.k === 'tecla') {
         w.append(sel([['acao', 'direção/ação'], ['livre', 'qualquer tecla']], c.tecla !== undefined ? 'livre' : 'acao', t => { if (t === 'livre') { delete c.acao; c.tecla = 'z'; } else { delete c.tecla; c.acao = 'acao'; } redesenhar(); }, 'tipo de tecla'));
@@ -80,7 +92,8 @@
           else if (c.tipo === 'sel') topo.append(sel(c.ops, b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
           else if (c.tipo === 'cond') topo.append(campoCond(b, 'c'));
           else if (c.tipo === 'obj') topo.append(campoObj(b, c.n));
-          else if (c.tipo === 'attr') topo.append(sel(B.ATTR_NOMES, b[c.n], x => { b[c.n] = x; mudou(); }, 'atributo'));
+          else if (c.tipo === 'attr') topo.append(campoAttr(b, c.n));
+          else if (c.tipo === 'objn') { const ns = opc.objetos ? opc.objetos() : []; topo.append(sel([['', '(escolha)'], ...ns.map(x => [x, x])], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'objeto a copiar')); }
           else if (c.tipo === 'cor') topo.append(entrada('color', /^#[0-9a-f]{6}$/i.test(b.cor) ? b.cor : '#ff5555', x => { b.cor = x; mudou(); }, 'cor'));
         }
         topo.append(botoes(arr, i)); linha.append(topo);

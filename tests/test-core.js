@@ -220,6 +220,24 @@ const nova=()=>new C.Engine();
  ok(e.compilarScripts().length===0,'blocos de atributo compilam');e.passo();
  ok(alvo.Velocity&&alvo.Velocity.vx===6&&alvo.Transform.y===3&&alvo.Sprite.rotulo==='oi'&&dono.Sprite.cor==='#123456','mudar/somar atributo, contas e lógica e/não funcionam');
  let msg='';try{G.gerar([{t:'evento_quadro',f:[f('mudar_attr',{a:'inexistente'})]}])}catch(x){msg=x.message}ok(/desconhecido/.test(msg),'atributo inexistente é recusado');}
+// 9c) Fase A: atributos próprios, etiquetas, modelos, laços, chance, observar
+{const G=EditorBlocos,f=(t,o)=>Object.assign(G.novo(t),o),n=x=>({k:'num',v:x}),rodar=(bl,cria,passos=1)=>{const e=nova();cria(e);e.scene.estado.scripts={s:{blocos:bl,fonte:G.gerar(bl)}};const er=e.compilarScripts();ok(er.length===0,'compila: '+bl[0].f.map(b=>b.t).join(','));for(let i=0;i<passos;i++)e.passo();return e;};
+ // atributo próprio: definir, somar, ler em condição, e leitura em outro objeto pelo nome
+ let e=rodar([{t:'evento_quadro',f:[f('mudar_attr',{o:'proprio',a:'a:vida',v:n(3)}),f('somar_attr',{o:'proprio',a:'a:vida',v:n(2)}),f('mudar_attr',{o:'n:alvo',a:'x',v:{k:'attr',o:'proprio',a:'a:vida'}})]}],e=>{e.scene.create({nome:'alvo',Transform:{x:0,y:0}});e.scene.create({nome:'dono',Transform:{x:0,y:0},Script:{nome:'s'}});});
+ ok(e.scene.find('dono').Attr.vida===5&&e.scene.find('alvo').Transform.x===5,'atributo próprio: definir, somar e ler');
+ // etiquetas: contar, para cada, tem etiqueta, mais próximo; modelo + clonar
+ e=rodar([{t:'evento_quadro',f:[f('para_cada',{tag:'inimigo',f:[f('somar_attr',{o:'cada',a:'a:golpes',v:n(1)})]}),f('mudar_attr',{o:'proprio',a:'a:total',v:{k:'contar',tag:'inimigo'}}),f('mudar_attr',{o:'proprio',a:'a:perto',v:{k:'attr',o:'p:inimigo',a:'x'}}),f('se',{c:{k:'etiq',o:'proprio',tag:'heroi'},f:[f('mudar_attr',{o:'proprio',a:'a:heroi',v:n(1)})]})]}],e=>{e.scene.create({nome:'i1',Transform:{x:10,y:0},Etiquetas:['inimigo']});e.scene.create({nome:'i2',Transform:{x:200,y:0},Etiquetas:['inimigo']});e.scene.create({nome:'m',Transform:{x:0,y:0},Etiquetas:['inimigo'],Modelo:{}});e.scene.create({nome:'dono',Transform:{x:0,y:0},Etiquetas:['heroi'],Script:{nome:'s'}});});
+ const d=e.scene.find('dono');ok(e.scene.find('i1').Attr.golpes===1&&e.scene.find('i2').Attr.golpes===1&&d.Attr.total===2&&d.Attr.perto===10&&d.Attr.heroi===1,'etiquetas: para cada, contar, mais próximo e tem etiqueta (modelo fica de fora)');
+ ok(!e.scene.find('m').Attr,'modelo não participa do jogo');
+ e=rodar([{t:'evento_inicio',f:[f('clonar',{nome:'m',vx:n(50),vy:n(60)})]}],e=>{e.scene.create({nome:'m',Transform:{x:0,y:0},Modelo:{},Sprite:{forma:'circulo',raio:3,cor:'#fff'}});e.scene.create({nome:'dono',Transform:{x:0,y:0},Script:{nome:'s'}});});
+ const cps=e.scene.findAll('m');ok(cps.length===2&&cps[1].Transform.x===50&&cps[1].Modelo===undefined&&e.scene.query('Sprite').length===1,'clonar cria cópia sem a marca Modelo e o molde some do jogo');
+ // laços e controle
+ e=rodar([{t:'evento_quadro',f:[f('repetir',{n:n(4),f:[f('somar_attr',{o:'proprio',a:'a:c',v:n(1)})]}),f('enquanto',{c:{k:'cmp',a:n(1),op:'=',b:n(1)},f:[f('somar_attr',{o:'proprio',a:'a:inf',v:n(1)})]}),f('chance',{p:n(100),f:[f('mudar_attr',{o:'proprio',a:'a:ch',v:n(1)})]}),f('observar',{rot:'c',v:{k:'attr',o:'proprio',a:'a:c'}}),f('comentario',{txt:'oi\nx'}),f('sair'),f('mudar_attr',{o:'proprio',a:'a:depois',v:n(1)})]}],e=>{e.scene.create({nome:'dono',Transform:{x:0,y:0},Script:{nome:'s'}});});
+ const o=e.scene.find('dono');ok(o.Attr.c===4&&o.Attr.inf===10000&&o.Attr.ch===1&&o.Attr.depois===undefined&&e.observados.c===4,'repetir, enquanto (limitado), chance, observar, comentário e sair');
+ const lim=(fn)=>{try{fn();return''}catch(x){return x.message}};
+ const sc=()=>new C.Scene();
+ ok(/atributo/.test(lim(()=>sc().create({Attr:{'1x':1}})))&&/Attr/.test(lim(()=>sc().create({Attr:{a:{}}})))&&/Etiquetas/.test(lim(()=>sc().create({Etiquetas:['']})))&&/Modelo/.test(lim(()=>sc().create({Modelo:5}))),'validação de Attr, Etiquetas e Modelo');
+ const cj=nova();cj.scene.create({nome:'a',Transform:{x:1,y:2},Attr:{vida:3},Etiquetas:['x'],Modelo:{}});const js=JSON.stringify(C.Serializer.paraJSON(cj.scene)),c2=nova();C.Serializer.deJSON(c2.scene,JSON.parse(js));const a2=c2.scene.find('a');ok(a2.Attr.vida===3&&a2.Etiquetas[0]==='x'&&a2.Modelo,'Attr, Etiquetas e Modelo salvam e carregam');}
 // 10) perfil por sistema
 {const e=nova();e.perfil=true;e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1,vy:0}});for(let i=0;i<5;i++)e.passo();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');

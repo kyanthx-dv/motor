@@ -18,7 +18,7 @@
   <section class="painel" aria-label="Propriedades"><h2>Propriedades</h2><div id="props" class="props"></div>
     <h2>Variáveis <small id="n-var"></small></h2><div id="vars" class="vars"></div>
     <form id="nova-var" class="nv"><input id="nv-nome" placeholder="nome" aria-label="Nome da variável"><select id="nv-tipo" aria-label="Tipo"><option value="numero">número</option><option value="texto">texto</option><option value="booleano">verdadeiro/falso</option></select><input id="nv-val" placeholder="valor inicial" aria-label="Valor inicial"><button type="submit">Criar</button></form>
-    <div id="msg" class="msg" role="status"></div>
+    <div id="msg" class="msg" role="status"></div><div id="obs" class="msg" role="status" hidden></div>
     <details class="json"><summary>Cena em JSON</summary><textarea id="json" spellcheck="false" aria-label="Cena em JSON"></textarea>
       <div class="linha"><button type="button" id="j-ler">Atualizar do editor</button><button type="button" id="j-aplicar">Aplicar JSON</button></div></details>
   </section>
