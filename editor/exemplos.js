@@ -23,7 +23,7 @@
       estado: { vars: { pontos: 0 }, scripts },
       entidades: [
         parede('parede-cima', 400, 8, 800, 16), parede('parede-baixo', 400, 442, 800, 16), parede('parede-esq', 8, 225, 16, 450), parede('parede-dir', 792, 225, 16, 450),
-        { nome: 'jogador', Transform: { x: 400, y: 225 }, Body: { forma: 'circulo', raio: 16, massa: 1, elasticidade: 0.1, amortecimento: 4 }, Sprite: { forma: 'circulo', raio: 16, cor: '#4aa3ff' }, Controller: { aceleracao: 1800, velMax: 280 } },
+        { nome: 'jogador', Transform: { x: 400, y: 225 }, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 16, massa: 1, elasticidade: 0.1, amortecimento: 4 }, Sprite: { forma: 'circulo', raio: 16, cor: '#4aa3ff' }, Controller: { aceleracao: 1800, velMax: 280 } },
         { nome: 'placar', Transform: { x: 100, y: 30 }, Sprite: { w: 170, h: 34, cor: 'rgba(0,0,0,.45)', rotulo: 'Pontos: 0', corTexto: '#ffffff', tamanhoTexto: 20, fixo: true }, Script: { nome: 'placar' } },
         { nome: 'gerador', Transform: { x: 0, y: 0 }, Script: { nome: 'gerador' } }
       ]
