@@ -8,12 +8,12 @@
   const OPS = ['<', '<=', '=', '!=', '>=', '>'];
   const erro = m => new Error(m);
   E.ACOES = ACOES; E.OPS = OPS;
-  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta' };
+  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta', mx: 'mouse: posição x (mundo)', my: 'mouse: posição y (mundo)' };
   E.CONTAS = [['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷'], ['%', 'resto'], ['min', 'menor de'], ['max', 'maior de']];
-  E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não'], ['etiq', 'tem etiqueta']];
+  E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não'], ['etiq', 'tem etiqueta'], ['mouse', 'mouse'], ['sobre', 'mouse sobre objeto']];
   // Atributos que os blocos genéricos sabem ler/mudar: componente, propriedade e tipo
-  const ATTRS = E.ATTRS = { x: { c: 'Transform', p: 'x', t: 'num' }, y: { c: 'Transform', p: 'y', t: 'num' }, vx: { c: 'Velocity', p: 'vx', t: 'num' }, vy: { c: 'Velocity', p: 'vy', t: 'num' }, cor: { c: 'Sprite', p: 'cor', t: 'txt' }, texto: { c: 'Sprite', p: 'rotulo', t: 'txt' }, corTexto: { c: 'Sprite', p: 'corTexto', t: 'txt' }, raio: { c: 'Sprite', p: 'raio', t: 'num' } };
-  E.ATTR_NOMES = [['x', 'x'], ['y', 'y'], ['vx', 'velocidade x'], ['vy', 'velocidade y'], ['cor', 'cor'], ['texto', 'texto'], ['corTexto', 'cor do texto'], ['raio', 'raio (visual)']];
+  const ATTRS = E.ATTRS = { x: { c: 'Transform', p: 'x', t: 'num' }, y: { c: 'Transform', p: 'y', t: 'num' }, vx: { c: 'Velocity', p: 'vx', t: 'num' }, vy: { c: 'Velocity', p: 'vy', t: 'num' }, cor: { c: 'Sprite', p: 'cor', t: 'txt' }, texto: { c: 'Sprite', p: 'rotulo', t: 'txt' }, corTexto: { c: 'Sprite', p: 'corTexto', t: 'txt' }, raio: { c: 'Sprite', p: 'raio', t: 'num' }, tamanhoTexto: { c: 'Sprite', p: 'tamanhoTexto', t: 'num' }, alinhar: { c: 'Sprite', p: 'alinhar', t: 'txt' }, fonte: { c: 'Sprite', p: 'fonte', t: 'txt' } };
+  E.ATTR_NOMES = [['x', 'x'], ['y', 'y'], ['vx', 'velocidade x'], ['vy', 'velocidade y'], ['cor', 'cor'], ['texto', 'texto'], ['corTexto', 'cor do texto'], ['raio', 'raio (visual)'], ['tamanhoTexto', 'tamanho do texto'], ['alinhar', 'alinhamento (esquerda/centro/direita)'], ['fonte', 'fonte do texto']];
   function objExpr(o) {
     if (o === 'proprio' || o === undefined) return 'e';
     if (o === 'outro') return "(typeof d !== 'undefined' && d ? ctx.scene.get(d.outro) : null)";
@@ -42,6 +42,8 @@
       case 'rand': { const a = Number(v.min), b = Number(v.max); if (!isFinite(a) || !isFinite(b)) throw erro('aleatório: mínimo e máximo precisam ser números'); return 'ctx.engine.aleatorio(' + a + ', ' + b + ')'; }
       case 'outro': return "(typeof d !== 'undefined' && d && ctx.scene.get(d.outro) ? ctx.scene.get(d.outro).nome : '')";
       case 'attr': { const d = attrDef(v.a); if (d.t === 'any') return '((o) => (o && o.' + d.c + ' && o.' + d.c + '.' + d.p + ' !== undefined ? o.' + d.c + '.' + d.p + ' : 0))(' + objExpr(v.o) + ')'; return '((o) => (o && o.' + d.c + ' ? o.' + d.c + '.' + d.p + ' : ' + (d.t === 'num' ? '0' : "''") + '))(' + objExpr(v.o) + ')'; }
+      case 'mx': return 'ctx.input.pointer.x';
+      case 'my': return 'ctx.input.pointer.y';
       case 'contar': return 'ctx.scene.query("Etiquetas").filter(o => o.Etiquetas.includes(' + tagStr(v.tag) + ')).length';
       case 'op': {
         const o = v.o, a = valor(v.a), b = valor(v.b);
@@ -67,6 +69,8 @@
       return '(' + valor(c.a) + ' ' + (c.op === '=' ? '===' : c.op === '!=' ? '!==' : c.op) + ' ' + valor(c.b) + ')';
     }
     if (c.k === 'e' || c.k === 'ou') return '(' + cond(c.a) + (c.k === 'e' ? ' && ' : ' || ') + cond(c.b) + ')';
+    if (c.k === 'mouse') return 'ctx.input.pointer.' + (c.modo === 'pressed' ? 'pressed' : 'down');
+    if (c.k === 'sobre') return '((o) => !!o && ctx.sobre(o))(' + objExpr(c.o) + ')';
     if (c.k === 'etiq') return '((o) => !!(o && o.Etiquetas && o.Etiquetas.includes(' + tagStr(c.tag) + ')))(' + objExpr(c.o) + ')';
     if (c.k === 'nao') return '(!' + cond(c.a) + ')';
     throw erro('condição desconhecida: ' + c.k);
@@ -103,6 +107,10 @@
     sair: { cat: 'Controle', menu: 'sair do script (parar aqui)', campos: [{ t: 'sair do script' }], ger: () => ['return;'] },
     observar: { cat: 'Ferramentas', menu: 'observar valor', campos: [{ t: 'observar' }, { n: 'rot', tipo: 'txt', padrao: 'valor' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => { if (typeof b.rot !== 'string' || !b.rot) throw erro('dê um nome ao valor observado'); return ['ctx.engine.observar(' + JSON.stringify(b.rot.slice(0, 30)) + ', ' + valor(b.v) + ');']; } },
     comentario: { cat: 'Ferramentas', menu: 'comentário', campos: [{ t: 'comentário:' }, { n: 'txt', tipo: 'txt', padrao: '' }], ger: b => ['// ' + String(b.txt == null ? '' : b.txt).replace(/[\r\n\u2028\u2029]+/g, ' ').slice(0, 200)] },
+    ir_cena: { cat: 'Cena', menu: 'ir para a cena', campos: [{ t: 'ir para a cena' }, { n: 'cena', tipo: 'cena', padrao: '' }], ger: b => { if (typeof b.cena !== 'string' || !b.cena) throw erro('escolha a cena'); return ['ctx.engine.irPara(' + JSON.stringify(b.cena) + ');']; } },
+    camera_seguir: { cat: 'Cena', menu: 'câmera: seguir objeto', campos: [{ t: 'câmera segue' }, { n: 'nome', tipo: 'objn', padrao: '' }], ger: b => ['{', '  const cam = ctx.scene.estado.camera || (ctx.scene.estado.camera = { x: ctx.tela.largura / 2, y: ctx.tela.altura / 2, zoom: 1, suavizar: 8 });', '  cam.seguir = ' + JSON.stringify(typeof b.nome === 'string' ? b.nome : '') + ';', '}'] },
+    camera_zoom: { cat: 'Cena', menu: 'câmera: zoom', campos: [{ t: 'câmera: zoom' }, { n: 'v', tipo: 'valor', padrao: N(1) }], ger: b => ['{', '  const cam = ctx.scene.estado.camera || (ctx.scene.estado.camera = { x: ctx.tela.largura / 2, y: ctx.tela.altura / 2, zoom: 1, suavizar: 8 });', '  const z = Number(' + valor(b.v) + ');', '  if (isFinite(z) && z > 0.05 && z < 20) cam.zoom = z;', '}'] },
+    camera_pos: { cat: 'Cena', menu: 'câmera: ir para x, y', campos: [{ t: 'câmera vai para x' }, { n: 'vx', tipo: 'valor', padrao: N(400) }, { t: 'y' }, { n: 'vy', tipo: 'valor', padrao: N(225) }], ger: b => ['{', '  const cam = ctx.scene.estado.camera || (ctx.scene.estado.camera = { x: ctx.tela.largura / 2, y: ctx.tela.altura / 2, zoom: 1, suavizar: 8 });', '  const cx = Number(' + valor(b.vx) + '), cy = Number(' + valor(b.vy) + ');', '  if (isFinite(cx) && isFinite(cy)) { cam.seguir = ""; cam.x = cx; cam.y = cy; }', '}'] },
     var_definir: { cat: 'Variáveis', campos: [{ t: 'definir' }, { n: 'var', tipo: 'var' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => ['ctx.vars.definir(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
     var_somar: { cat: 'Variáveis', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'var', tipo: 'var' }], ger: b => ['ctx.vars.somar(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
     se: { cat: 'Controle', campos: [{ t: 'se' }, { n: 'c', tipo: 'cond' }], filhos: ['f', 's'], ger: (b, g) => ['if (' + cond(b.c) + ') {', ...g.lista(b.f), ...(b.s && b.s.length ? ['} else {', ...g.lista(b.s)] : []), '}'] },
@@ -131,6 +139,7 @@
     evento_inicio: { rotulo: 'quando o jogo começa', sec: 'inicio' },
     evento_quadro: { rotulo: 'a cada quadro (60 vezes por segundo)', sec: 'quadro' },
     evento_colisao: { rotulo: 'quando este objeto colidir', sec: 'colisao' },
+    evento_clique: { rotulo: 'quando clicarem neste objeto', sec: 'clique' },
     evento_gatilho: { rotulo: 'quando este objeto entrar/ficar numa zona (gatilho)', sec: 'gatilho' }
   };
   E.BLOCOS = BLOCOS; E.HATS = HATS;
@@ -148,13 +157,14 @@
   }
   E.gerar = function (blocos) {
     if (!Array.isArray(blocos)) throw erro('blocos inválidos'); contador = 0;
-    const sec = { inicio: [], quadro: [], colisao: [], gatilho: [] };
+    const sec = { inicio: [], quadro: [], colisao: [], gatilho: [], clique: [] };
     for (const h of blocos) { const d = h && HATS[h.t]; if (!d) throw erro('comece com um bloco de evento'); sec[d.sec].push(...lista(h.f || [], 0)); }
     const out = ['// Gerado pelos blocos. Edite os blocos: este texto é refeito a cada mudança.'];
     if (sec.inicio.length) out.push('function iniciar(e, ctx) {', '  const dt = ctx.dt;', ...ind(sec.inicio, 1), '}');
     if (sec.quadro.length) out.push('function atualizar(e, dt, ctx) {', ...ind(sec.quadro, 1), '}');
     const ev = [];
     if (sec.colisao.length) ev.push(['  colisao(e, d, ctx) {', '    const dt = ctx.dt;', ...ind(sec.colisao, 2), '  }']);
+    if (sec.clique.length) ev.push(['  clique(e, d, ctx) {', '    const dt = ctx.dt;', ...ind(sec.clique, 2), '  }']);
     if (sec.gatilho.length) ev.push(['  gatilho(e, d, ctx) {', '    const dt = ctx.dt;', ...ind(sec.gatilho, 2), '  }']);
     if (ev.length) { out.push('const eventos = {'); ev.forEach((l, i) => out.push(...(i < ev.length - 1 ? [...l.slice(0, -1), l[l.length - 1] + ','] : l))); out.push('};'); }
     return out.join('\n') + '\n';

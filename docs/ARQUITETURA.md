@@ -158,3 +158,8 @@ Em vez de um bloco por ação, há blocos com menus: **mudar / somar [objeto ▾
 - **Objetos nos blocos:** este, o outro, `cada` (dentro de "para cada"), o mais próximo com etiqueta, ou pelo nome. Atributos: os fixos + os próprios (`a:nome`, criados com "+ novo atributo…").
 - **Blocos:** dar etiqueta, criar cópia (modelo), para cada objeto com etiqueta, repetir N (máx. 1000), repetir enquanto (máx. 10000 voltas), % de chance, sair do script, observar valor (`engine.observar`, aparece no editor durante o Play) e comentário. Valor "quantos com etiqueta" e condição "tem etiqueta".
 - **Editor:** grupo "Marcas" no painel de propriedades (etiquetas, atributos `nome=valor`, caixa "modelo").
+
+## 22. Fase C1: clique, mouse, cenas por JSON e câmera
+- **Clique:** o sistema `ui` emite `clique {para: id}` ao objeto com `Script` que estiver sob o ponteiro quando ele é apertado (`C.Systems.ui.sobre(e, ponteiro)`: usa o `Body` ou, sem ele, o `Sprite`; `Sprite.fixo` usa a posição na janela). Scripts recebem em `eventos.clique(e, d, ctx)`. `ctx.sobre(e)` é o mesmo teste, para qualquer objeto.
+- **Blocos:** evento "quando clicarem neste objeto", condições "mouse (clicou agora / está apertado)" e "mouse sobre objeto", valores "mouse x/y (mundo)", atributos de texto (`tamanhoTexto`, `alinhar`, `fonte`), "ir para a cena", câmera (seguir objeto, zoom, ir para x/y).
+- **Cenas por JSON:** `engine.registrarCenaJSON(nome, json)` registra uma cena salva pelo editor. Ao entrar, as variáveis existentes são mantidas (as da cena nova só acrescentam as que faltam) e os scripts da cena são religados. O editor deve registrar todas as cenas do projeto ao dar Play.

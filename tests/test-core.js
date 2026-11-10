@@ -238,6 +238,29 @@ const nova=()=>new C.Engine();
  const sc=()=>new C.Scene();
  ok(/atributo/.test(lim(()=>sc().create({Attr:{'1x':1}})))&&/Attr/.test(lim(()=>sc().create({Attr:{a:{}}})))&&/Etiquetas/.test(lim(()=>sc().create({Etiquetas:['']})))&&/Modelo/.test(lim(()=>sc().create({Modelo:5}))),'validação de Attr, Etiquetas e Modelo');
  const cj=nova();cj.scene.create({nome:'a',Transform:{x:1,y:2},Attr:{vida:3},Etiquetas:['x'],Modelo:{}});const js=JSON.stringify(C.Serializer.paraJSON(cj.scene)),c2=nova();C.Serializer.deJSON(c2.scene,JSON.parse(js));const a2=c2.scene.find('a');ok(a2.Attr.vida===3&&a2.Etiquetas[0]==='x'&&a2.Modelo,'Attr, Etiquetas e Modelo salvam e carregam');}
+// 9d) Fase C1: clique, mouse, cenas por JSON, câmera por blocos
+{const G=EditorBlocos,f=(t,o)=>Object.assign(G.novo(t),o),n=x=>({k:'num',v:x});
+ const ptr=(x,y,pressed)=>({poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x,y,tx:x,ty:y,down:!!pressed,pressed:!!pressed}})});
+ const mk=(bl,cria)=>{const e=nova();cria(e);e.scene.estado.scripts={s:{blocos:bl,fonte:G.gerar(bl)}};ok(e.compilarScripts().length===0,'compila: '+bl.map(h=>h.t).join(','));return e;};
+ // evento clique: só o objeto sob o ponteiro recebe; fora não
+ let e=mk([{t:'evento_clique',f:[f('somar_attr',{o:'proprio',a:'a:cliques',v:n(1)})]}],e=>{e.scene.create({nome:'a',Transform:{x:100,y:100},Body:{forma:'circulo',raio:20,massa:0},Script:{nome:'s'}});e.scene.create({nome:'b',Transform:{x:300,y:100},Sprite:{w:40,h:40,cor:'#fff'},Script:{nome:'s'}});});
+ e.input=ptr(105,100,true);e.passo();e.input=ptr(300,119,true);e.passo();e.input=ptr(300,125,true);e.passo();e.input=ptr(100,100,false);e.passo();
+ ok(e.scene.find('a').Attr.cliques===1&&e.scene.find('b').Attr.cliques===1,'evento "quando clicarem neste objeto": círculo (Body) e retângulo (Sprite), só dentro da forma e só ao apertar');
+ // condição mouse sobre / mouse apertado e posição do mouse
+ e=mk([{t:'evento_quadro',f:[f('se',{c:{k:'sobre',o:'proprio'},f:[f('mudar_attr',{o:'proprio',a:'a:sobre',v:n(1)})]}),f('se',{c:{k:'mouse',modo:'down'},f:[f('mudar_attr',{o:'proprio',a:'a:mx',v:{k:'mx'}}),f('mudar_attr',{o:'proprio',a:'a:my',v:{k:'my'}})]})]}],e=>{e.scene.create({nome:'a',Transform:{x:100,y:100},Sprite:{w:40,h:40,cor:'#fff'},Script:{nome:'s'}});});
+ e.input=ptr(110,90,true);e.passo();const a=e.scene.find('a');ok(a.Attr.sobre===1&&a.Attr.mx===110&&a.Attr.my===90,'condições "mouse sobre" e "mouse apertado" e valores x/y do mouse');
+ // texto: atributos novos
+ e=mk([{t:'evento_inicio',f:[f('mudar_attr',{o:'proprio',a:'tamanhoTexto',v:n(30)}),f('mudar_attr',{o:'proprio',a:'alinhar',v:{k:'txt',v:'esquerda'}})]}],e=>{e.scene.create({nome:'t',Transform:{x:0,y:0},Sprite:{rotulo:'x'},Script:{nome:'s'}});});e.passo();ok(e.scene.find('t').Sprite.tamanhoTexto===30&&e.scene.find('t').Sprite.alinhar==='esquerda','atributos de texto: tamanho e alinhamento');
+ // cenas por JSON: ir para a cena mantém variáveis e religa scripts
+ e=nova();const base=nova();base.scene.create({nome:'c2obj',Transform:{x:5,y:5},Script:{nome:'p2'}});base.scene.estado.vars={extra:7};
+ const bl2=[{t:'evento_inicio',f:[f('var_somar',{var:'pontos',v:n(10)})]}];base.scene.estado.scripts={p2:{blocos:bl2,fonte:G.gerar(bl2)}};
+ e.registrarCenaJSON('fase2',C.Serializer.paraJSON(base.scene));
+ const bl1=[{t:'evento_quadro',f:[f('ir_cena',{cena:'fase2'})]}];e.scene.estado.scripts={p1:{blocos:bl1,fonte:G.gerar(bl1)}};e.scene.create({nome:'c1',Transform:{x:0,y:0},Script:{nome:'p1'}});e.compilarScripts();e.vars.declarar('pontos',1);
+ e.passo();e.passo();ok(e.scene.estado.cena==='fase2'&&e.scene.find('c2obj')&&!e.scene.find('c1')&&e.vars.ler('pontos')===11&&e.vars.ler('extra')===7,'ir para a cena: troca, religa scripts e mantém variáveis (cenas novas só acrescentam as suas)');
+ // câmera
+ e=mk([{t:'evento_inicio',f:[f('camera_seguir',{nome:'alvo'}),f('camera_zoom',{v:n(2)})]}],e=>{e.scene.create({nome:'alvo',Transform:{x:50,y:60}});e.scene.create({nome:'d',Transform:{x:0,y:0},Script:{nome:'s'}});});e.passo();
+ ok(e.scene.estado.camera.seguir==='alvo'&&e.scene.estado.camera.zoom===2,'blocos de câmera: seguir e zoom');
+ let m='';try{G.gerar([{t:'evento_inicio',f:[f('ir_cena',{cena:''})]}])}catch(x){m=x.message}ok(/cena/.test(m),'ir para a cena exige escolher a cena');}
 // 10) perfil por sistema
 {const e=nova();e.perfil=true;e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1,vy:0}});for(let i=0;i<5;i++)e.passo();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');
