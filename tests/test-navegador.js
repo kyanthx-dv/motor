@@ -187,6 +187,28 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   const hats = await p.locator('#bl-teste .bloco.hat').all(); const h2 = await hats[1].boundingBox(); const b1 = await caixa('#bl-teste .bloco:not(.hat)'); await p.mouse.move(b1.x + 4, b1.y + 4); await p.mouse.down(); await p.mouse.move(h2.x + 40, h2.y + 8, { steps: 8 }); await p.mouse.up(); await p.waitForTimeout(100);
   ok(await p.evaluate(() => window.__sc.blocos[0].f.length === 0 && window.__sc.blocos[1].f.length === 1 && window.__sc.blocos[1].f[0].t === 'reiniciar'), 'soltar sobre a barra de outro evento move o bloco para dentro dele');
   await p.evaluate(() => document.getElementById('bl-teste').remove());
+  // várias cenas
+  p.on('dialog', d => d.accept());
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.evaluate(() => { editor.cena.create({ nome: 'marca1', Transform: { x: 10, y: 10 } }); editor.json(); });
+  await p.fill('#cena-nome', 'fase2'); await p.click('#cena-nova'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => EditorCenas.nomes().join() === 'fase2,principal' && editor.cena.entities.size === 0 && document.getElementById('cenas-lista').value === 'fase2'), 'cenas: nova cena abre vazia e a lista mostra as duas');
+  await p.evaluate(() => { editor.cena.create({ nome: 'marca2', Transform: { x: 20, y: 20 } }); editor.json(); });
+  await p.selectOption('#cenas-lista', 'principal'); await p.click('#cena-abrir'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => !!editor.cena.find('marca1') && !editor.cena.find('marca2')), 'cenas: voltar para a cena anterior mantém os objetos de cada uma');
+  await p.evaluate(() => { const bl = [{ t: 'evento_inicio', f: [Object.assign(EditorBlocos.novo('ir_cena'), { cena: 'fase2' })] }]; editor.cena.estado.scripts.vai = { blocos: bl, fonte: EditorBlocos.gerar(bl) }; editor.cena.find('marca1').Script = { nome: 'vai' }; editor.json(); });
+  await p.click('#e-play'); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => editor.engine.scene.estado.cena === 'fase2' && !!editor.engine.scene.find('marca2') && !editor.engine.scene.find('marca1')), 'cenas: Play + bloco "ir para a cena" troca para a outra cena');
+  await p.click('#e-parar'); await p.waitForTimeout(200);
+  ok(await p.evaluate(() => !!editor.cena.find('marca1') && EditorCenas.nomes().length === 2), 'cenas: Parar volta para a cena que estava aberta no editor');
+  await p.fill('#cena-nome', 'mapa'); await p.selectOption('#cenas-lista', 'fase2'); await p.click('#cena-renomear'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => EditorCenas.nomes().join() === 'mapa,principal' && editor.cena.estado.scripts.vai.blocos[0].f[0].cena === 'mapa' && /"mapa"/.test(editor.cena.estado.scripts.vai.fonte)), 'cenas: renomear atualiza os blocos "ir para a cena"');
+  await p.reload(); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => EditorCenas.nomes().join() === 'mapa,principal' && !!editor.cena.find('marca1')), 'cenas: sobrevivem a recarregar a página');
+  await p.selectOption('#cenas-lista', 'mapa'); await p.click('#cena-apagar'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => EditorCenas.nomes().join() === 'principal'), 'cenas: apagar uma cena');
+  await p.click('#cena-apagar'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => EditorCenas.nomes().length === 1), 'cenas: não deixa apagar a última');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
