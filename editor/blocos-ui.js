@@ -1,4 +1,4 @@
-/* Editor · interface dos blocos. Lista indentada (sem arrastar): funciona igual com mouse e dedo.
+/* Editor · interface dos blocos. Lista indentada com arraste por Pointer Events: funciona igual com mouse e dedo.
    Cada linha é um bloco com campos; botões ↑ ↓ ✕; menu "+ bloco" no fim de cada pilha. Só edita DADOS (script.blocos). */
 (function () {
   const B = EditorBlocos, el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
@@ -11,6 +11,65 @@
 
   B.montar = function (cont, script, opc) {
     const vars = () => opc.vars(), mudou = () => opc.aoMudar(), redesenhar = () => { render(); mudou(); };
+    let arrastando = null, indicador = null;
+    const interativo = t => t.closest && t.closest('input,select,textarea,button');
+    function limparArraste() {
+      if (!arrastando) return;
+      arrastando.linha.style.opacity = '';
+      arrastando.linha.style.cursor = '';
+      window.removeEventListener('pointermove', moverArraste, true);
+      window.removeEventListener('pointerup', terminarArraste, true);
+      window.removeEventListener('pointercancel', cancelarArraste, true);
+      window.removeEventListener('keydown', teclaArraste, true);
+      if (indicador) { indicador.remove(); indicador = null; }
+      arrastando = null;
+    }
+    function cancelarArraste() { limparArraste(); }
+    function teclaArraste(ev) { if (ev.key === 'Escape') { ev.preventDefault(); cancelarArraste(); } }
+    function mostrarIndicador(alvo) {
+      if (!indicador) { indicador = el('div', 'drop-indicador'); indicador.style.cssText = 'position:fixed;height:3px;background:var(--acento);border-radius:3px;z-index:1000;pointer-events:none;box-shadow:0 0 0 1px color-mix(in srgb, var(--acento) 35%, transparent)'; document.body.append(indicador); }
+      const r = alvo.rect; indicador.style.left = r.left + 'px'; indicador.style.top = Math.max(0, r.top - 1) + 'px'; indicador.style.width = Math.max(12, r.width) + 'px'; indicador.hidden = false;
+    }
+    function alvoDoPonteiro(ev) {
+      const sob = document.elementFromPoint(ev.clientX, ev.clientY); if (!sob) return null;
+      const bloco = sob.closest && sob.closest('.bloco');
+      if (bloco && bloco === arrastando.linha) return null;
+      if (bloco) {
+        const pilhaAlvo = bloco.parentElement, b = bloco.__bloco, arr = pilhaAlvo && pilhaAlvo.__arr;
+        if (!arr || !b) return null;
+        const r = bloco.getBoundingClientRect(), antes = ev.clientY < r.top + r.height / 2;
+        return { arr, index: arr.indexOf(b) + (antes ? 0 : 1), pilha: pilhaAlvo, rect: { left: r.left, top: antes ? r.top : r.bottom, width: r.width } };
+      }
+      const rot = sob.closest && sob.closest('.rot');
+      if (rot) {
+        const pilhaAlvo = rot.nextElementSibling && rot.nextElementSibling.classList.contains('pilha') ? rot.nextElementSibling : null;
+        if (pilhaAlvo && pilhaAlvo.__arr) { const r = pilhaAlvo.getBoundingClientRect(); return { arr: pilhaAlvo.__arr, index: pilhaAlvo.__arr.length, pilha: pilhaAlvo, rect: { left: r.left, top: r.bottom, width: r.width } }; }
+      }
+      const pilhaAlvo = sob.closest && sob.closest('.pilha');
+      if (pilhaAlvo && pilhaAlvo.__arr) { const r = pilhaAlvo.getBoundingClientRect(); return { arr: pilhaAlvo.__arr, index: pilhaAlvo.__arr.length, pilha: pilhaAlvo, rect: { left: r.left, top: r.bottom, width: r.width } }; }
+      return null;
+    }
+    function moverArraste(ev) {
+      if (!arrastando || ev.pointerId !== arrastando.pointerId) return;
+      ev.preventDefault(); const alvo = alvoDoPonteiro(ev);
+      if (!alvo || arrastando.linha.contains(alvo.pilha)) { if (indicador) indicador.hidden = true; arrastando.alvo = null; return; }
+      arrastando.alvo = alvo; mostrarIndicador(alvo);
+    }
+    function terminarArraste(ev) {
+      if (!arrastando || ev.pointerId !== arrastando.pointerId) return;
+      const alvo = arrastando.alvo;
+      if (alvo && !arrastando.linha.contains(alvo.pilha)) {
+        const origem = arrastando.arr, i = origem.indexOf(arrastando.bloco);
+        if (i >= 0) { origem.splice(i, 1); let n = alvo.index; if (alvo.arr === origem && n > i) n--; alvo.arr.splice(Math.max(0, Math.min(n, alvo.arr.length)), 0, arrastando.bloco); limparArraste(); render(); mudou(); return; }
+      }
+      limparArraste();
+    }
+    function iniciarArraste(ev, linha, arr, b, i) {
+      if (arrastando || (ev.button !== undefined && ev.button !== 0) || interativo(ev.target) || ev.currentTarget !== ev.target.closest('.bloco')) return;
+      ev.preventDefault(); ev.stopPropagation(); linha.setPointerCapture?.(ev.pointerId); linha.style.opacity = '.45'; linha.style.cursor = 'grabbing';
+      arrastando = { linha, arr, bloco: b, index: i, pointerId: ev.pointerId, alvo: null };
+      window.addEventListener('pointermove', moverArraste, true); window.addEventListener('pointerup', terminarArraste, true); window.addEventListener('pointercancel', cancelarArraste, true); window.addEventListener('keydown', teclaArraste, true);
+    }
     function campoValor(obj, nome, rotulo) {
       const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val');
       w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : { k }; redesenhar(); }, rotulo));
@@ -79,8 +138,10 @@
     }
     function pilha(arr, hat) {
       const p = el('div', 'pilha');
+      p.__arr = arr;
       arr.forEach((b, i) => {
         const def = hat ? B.HATS[b.t] : B.BLOCOS[b.t], linha = el('div', hat ? 'bloco hat' : 'bloco cat-' + def.cat);
+        linha.__arr = arr; linha.__bloco = b; linha.style.touchAction = 'none';
         const topo = el('div', 'topo');
         if (hat) topo.append(el('b', null, def.rotulo));
         else for (const c of def.campos) {
@@ -96,7 +157,7 @@
           else if (c.tipo === 'objn') { const ns = opc.objetos ? opc.objetos() : []; topo.append(sel([['', '(escolha)'], ...ns.map(x => [x, x])], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'objeto a copiar')); }
           else if (c.tipo === 'cor') topo.append(entrada('color', /^#[0-9a-f]{6}$/i.test(b.cor) ? b.cor : '#ff5555', x => { b.cor = x; mudou(); }, 'cor'));
         }
-        topo.append(botoes(arr, i)); linha.append(topo);
+        topo.append(botoes(arr, i)); linha.append(topo); linha.addEventListener('pointerdown', ev => iniciarArraste(ev, linha, arr, b, i));
         if (hat) { linha.append(pilha(b.f, false), menu(b.f, false)); }
         else if (def.filhos) { const dois = def.filhos.length > 1; linha.append(el('div', 'rot', dois ? 'então' : 'faça'), pilha(b.f, false), menu(b.f, false)); if (dois) linha.append(el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); }
         p.append(linha);

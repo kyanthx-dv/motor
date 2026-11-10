@@ -25,6 +25,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [x] **Tarefa 2** `editor/blocos-ui.js`: marcar campo script órfão do bloco criar com borda vermelha e título "script não existe".
 - [x] **Tarefa 3** `tests/test-navegador.js`: reforçar o exemplo Pega-moedas com localStorage limpo, coleta, pixels do placar e guarda robusta do atalho.
 - [x] **Conectores visuais** `editor/editor.css`: dar aos blocos aparência de peças empilhadas, com encaixes, espaçamento e linhas para pilhas filhas.
+- [x] **Arrastar blocos** `editor/blocos-ui.js`: mover blocos por Pointer Events entre posições, pilhas e eventos, com indicador e cancelamento por Escape.
 
 ## Só o Claude faz (não pegar)
 (nada pendente: a revisão 2 foi toda corrigida).
@@ -67,6 +68,9 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - Conectores visuais concluídos: CSS adiciona peças arredondadas, entalhe/saliência, espaçamento e conectores coloridos para pilhas filhas.
 - Testado: `npm test`, `node tests/test-navegador.js` e `git diff --check`.
 - Dúvidas: nenhuma; HTML, core e gerador permaneceram intocados.
+- Arrastar blocos concluído: Pointer Events movem o mesmo objeto entre arrays/pilhas, com indicador visual, Escape e botões preservados.
+- Testado: `npm test`, `node tests/test-navegador.js`, `node --check` e `git diff --check`.
+- Dúvidas: nenhuma; `core/` e `editor/gerador.js` permaneceram intocados.
 
 ## Dúvidas do Manus
 (vazio)
