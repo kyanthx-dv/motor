@@ -24,6 +24,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [x] **Tarefa 1** `editor/`: botão Novo texto cria e seleciona uma entidade de texto/placar sem Body, integrada a desfazer/refazer.
 - [x] **Tarefa 2** `editor/blocos-ui.js`: marcar campo script órfão do bloco criar com borda vermelha e título "script não existe".
 - [x] **Tarefa 3** `tests/test-navegador.js`: reforçar o exemplo Pega-moedas com localStorage limpo, coleta, pixels do placar e guarda robusta do atalho.
+- [x] **Conectores visuais** `editor/editor.css`: dar aos blocos aparência de peças empilhadas, com encaixes, espaçamento e linhas para pilhas filhas.
 
 ## Só o Claude faz (não pegar)
 (nada pendente: a revisão 2 foi toda corrigida).
@@ -63,6 +64,9 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - Tarefa 3 concluída: teste do Pega-moedas confirma projeto exato, coleta e pixels do texto; JSON é capturado antes da digitação e o atalho usa closest.
 - Testado: `npm test`, `node tests/test-navegador.js`, `node --check` e `git diff --check` (todos passaram).
 - Dúvidas: nenhuma.
+- Conectores visuais concluídos: CSS adiciona peças arredondadas, entalhe/saliência, espaçamento e conectores coloridos para pilhas filhas.
+- Testado: `npm test`, `node tests/test-navegador.js` e `git diff --check`.
+- Dúvidas: nenhuma; HTML, core e gerador permaneceram intocados.
 
 ## Dúvidas do Manus
 (vazio)
