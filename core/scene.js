@@ -40,6 +40,18 @@
       else { num(b.w, n, 'Body.w'); num(b.h, n, 'Body.h'); if (b.w <= 0 || b.h <= 0) throw new Error('entidade "' + n + '": Body.w e Body.h precisam ser maiores que 0'); }
     }
   }
+  // O ponteiro está sobre a entidade? Usa o Body (círculo/retângulo) ou, sem ele, o Sprite. Sprite.fixo usa a posição na janela.
+  C.sobre = function sobre(e, p) {
+    if (!e || !e.Transform || !p || p.ativo === false) return false;   // ativo:false = o ponteiro ainda não apareceu na tela
+    const S = e.Sprite, B = e.Body, fixo = S && S.fixo, px = fixo ? p.tx : p.x, py = fixo ? p.ty : p.y;
+    if (typeof px !== 'number' || typeof py !== 'number') return false;
+    let circ = false, r = 0, w = 0, h = 0;
+    if (B) { if (B.forma === 'circulo' || (!B.forma && B.raio !== undefined)) { circ = true; r = B.raio; } else { w = B.w; h = B.h; } }
+    else if (S) { if (S.forma === 'circulo' || (S.raio !== undefined && S.w === undefined)) { circ = true; r = S.raio ?? 16; } else { w = S.w ?? 32; h = S.h ?? 32; } }
+    else return false;
+    const dx = px - e.Transform.x, dy = py - e.Transform.y;
+    return circ ? dx * dx + dy * dy <= r * r : Math.abs(dx) <= w / 2 && Math.abs(dy) <= h / 2;
+  };
   class Scene {
     constructor() { this.entities = new Map(); this.nextId = 1; this.estado = {}; this._remover = new Set(); this.jogando = false; }
     create(dados = {}) {

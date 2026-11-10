@@ -14,7 +14,7 @@
       this.listeners = [];
       this.down = new Set(); this.edge = new Set(); this.soltou = new Set(); this.keys = new Set(); this.keysEdge = new Set();
       this.joystick = { ativo: false, x0: 0, y0: 0, x: 0, y: 0, dx: 0, dy: 0, raio: 56, id: null };
-      this.pointer = { x: 0, y: 0, tx: 0, ty: 0, down: false }; this.pEdge = false; this.ptId = null;   // um ponteiro principal no canvas; botões HTML são independentes
+      this.pointer = { x: 0, y: 0, tx: 0, ty: 0, down: false, ativo: false }; this.pEdge = false; this.ptId = null;   // um ponteiro principal no canvas; botões HTML são independentes
       this.mapa = new Map();
       for (const a in this.teclas) for (const k of this.teclas[a]) this.mapa.set(k, a);
       const ouvir = (alvo, tipo, fn) => { alvo.addEventListener(tipo, fn); this.listeners.push({ alvo, tipo, fn }); };
@@ -45,7 +45,7 @@
       ouvir(canvas, 'pointerup', fim); ouvir(canvas, 'pointercancel', fim);
     }
     local(e) { const r = this.canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-    atualizarPonteiro(p, down) { const w = this.renderer ? this.renderer.telaParaMundo(p.x, p.y) : p; this.pointer.x = w.x; this.pointer.y = w.y; this.pointer.down = down;
+    atualizarPonteiro(p, down) { const w = this.renderer ? this.renderer.telaParaMundo(p.x, p.y) : p; this.pointer.x = w.x; this.pointer.y = w.y; this.pointer.down = down; this.pointer.ativo = true;
       const j = this.renderer && this.renderer.telaParaJanela ? this.renderer.telaParaJanela(p.x, p.y) : p; this.pointer.tx = j.x; this.pointer.ty = j.y; }
     // também serve para botões virtuais na tela (celular)
     pressionar(acao, v) {
