@@ -21,6 +21,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - [x] **M8** `editor/editor.js`: criar `Core.Input` somente no Play, atribuir a `engine.input`, destruir no Parar e testar seta movendo o jogador com Controller.
 - [x] **M11** `editor/`: lista de projetos em `localStorage` com criar/abrir/renomear/apagar e botão Jogar em tela cheia com entrada ligada. Sem alterar o core.
 - [x] **M12** `editor/`: desfazer/refazer por Ctrl+Z/Ctrl+Y e botões, com snapshots JSON de até 50 níveis para mudanças do editor e sem registrar durante o Play. Sem alterar o core.
+- [x] **Tarefa 1** `editor/`: botão Novo texto cria e seleciona uma entidade de texto/placar sem Body, integrada a desfazer/refazer.
 
 ## Só o Claude faz (não pegar)
 (nada pendente: a revisão 2 foi toda corrigida).
@@ -54,6 +55,9 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - Dúvidas: nenhuma.
 - M12 concluída: histórico JSON de desfazer/refazer com 50 snapshots, botões e atalhos, agrupando cada arrasto e suspendendo registros durante o Play.
 - Testado: `node tests/test-core.js`, `node tests/test-navegador.js`, `node --check editor/editor.js` e validação de conflitos/diff (todos passaram).
+- Dúvidas: nenhuma.
+- Tarefa 1 concluída: botão Novo texto cria Sprite fixo com rótulo, cor e tamanho solicitados e integra o histórico.
+- Testado: `npm test`, `node tests/test-navegador.js`, `node --check` e `git diff --check` (todos passaram).
 - Dúvidas: nenhuma.
 
 ## Dúvidas do Manus
