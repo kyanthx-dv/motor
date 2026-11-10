@@ -30,13 +30,16 @@
       if (!indicador) { indicador = el('div', 'drop-indicador'); indicador.style.cssText = 'position:fixed;height:3px;background:var(--acento);border-radius:3px;z-index:1000;pointer-events:none;box-shadow:0 0 0 1px color-mix(in srgb, var(--acento) 35%, transparent)'; document.body.append(indicador); }
       const r = alvo.rect; indicador.style.left = r.left + 'px'; indicador.style.top = Math.max(0, r.top - 1) + 'px'; indicador.style.width = Math.max(12, r.width) + 'px'; indicador.hidden = false;
     }
-    function alvoDoPonteiro(ev) {
+    function alvoDoPonteiro(ev) { const r = alvoBruto(ev); return r && ((r.arr === script.blocos) === !!B.HATS[arrastando.bloco.t]) ? r : null; }
+    function alvoBruto(ev) {
       const sob = document.elementFromPoint(ev.clientX, ev.clientY); if (!sob) return null;
       const bloco = sob.closest && sob.closest('.bloco');
       if (bloco && bloco === arrastando.linha) return null;
+      const ehHat = !!B.HATS[arrastando.bloco.t];   // eventos só no topo; os demais blocos só dentro de eventos (alvoDoPonteiro valida)
       if (bloco) {
         const pilhaAlvo = bloco.parentElement, b = bloco.__bloco, arr = pilhaAlvo && pilhaAlvo.__arr;
         if (!arr || !b) return null;
+        if (B.HATS[b.t] && !ehHat) { const pf = bloco.querySelector('.pilha'), r = (pf || bloco).getBoundingClientRect(); return pf && pf.__arr ? { arr: pf.__arr, index: 0, pilha: pf, rect: { left: r.left, top: r.top, width: r.width } } : null; }
         const r = bloco.getBoundingClientRect(), antes = ev.clientY < r.top + r.height / 2;
         return { arr, index: arr.indexOf(b) + (antes ? 0 : 1), pilha: pilhaAlvo, rect: { left: r.left, top: antes ? r.top : r.bottom, width: r.width } };
       }
@@ -140,7 +143,9 @@
       const p = el('div', 'pilha');
       p.__arr = arr;
       arr.forEach((b, i) => {
-        const def = hat ? B.HATS[b.t] : B.BLOCOS[b.t], linha = el('div', hat ? 'bloco hat' : 'bloco cat-' + def.cat);
+        const def = hat ? B.HATS[b.t] : B.BLOCOS[b.t];
+        if (!def) { const w = el('div', 'bloco'); w.append(el('span', 'aviso-mini', 'bloco inválido (' + b.t + ') '), botoes(arr, i)); p.append(w); return; }
+        const linha = el('div', hat ? 'bloco hat' : 'bloco cat-' + def.cat);
         linha.__arr = arr; linha.__bloco = b; linha.style.touchAction = 'none';
         const topo = el('div', 'topo');
         if (hat) topo.append(el('b', null, def.rotulo));
