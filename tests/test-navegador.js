@@ -172,6 +172,10 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.fill('input[placeholder="inimigo, moeda"]', 'heroi, rapido'); await p.press('input[placeholder="inimigo, moeda"]', 'Tab'); await p.fill('input[placeholder="vida=3, nome=Zé"]', 'vida=3, nome=Zé'); await p.press('input[placeholder="vida=3, nome=Zé"]', 'Tab'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => { const e = editor.cena.find('jogador'); return e.Etiquetas.join() === 'heroi,rapido' && e.Attr.vida === 3 && e.Attr.nome === 'Zé'; }), 'painel Marcas: etiquetas e atributos próprios');
   ok(await p.evaluate(() => { const d = document.createElement('div'); const bl = Object.keys(EditorBlocos.BLOCOS).map(t => { const b = EditorBlocos.novo(t); if (t === 'clonar') b.nome = ''; return b; }); EditorBlocos.montar(d, { blocos: [{ t: 'evento_quadro', f: bl }] }, { vars: () => [], scripts: () => [], objetos: () => ['jogador'], etiquetas: () => ['heroi'], atributos: () => ['vida'], aoMudar() {} }); return d.querySelectorAll('.bloco:not(.hat)').length >= bl.length; }), 'interface desenha todos os blocos, inclusive os da Fase A');
+  await p.evaluate(() => { editor.cena.estado.scripts.quebra = { fonte: 'function atualizar(e, dt, ctx) { ctx.engine.naoExiste(); }' }; editor.cena.find('jogador').Script = { nome: 'quebra' }; });
+  await p.click('#e-play'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => /Erro no script "quebra"/.test(document.getElementById('msg').textContent)), 'erro de script aparece na mensagem do editor');
+  await p.click('#e-parar');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
