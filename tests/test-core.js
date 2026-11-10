@@ -261,6 +261,17 @@ const nova=()=>new C.Engine();
  e=mk([{t:'evento_inicio',f:[f('camera_seguir',{nome:'alvo'}),f('camera_zoom',{v:n(2)})]}],e=>{e.scene.create({nome:'alvo',Transform:{x:50,y:60}});e.scene.create({nome:'d',Transform:{x:0,y:0},Script:{nome:'s'}});});e.passo();
  ok(e.scene.estado.camera.seguir==='alvo'&&e.scene.estado.camera.zoom===2,'blocos de câmera: seguir e zoom');
  let m='';try{G.gerar([{t:'evento_inicio',f:[f('ir_cena',{cena:''})]}])}catch(x){m=x.message}ok(/cena/.test(m),'ir para a cena exige escolher a cena');}
+// 9e) revisão do C1: clique só no objeto do topo, ctx.sobre sem sistema ui, ponteiro ainda ausente
+{const G=EditorBlocos,f=(t,o)=>Object.assign(G.novo(t),o),n=x=>({k:'num',v:x});
+ const ptr=(x,y,pressed,ativo)=>({poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x,y,tx:x,ty:y,down:!!pressed,pressed:!!pressed,ativo}})});
+ const bl=[{t:'evento_clique',f:[f('somar_attr',{o:'proprio',a:'a:c',v:n(1)})]}];
+ let e=nova();e.scene.estado.scripts={s:{blocos:bl,fonte:G.gerar(bl)}};
+ e.scene.create({nome:'baixo',Transform:{x:50,y:50},Sprite:{w:40,h:40,camada:0},Script:{nome:'s'}});e.scene.create({nome:'topo',Transform:{x:50,y:50},Sprite:{w:40,h:40,camada:5},Script:{nome:'s'}});e.scene.create({nome:'topo2',Transform:{x:50,y:50},Sprite:{w:40,h:40,camada:0},Script:{nome:'s'}});
+ e.compilarScripts();e.input=ptr(50,50,true,true);e.passo();
+ ok((e.scene.find('baixo').Attr||{}).c===undefined&&e.scene.find('topo').Attr.c===1&&(e.scene.find('topo2').Attr||{}).c===undefined,'clique vai só para o objeto do topo (maior camada)');
+ e=nova();e.scene.create({nome:'a',Transform:{x:0,y:0},Sprite:{w:40,h:40,fixo:true},Script:{nome:'s'}});e.scene.estado.scripts={s:{blocos:bl,fonte:G.gerar(bl)}};e.compilarScripts();
+ e.input=ptr(0,0,true,false);e.passo();ok(!e.scene.find('a').Attr,'ponteiro ainda ausente (ativo:false) não conta como clique no canto');
+ const sem=new C.Engine({padrao:false});sem.scene.create({nome:'a',Transform:{x:0,y:0},Sprite:{w:10,h:10}});sem.input=ptr(0,0,false,true);sem.passo();ok(sem.ctx.sobre(sem.scene.find('a'))===true,'ctx.sobre funciona com padrao:false (sem o sistema ui)');}
 // 10) perfil por sistema
 {const e=nova();e.perfil=true;e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1,vy:0}});for(let i=0;i<5;i++)e.passo();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');
