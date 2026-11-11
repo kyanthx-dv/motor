@@ -156,7 +156,7 @@
   });
 
   // ---- JSON da cena (salvar/abrir sem arquivo; o motor carrega de forma transacional)
-  function json(registrar = true) { $('json').value = JSON.stringify(C.Serializer.paraJSON(cena), null, 1); persistirAtual(); if (registrar) registrarSnapshot(); }
+  function json(registrar = true) { $('json').value = JSON.stringify(C.Serializer.paraJSON(cena), null, 1); persistirAtual(); if (window.EditorCamera) EditorCamera.atualizar(); if (registrar) registrarSnapshot(); }
   $('j-ler').addEventListener('click', () => { json(); msg('JSON atualizado.', 'ok'); });
   $('j-aplicar').addEventListener('click', () => {
     try { C.Serializer.deJSON(cena, JSON.parse($('json').value)); msg('Cena carregada.', 'ok'); } catch (x) { msg('Não carregou (a cena atual foi mantida): ' + x.message, 'erro'); return; }

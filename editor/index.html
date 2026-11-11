@@ -16,6 +16,7 @@
       <div class="linha"><button type="button" id="sc-conv" hidden>Converter em código (sem volta)</button><button type="button" id="sc-anexar">Anexar ao objeto selecionado</button><button type="button" id="sc-desanexar">Desanexar</button><button type="button" id="sc-remover">Remover script</button></div>
       <div id="sc-info" class="status"></div></section></section>
   <section class="painel" aria-label="Propriedades"><h2>Propriedades</h2><div id="props" class="props"></div>
+    <section id="camera" class="camera" aria-label="Câmera"><h2>Câmera</h2><div class="campo"><label for="cam-x">x</label><input id="cam-x" type="number" step="any"></div><div class="campo"><label for="cam-y">y</label><input id="cam-y" type="number" step="any"></div><div class="campo"><label for="cam-zoom">zoom</label><input id="cam-zoom" type="number" min="0.05" step="any"></div><div class="campo"><label for="cam-suavizar">suavizar</label><input id="cam-suavizar" type="number" min="0" step="any"></div><div class="campo"><label for="cam-seguir">seguir</label><select id="cam-seguir"></select></div><h2>Limites</h2><div class="camera-limites"><input id="cam-x0" type="number" step="any" placeholder="x0"><input id="cam-y0" type="number" step="any" placeholder="y0"><input id="cam-x1" type="number" step="any" placeholder="x1"><input id="cam-y1" type="number" step="any" placeholder="y1"></div><div class="linha"><button type="button" id="cam-aplicar">Aplicar</button><button type="button" id="cam-limpar">Fixa</button></div><div id="cam-msg" class="msg" role="status"></div></section>
     <h2>Variáveis <small id="n-var"></small></h2><div id="vars" class="vars"></div>
     <form id="nova-var" class="nv"><input id="nv-nome" placeholder="nome" aria-label="Nome da variável"><select id="nv-tipo" aria-label="Tipo"><option value="numero">número</option><option value="texto">texto</option><option value="booleano">verdadeiro/falso</option></select><input id="nv-val" placeholder="valor inicial" aria-label="Valor inicial"><button type="submit">Criar</button></form>
     <div id="msg" class="msg" role="status"></div><div id="obs" class="msg" role="status" hidden></div>
@@ -27,6 +28,6 @@
 <script src="../core/events.js"></script><script src="../core/scene.js"></script><script src="../core/variaveis.js"></script><script src="../core/serializer.js"></script>
 <script src="../core/systems/controles.js"></script><script src="../core/systems/ui.js"></script><script src="../core/systems/scripts.js"></script><script src="../core/systems/fisica.js"></script><script src="../core/systems/animacao.js"></script><script src="../core/systems/camera.js"></script>
 <script src="../core/engine.js"></script><script src="../adapters/assets.js"></script><script src="../adapters/audio.js"></script><script src="../adapters/canvas-renderer.js"></script><script src="../adapters/input.js"></script>
-<script src="editor.js"></script>
+  <script src="editor.js"></script><script src="camera.js"></script>
   <script src="cenas.js"></script><script src="gerador.js"></script><script src="exemplos.js"></script><script src="blocos-ui.js"></script><script src="scripts.js"></script>
 </body></html>

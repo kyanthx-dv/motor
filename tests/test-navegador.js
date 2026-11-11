@@ -54,6 +54,9 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.selectOption('#projetos', 'Exemplo'); await p.click('#projeto-abrir'); await p.waitForTimeout(80); ok(await p.evaluate(() => editor.projetoAtual === 'Exemplo' && editor.cena.entities.size === 5), 'M11 abre projeto salvo');
   await p.selectOption('#projetos', 'Projeto Renomeado'); p.once('dialog', d => d.accept()); await p.click('#projeto-apagar'); await p.waitForTimeout(80); ok(await p.evaluate(() => document.querySelectorAll('#projetos option').length === 1 && editor.projetoAtual === 'Exemplo'), 'M11 apaga projeto');
   ok(await p.evaluate(() => document.querySelectorAll('#lista button').length === 5 && !!window.editor), 'editor abre com 5 objetos na lista');
+  await p.fill('#cam-x', '120'); await p.fill('#cam-y', '80'); await p.fill('#cam-zoom', '1.5'); await p.fill('#cam-suavizar', '6'); await p.selectOption('#cam-seguir', { label: 'jogador' }); await p.click('#cam-aplicar'); await p.waitForTimeout(80);
+  ok(await p.evaluate(() => { const c = editor.cena.estado.camera; return c.x === 120 && c.y === 80 && c.zoom === 1.5 && c.suavizar === 6 && c.seguir === 'jogador'; }), 'painel de câmera aplica posição, zoom e seguimento');
+  await p.click('#cam-limpar'); await p.waitForTimeout(50); ok(await p.evaluate(() => !editor.cena.estado.camera), 'painel de câmera restaura a câmera fixa');
   const pos = await p.evaluate(() => { const e = editor.cena.find('bola'), b = document.getElementById('tela').getBoundingClientRect(), r = editor.renderer; return { x: b.left + r.ox + e.Transform.x * r.esc, y: b.top + r.oy + e.Transform.y * r.esc }; });
   await p.mouse.click(pos.x, pos.y); await p.waitForTimeout(150);
   ok(await p.evaluate(() => editor.cena.get(editor.sel).nome === 'bola' && document.querySelector('#lista [aria-current]').textContent.includes('bola')), 'clicar no canvas seleciona o objeto');
