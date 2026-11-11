@@ -72,7 +72,7 @@
         if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else g.rect(x - w / 2, y - h / 2, w, h);
         if (f === 'anel') { g.strokeStyle = s.cor || '#fff'; g.stroke(); }
         else { g.fillStyle = (e.Botao && e.Botao.sobre && s.corSobre) || s.cor || '#ccc'; g.fill(); if (s.borda) { g.strokeStyle = s.borda; g.stroke(); } }
-        if (s.rotulo) { g.fillStyle = s.corTexto || '#fff'; g.font = '600 ' + (s.tamanhoTexto || 14) + 'px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s.rotulo, x, y); }
+        if (s.rotulo) { g.fillStyle = s.corTexto || '#fff'; g.font = '600 ' + (s.tamanhoTexto || 14) + 'px ' + (s.fonte || 'system-ui,sans-serif'); g.textAlign = s.alinhar || 'center'; g.textBaseline = 'middle'; const tx = s.alinhar === 'left' ? x - w / 2 + 8 : s.alinhar === 'right' ? x + w / 2 - 8 : x; g.fillText(s.rotulo, tx, y); }
       };
       for (const e of todos) if (!e.Sprite.fixo) pintar(e, cx, cy, L / z / 2, A / z / 2);
       if (this.selecionada != null) {
