@@ -214,6 +214,12 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(() => EditorCenas.nomes().join() === 'principal'), 'cenas: apagar uma cena');
   await p.click('#cena-apagar'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => EditorCenas.nomes().length === 1), 'cenas: não deixa apagar a última');
+  const exportado = await p.evaluate(() => { const x = EditorArquivos.exportar(); x.cenas.cenas.segunda = { formato: 1, estado: { vars: {} }, entidades: [] }; return x; });
+  ok(!!exportado.cena && exportado.cenas.atual === 'principal' && !!exportado.cenas.cenas.principal, 'arquivos: Baixar inclui a cena viva e o pacote de cenas');
+  await p.evaluate(x => EditorArquivos.importar(JSON.stringify(x)), exportado); await p.waitForTimeout(120);
+  ok(await p.evaluate(() => editor.projetoAtual === 'Importado' && EditorCenas.nomes().join() === 'principal,segunda'), 'arquivos: abrir projeto multi-cena recria todas as cenas');
+  await p.evaluate(x => EditorArquivos.importar(JSON.stringify(x)), exportado.cena); await p.waitForTimeout(120);
+  ok(await p.evaluate(() => editor.projetoAtual === 'Importado 2' && EditorCenas.nomes().length === 1), 'arquivos: abrir cena antiga cria projeto compatível');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

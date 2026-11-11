@@ -59,6 +59,7 @@
     },
     // para testes e para o "baixar projeto": estado de todas as cenas
     exportar() { const p = proj(); return { atual: p.atual, cenas: Object.assign({}, p.cenas, { [p.atual]: vivo() }) }; },
+    importar(nome, pacote) { const cenas = pacote && pacote.cenas && typeof pacote.cenas === 'object' ? pacote.cenas : {}; const atual = typeof pacote?.atual === 'string' && cenas[pacote.atual] ? pacote.atual : Object.keys(cenas)[0] || 'principal'; const viva = cenas[atual] || pacote?.cena || vazia(); const outras = {}; for (const n of Object.keys(cenas)) if (n !== atual) outras[n] = cenas[n]; dados[nome] = { atual, cenas: outras }; guardar(); },
     irPara, nova, renomear, apagar
   };
   $('cena-nova').addEventListener('click', nova); $('cena-abrir').addEventListener('click', () => irPara($('cenas-lista').value));

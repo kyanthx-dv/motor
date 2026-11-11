@@ -75,6 +75,7 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - T1 concluída: editor cria botão fixo com hover, texto aceita alinhamento/fonte e o renderer aplica essas propriedades.
 - Testado: `npm test`, `node tests/test-navegador.js`, `node --check` nos arquivos alterados e `git diff --check` (todos passaram).
 - T2 concluída: painel modular de câmera permite posição, zoom, suavização, seguimento e limites, com restauração fixa.
+- T3 concluída: Baixar inclui a cena viva e `EditorCenas.exportar()`; Abrir arquivo importa cenas multi-cena e cenas antigas.
 - Testado: `npm test`, `node tests/test-navegador.js`, `node --check` e `git diff --check` (todos passaram).
 - Dúvidas: nenhuma; `core/` e `editor/gerador.js` permaneceram intocados.
 

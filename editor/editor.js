@@ -190,6 +190,7 @@
   $('c-col').addEventListener('change', redesenhar);
 
   exemplo(); listar(); props(); variaveis(); json();
-  window.editor = { carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get projetoAtual() { return projetoAtual; } };
+  function importarProjeto(nome, viva, todas) { if (engine.rodando) parar(); projetos[nome] = viva; if (window.EditorCenas && EditorCenas.importar) EditorCenas.importar(nome, todas); guardarProjetos(); abrirProjeto(nome); }
+  window.editor = { carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, importarProjeto, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get projetoAtual() { return projetoAtual; } };
   inicializarProjetos(); historicoLimpar(); loop();
 })();
