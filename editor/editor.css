@@ -40,3 +40,8 @@ button{background:var(--bg);color:var(--fg);border:1px solid var(--linha);border
 select.add{width:auto;color:var(--acento);border-style:dashed;margin:4px 0 0 14px;max-width:calc(100% - 14px)}.blocos>select.add{margin-left:0}.aviso-mini{color:var(--erro)}
 .bloco button.tecla{border-style:dashed;color:var(--acento)}
 .bloco.cat-Som{border-left-color:#14b8a6}
+
+[hidden] { display: none !important; }
+
+.cab-comp { display: flex; justify-content: space-between; align-items: center; }
+.cab-comp .mini { padding: 0 .4rem; min-width: 0; line-height: 1.4; opacity: .7; }

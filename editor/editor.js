@@ -69,7 +69,7 @@
       if (e.id === sel) b.setAttribute('aria-current', 'true'); b.addEventListener('click', () => selecionar(e.id)); li.append(b); ul.append(li);
     }
   }
-  function atualizarAcoes() { const tem = sel != null && !!cena.get(sel); $('e-duplicar').disabled = !tem; $('e-remover').disabled = !tem; $('e-play').disabled = engine.rodando; $('e-parar').disabled = !engine.rodando; atualizarHistorico(); }
+  function atualizarAcoes() { const tem = sel != null && !!cena.get(sel); $('e-duplicar').disabled = !tem || engine.rodando; $('e-remover').disabled = !tem || engine.rodando; $('e-criar').disabled = engine.rodando; $('e-play').disabled = engine.rodando; $('e-parar').disabled = !engine.rodando; atualizarHistorico(); }
   function selecionar(id) { sel = id != null && cena.get(id) ? id : null; listar(); props(); redesenhar(); atualizarAcoes(); if (window.editor && window.editor.aoSelecionar) window.editor.aoSelecionar(); }
   function nomeLivre(base) { let nome = base, n = 2; while (cena.find(nome)) nome = base + ' ' + n++; return nome; }
   function criar() { const e = cena.create({ nome: nomeLivre('objeto'), Transform: { x: 400, y: 225 }, Body: { forma: 'circulo', raio: 18, massa: 1, elasticidade: 0.4 }, Sprite: { forma: 'circulo', raio: 18, cor: '#a78bfa' } }); selecionar(e.id); msg('Objeto criado.', 'ok'); json(); }
@@ -78,7 +78,7 @@
   function duplicar() { const e = cena.get(sel); if (!e) return; const d = JSON.parse(JSON.stringify(e)); delete d.id; d.nome = nomeLivre((e.nome || 'objeto') + ' cópia'); d.Transform.x += 24; d.Transform.y += 24; const novo = cena.create(d); selecionar(novo.id); msg('Objeto duplicado.', 'ok'); json(); }
   function remover() { if (sel == null || !cena.get(sel)) return; cena.destroy(sel); cena.flush(); sel = null; listar(); props(); redesenhar(); atualizarAcoes(); msg('Objeto removido.', 'ok'); json(); }
   function play() { historicoSuspenso = true; salvoPlay = JSON.stringify(C.Serializer.paraJSON(cena)); input = new Core.Input(tela, renderer); engine.input = input; engine.audio = Core.Audio ? new Core.Audio() : null; if (window.EditorCenas) EditorCenas.registrar(engine); engine.iniciar(); atualizarAcoes(); msg('Motor em execução.', 'ok'); }
-  function parar() { engine.parar(); engine.audio = null; if (input) { input.destruir(); input = null; engine.input = null; } if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(false); redesenhar(); } historicoSuspenso = false; if (modoJogo) { modoJogo = false; document.body.classList.remove('modo-jogo'); $('e-jogar').textContent = 'Jogar'; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
+  function parar() { engine.parar(); engine.audio = null; if (input) { input.destruir(); input = null; engine.input = null; } if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(false); redesenhar(); } historicoSuspenso = false; if (modoJogo) { modoJogo = false; document.body.classList.remove('modo-jogo'); $('e-jogar').textContent = 'Tela cheia'; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
   function jogar() { if (modoJogo) return parar(); persistirAtual(); modoJogo = true; document.body.classList.add('modo-jogo'); $('e-jogar').textContent = 'Sair'; play(); if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); }
 
   // ---- propriedades (só mostra o que a entidade já tem)
@@ -94,7 +94,9 @@
     if (!e) { box.append(el('div', 'vazio', 'Nenhum objeto selecionado.')); return; }
     const nome = el('input'); nome.value = e.nome; nome.addEventListener('change', () => aplicar(null, 'nome', nome.value)); box.append(campo('nome', nome));
     for (const comp in CAMPOS) {
-      if (!e[comp]) continue; const g = el('div', 'grupo'); g.append(el('b', null, comp));
+      if (!e[comp]) continue; const g = el('div', 'grupo'), cab = el('div', 'cab-comp'); cab.append(el('b', null, comp));
+      if (comp !== 'Transform') { const rm = el('button', 'mini', '✕'); rm.type = 'button'; rm.title = 'Remover ' + comp; rm.setAttribute('aria-label', 'Remover o componente ' + comp); rm.addEventListener('click', () => definir(comp, undefined)); cab.append(rm); }
+      g.append(cab);
       for (const [k, tipo, op] of CAMPOS[comp]) {
         if (!(k in e[comp])) continue; const v = e[comp][k]; let i;
         if (tipo === 'sel') { i = el('select'); for (const o of op) { const x = el('option', null, o); x.value = o; i.append(x); } i.value = v; }
@@ -107,6 +109,13 @@
       }
       box.append(g);
     }
+    const falta = COMPONENTES.filter(([, mud]) => Object.keys(mud).some(k => !e[k]));
+    if (falta.length) {
+      const add = el('select'); add.setAttribute('aria-label', 'Adicionar componente'); add.append(new Option('+ componente…', ''));
+      for (const [rot] of falta) add.append(new Option(rot, rot));
+      add.addEventListener('change', () => { const it = COMPONENTES.find(c => c[0] === add.value); if (it) adicionar(it[1]); });
+      box.append(add);
+    }
     const m = el('div', 'grupo'); m.append(el('b', null, 'Marcas'));
     const et = el('input'); et.value = (e.Etiquetas || []).join(', '); et.placeholder = 'inimigo, moeda'; et.addEventListener('change', () => definir('Etiquetas', et.value.split(',').map(x => x.trim()).filter(Boolean)));
     const at = el('input'); at.value = Object.entries(e.Attr || {}).map(([k, v]) => k + '=' + v).join(', '); at.placeholder = 'vida=3, nome=Zé';
@@ -117,6 +126,23 @@
     });
     const mo = el('input'); mo.type = 'checkbox'; mo.checked = e.Modelo !== undefined; mo.style.width = 'auto'; mo.addEventListener('change', () => definir('Modelo', mo.checked ? {} : undefined));
     m.append(campo('etiquetas', et), campo('atributos', at), campo('modelo (só molde)', mo)); box.append(m);
+  }
+  // Componentes que dá para adicionar pelo painel (o motor valida tudo antes de aceitar).
+  const BODY = { massa: 1, elasticidade: 0, amortecimento: 0 };
+  const COMPONENTES = [
+    ['Colisão retangular (hitbox)', { Body: Object.assign({ forma: 'retangulo', w: 32, h: 32 }, BODY), Velocity: { vx: 0, vy: 0 } }],
+    ['Colisão circular (hitbox)', { Body: Object.assign({ forma: 'circulo', raio: 16 }, BODY), Velocity: { vx: 0, vy: 0 } }],
+    ['Parede (colisão parada)', { Body: { forma: 'retangulo', w: 64, h: 16, massa: 0, elasticidade: 0.3 } }],
+    ['Andar com as setas', { Controller: { aceleracao: 1800, velMax: 280 }, Velocity: { vx: 0, vy: 0 } }],
+    ['Aparência (Sprite)', { Sprite: { forma: 'retangulo', w: 32, h: 32, cor: '#4af' } }],
+    ['Botão (clicável)', { Botao: { acao: {} } }]
+  ];
+  function adicionar(mud) {
+    const e = cena.get(sel); if (!e) return; const copia = JSON.parse(JSON.stringify(e));
+    for (const k in mud) if (!copia[k]) copia[k] = JSON.parse(JSON.stringify(mud[k]));
+    try { new C.Scene().create(copia); } catch (x) { msg(x.message, 'erro'); props(); return; }
+    for (const k in mud) if (!e[k]) e[k] = JSON.parse(JSON.stringify(mud[k]));
+    msg('', ''); listar(); props(); redesenhar(); json();
   }
   // Troca um componente inteiro (ou remove, se vazio/undefined); o motor valida numa cópia antes.
   function definir(comp, valor) {
@@ -183,8 +209,8 @@
     }
     return melhor;
   }
-  tela.addEventListener('click', ev => { if (arrastando) return; const w = mundo(ev), h = escolher(w.x, w.y); selecionar(h ? h.id : null); });
-  tela.addEventListener('pointerdown', ev => { const w = mundo(ev), h = escolher(w.x, w.y); if (!h) return; selecionar(h.id); arrastando = { id: h.id, dx: w.x - h.Transform.x, dy: w.y - h.Transform.y, mudou: false }; tela.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+  tela.addEventListener('click', ev => { if (arrastando || engine.rodando) return; /* durante o Play o editor é só leitura */ const w = mundo(ev), h = escolher(w.x, w.y); selecionar(h ? h.id : null); });
+  tela.addEventListener('pointerdown', ev => { if (engine.rodando) return; const w = mundo(ev), h = escolher(w.x, w.y); if (!h) return; selecionar(h.id); arrastando = { id: h.id, dx: w.x - h.Transform.x, dy: w.y - h.Transform.y, mudou: false }; tela.setPointerCapture(ev.pointerId); ev.preventDefault(); });
   tela.addEventListener('pointermove', ev => { const w = mundo(ev), h = arrastando && cena.get(arrastando.id); if (h) { h.Transform.x = w.x - arrastando.dx; h.Transform.y = w.y - arrastando.dy; arrastando.mudou = true; props(); json(false); redesenhar(); } const sob = escolher(w.x, w.y); $('status').textContent = 'x ' + Math.round(w.x) + ' · y ' + Math.round(w.y) + (sob ? ' · ' + (sob.nome || 'sem nome') + ' #' + sob.id : ''); });
   tela.addEventListener('pointerup', () => { if (arrastando && arrastando.mudou) registrarSnapshot(); arrastando = null; });
   $('c-col').addEventListener('change', redesenhar);
