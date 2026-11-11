@@ -272,6 +272,8 @@ const nova=()=>new C.Engine();
  e=nova();e.scene.create({nome:'a',Transform:{x:0,y:0},Sprite:{w:40,h:40,fixo:true},Script:{nome:'s'}});e.scene.estado.scripts={s:{blocos:bl,fonte:G.gerar(bl)}};e.compilarScripts();
  e.input=ptr(0,0,true,false);e.passo();ok(!e.scene.find('a').Attr,'ponteiro ainda ausente (ativo:false) não conta como clique no canto');
  const sem=new C.Engine({padrao:false});sem.scene.create({nome:'a',Transform:{x:0,y:0},Sprite:{w:10,h:10}});sem.input=ptr(0,0,false,true);sem.passo();ok(sem.ctx.sobre(sem.scene.find('a'))===true,'ctx.sobre funciona com padrao:false (sem o sistema ui)');}
+// 9f) câmera: limites sem tamanho são ignorados (antes prendiam a câmera em 0,0)
+{const e=nova();e.scene.create({nome:'a',Transform:{x:300,y:200}});e.scene.estado.camera={x:400,y:225,zoom:2,suavizar:50,seguir:'a',limites:{x0:0,y0:0,x1:0,y1:0}};for(let i=0;i<60;i++)e.passo();ok(Math.abs(e.scene.estado.camera.x-300)<1&&Math.abs(e.scene.estado.camera.y-200)<1,'câmera segue o alvo mesmo com limites 0,0,0,0 (ignorados)');}
 // 10) perfil por sistema
 {const e=nova();e.perfil=true;e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1,vy:0}});for(let i=0;i<5;i++)e.passo();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');

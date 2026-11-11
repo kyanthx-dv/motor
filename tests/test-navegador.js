@@ -159,6 +159,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.fill('#sc-nome', 'orfao'); await p.click('#sc-novo'); await p.selectOption('#sc-lista', 'chuva'); await p.locator('select[aria-label="script do objeto criado"]').selectOption('orfao'); await p.selectOption('#sc-lista', 'orfao'); await p.click('#sc-remover'); await p.selectOption('#sc-lista', 'chuva'); await p.waitForTimeout(100);
   ok(await p.locator('select[aria-label="script do objeto criado"]').evaluate(s => s.style.borderColor === 'red' && s.title === 'script não existe'), 'bloco criar marca script órfão');
   await p.locator('#bl > .pilha > .bloco.hat').first().locator(':scope > select.add').selectOption('mover_x'); await p.locator('#bl > select.add').selectOption('evento_inicio'); await p.locator('#bl > .pilha > .bloco.hat').nth(1).locator(':scope > select.add').selectOption('mover_y'); await p.waitForTimeout(100);
+  await p.setViewportSize({ width: 1280, height: 1800 }); await p.waitForTimeout(100);   // os dois blocos precisam estar visíveis na janela
   const origemArraste = p.locator('#bl > .pilha > .bloco.hat').first().locator(':scope > .pilha > .bloco.cat-Movimento').first(), destinoArraste = p.locator('#bl > .pilha > .bloco.hat').nth(1).locator(':scope > .pilha'); const bo = await origemArraste.boundingBox(), bd = await destinoArraste.boundingBox(); await p.mouse.move(bo.x + bo.width / 2, bo.y + 8); await p.mouse.down(); await p.mouse.move(bd.x + bd.width / 2, bd.y + bd.height / 2, { steps: 5 }); await p.mouse.up(); await p.waitForTimeout(100);
   ok(await p.evaluate(() => { const s = editor.cena.estado.scripts.chuva, primeiro = s.blocos[0].f, segundo = s.blocos[1].f; return !primeiro.some(b => b.t === 'mover_x') && segundo.filter(b => b.t === 'mover_x').length === 1 && segundo.some(b => b.t === 'mover_y'); }), 'arraste move bloco para outro evento sem copiar');
   await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); const antesN = await p.evaluate(() => editor.cena.entities.size); await p.click('#sc-anexar'); await p.click('#e-play'); await p.waitForTimeout(1500);
@@ -220,6 +221,22 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(() => editor.projetoAtual === 'Importado' && EditorCenas.nomes().join() === 'principal,segunda'), 'arquivos: abrir projeto multi-cena recria todas as cenas');
   await p.evaluate(x => EditorArquivos.importar(JSON.stringify(x)), exportado.cena); await p.waitForTimeout(120);
   ok(await p.evaluate(() => editor.projetoAtual === 'Importado 2' && EditorCenas.nomes().length === 1), 'arquivos: abrir cena antiga cria projeto compatível');
+  // ajustes do editor: câmera sem limites falsos, + componente, Play somente leitura, scripts sem sobra
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.evaluate(() => { editor.cena.create({ nome: 'j', Transform: { x: 100, y: 100 }, Sprite: { forma: 'circulo', raio: 16, cor: '#4af' } }); editor.json(); editor.selecionar(editor.cena.find('j').id); });
+  await p.click('#cam-aplicar'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => { const c = editor.cena.estado.camera; return c && c.x === 400 && c.zoom === 1 && c.limites === undefined; }), 'câmera: Aplicar com campos de limite vazios não cria limites 0,0,0,0');
+  await p.selectOption('select[aria-label="Adicionar componente"]', 'Colisão retangular (hitbox)'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => { const e = editor.cena.find('j'); return e.Body && e.Body.forma === 'retangulo' && e.Velocity; }), '+ componente: hitbox retangular com Velocity');
+  await p.locator('button[aria-label="Remover o componente Body"]').click(); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => !editor.cena.find('j').Body), '✕ remove o componente');
+  await p.click('#e-play'); await p.waitForTimeout(200);
+  const pos0 = await p.evaluate(() => JSON.stringify(editor.cena.find('j').Transform)); const bx = await p.locator('#tela').boundingBox();
+  await p.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2); await p.mouse.down(); await p.mouse.move(bx.x + 20, bx.y + 20, { steps: 5 }); await p.mouse.up();
+  ok(await p.evaluate(p0 => JSON.stringify(editor.engine.scene.find('j').Transform) === p0 && document.getElementById('e-criar').disabled, pos0), 'Play: editor somente leitura (não arrasta nem cria)');
+  await p.click('#e-parar');
+  await p.fill('#projeto-nome', 'Vazio2'); await p.click('#projeto-criar'); await p.waitForTimeout(200);
+  ok(await p.evaluate(() => document.getElementById('bl').children.length === 0 && document.getElementById('e-jogar').textContent === 'Tela cheia'), 'projeto novo: painel de blocos sem sobra do projeto anterior; botão Tela cheia');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
