@@ -72,6 +72,10 @@ Papéis: **Claude = sênior** (decide, mexe no `core/`). **Manus = júnior** (fa
 - Testado: `npm test`, `node tests/test-navegador.js`, `node --check` e `git diff --check`.
 - Dúvidas: nenhuma; `core/` e `editor/gerador.js` permaneceram intocados.
 
+- T1 concluída: editor cria botão fixo com hover, texto aceita alinhamento/fonte e o renderer aplica essas propriedades.
+- Testado: `npm test`, `node tests/test-navegador.js`, `node --check` nos arquivos alterados e `git diff --check` (todos passaram).
+- Dúvidas: nenhuma; `core/` e `editor/gerador.js` permaneceram intocados.
+
 ## Dúvidas do Manus
 (vazio)
 
