@@ -19,7 +19,7 @@
   const sincronizar = () => { for (const e of cena.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; } };
   const redesenhar = () => { sujo = true; };
   function obsTexto() { const n = $('obs'); if (!n) return; const t = engine.rodando ? Object.entries(engine.observados || {}).map(([k, v]) => k + ' = ' + v).join('  ·  ') : ''; if (n.textContent !== t) n.textContent = t; n.hidden = !t; }
-  function loop() { obsTexto(); if (sujo) { sujo = false; sincronizar(); renderer.selecionada = sel; renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
+  function loop() { obsTexto(); if (sujo) { sujo = false; if (!engine.rodando && C.Systems.hierarquia) C.Systems.hierarquia(cena); sincronizar(); renderer.selecionada = sel; renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
   new ResizeObserver(redesenhar).observe(tela);   // registrado depois do observer do renderer: ele redimensiona primeiro
 
   const msg = (t, tipo) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (tipo || ''); };
@@ -64,8 +64,10 @@
   function listar() {
     const ul = $('lista'); ul.innerHTML = ''; const todos = [...cena.entities.values()];
     $('n-obj').textContent = '(' + todos.length + ')';
-    for (const e of todos) {
-      const li = el('li'), b = el('button'); b.type = 'button'; b.append(el('span', null, e.nome || 'sem nome'), el('i', null, '#' + e.id));
+    const ordem = [], visita = (e, d) => { ordem.push([e, d]); for (const f of todos) if (f.Pai && f.Pai.id === e.id && d < 20) visita(f, d + 1); };
+    for (const e of todos) if (!e.Pai || !cena.get(e.Pai.id)) visita(e, 0);   // raízes primeiro; filhos logo abaixo do pai, com recuo
+    for (const [e, prof] of ordem) {
+      const li = el('li'), b = el('button'); b.type = 'button'; b.style.paddingLeft = (0.6 + prof * 1.1) + 'rem'; b.append(el('span', null, (prof ? '↳ ' : '') + (e.nome || 'sem nome')), el('i', null, '#' + e.id));
       if (e.id === sel) b.setAttribute('aria-current', 'true'); b.addEventListener('click', () => selecionar(e.id)); li.append(b); ul.append(li);
     }
   }
@@ -116,6 +118,10 @@
       add.addEventListener('change', () => { const it = COMPONENTES.find(c => c[0] === add.value); if (it) adicionar(it[1]); });
       box.append(add);
     }
+    const pai = el('select'); pai.setAttribute('aria-label', 'Pai do objeto'); pai.append(new Option('(sem pai)', ''));
+    for (const o of cena.entities.values()) if (o !== e && !cena.descendeDe(o, e)) pai.append(new Option((o.nome || 'sem nome') + ' #' + o.id, String(o.id)));
+    pai.value = e.Pai ? String(e.Pai.id) : '';
+    pai.addEventListener('change', () => { if (pai.value === '') cena.soltar(e); else if (!cena.adotar(e, cena.get(Number(pai.value)))) { msg('Não dá para usar esse objeto como pai.', 'erro'); return props(); } msg('', ''); listar(); props(); redesenhar(); json(); registrarSnapshot(); });
     const m = el('div', 'grupo'); m.append(el('b', null, 'Marcas'));
     const et = el('input'); et.value = (e.Etiquetas || []).join(', '); et.placeholder = 'inimigo, moeda'; et.addEventListener('change', () => definir('Etiquetas', et.value.split(',').map(x => x.trim()).filter(Boolean)));
     const at = el('input'); at.value = Object.entries(e.Attr || {}).map(([k, v]) => k + '=' + v).join(', '); at.placeholder = 'vida=3, nome=Zé';
@@ -125,7 +131,7 @@
       definir('Attr', o);
     });
     const mo = el('input'); mo.type = 'checkbox'; mo.checked = e.Modelo !== undefined; mo.style.width = 'auto'; mo.addEventListener('change', () => definir('Modelo', mo.checked ? {} : undefined));
-    m.append(campo('etiquetas', et), campo('atributos', at), campo('modelo (só molde)', mo)); box.append(m);
+    m.append(campo('pai', pai), campo('etiquetas', et), campo('atributos', at), campo('modelo (só molde)', mo)); box.append(m);
   }
   // Componentes que dá para adicionar pelo painel (o motor valida tudo antes de aceitar).
   const BODY = { massa: 1, elasticidade: 0, amortecimento: 0 };
@@ -153,11 +159,14 @@
     msg('', ''); listar(); props(); redesenhar(); json();
   }
   // Valida com o próprio motor numa cópia; só aplica se o motor aceitar.
+  // Filho: mexer na posição dele muda o deslocamento em relação ao pai (o pai mexendo leva os filhos junto).
+  function ajustarDeslocamento(h) { const p = h.Pai && cena.get(h.Pai.id); if (p && p.Transform) { h.Pai.dx = h.Transform.x - p.Transform.x; h.Pai.dy = h.Transform.y - p.Transform.y; } }
   function aplicar(comp, k, valor) {
     const e = cena.get(sel); if (!e) return; const copia = JSON.parse(JSON.stringify(e));
     if (comp) copia[comp][k] = valor; else copia[k] = valor;
     try { new C.Scene().create(copia); } catch (x) { msg(x.message, 'erro'); props(); return; }
     if (comp) e[comp][k] = valor; else e[k] = valor;
+    if (comp === 'Transform') ajustarDeslocamento(e);
     msg('', ''); listar(); props(); redesenhar(); json();
   }
 
@@ -211,7 +220,7 @@
   }
   tela.addEventListener('click', ev => { if (arrastando || engine.rodando) return; /* durante o Play o editor é só leitura */ const w = mundo(ev), h = escolher(w.x, w.y); selecionar(h ? h.id : null); });
   tela.addEventListener('pointerdown', ev => { if (engine.rodando) return; const w = mundo(ev), h = escolher(w.x, w.y); if (!h) return; selecionar(h.id); arrastando = { id: h.id, dx: w.x - h.Transform.x, dy: w.y - h.Transform.y, mudou: false }; tela.setPointerCapture(ev.pointerId); ev.preventDefault(); });
-  tela.addEventListener('pointermove', ev => { const w = mundo(ev), h = arrastando && cena.get(arrastando.id); if (h) { h.Transform.x = w.x - arrastando.dx; h.Transform.y = w.y - arrastando.dy; arrastando.mudou = true; props(); json(false); redesenhar(); } const sob = escolher(w.x, w.y); $('status').textContent = 'x ' + Math.round(w.x) + ' · y ' + Math.round(w.y) + (sob ? ' · ' + (sob.nome || 'sem nome') + ' #' + sob.id : ''); });
+  tela.addEventListener('pointermove', ev => { const w = mundo(ev), h = arrastando && cena.get(arrastando.id); if (h) { h.Transform.x = w.x - arrastando.dx; h.Transform.y = w.y - arrastando.dy; ajustarDeslocamento(h); arrastando.mudou = true; props(); json(false); redesenhar(); } const sob = escolher(w.x, w.y); $('status').textContent = 'x ' + Math.round(w.x) + ' · y ' + Math.round(w.y) + (sob ? ' · ' + (sob.nome || 'sem nome') + ' #' + sob.id : ''); });
   tela.addEventListener('pointerup', () => { if (arrastando && arrastando.mudou) registrarSnapshot(); arrastando = null; });
   $('c-col').addEventListener('change', redesenhar);
 

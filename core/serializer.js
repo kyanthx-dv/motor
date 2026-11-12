@@ -47,6 +47,10 @@
         if (!isObj(e)) throw new Error('save inválido: entidade #' + i + ' não é um objeto');
         tmp.create(e);                                           // valida id (inteiro, único) e componentes
       });
+      for (const e of tmp.entities.values()) if (e.Pai) {   // referências de pai: existem e não formam ciclo
+        if (!tmp.entities.has(e.Pai.id)) throw new Error('save inválido: entidade "' + (e.nome || e.id) + '" tem um pai que não existe (id ' + e.Pai.id + ')');
+        if (tmp.descendeDe(tmp.entities.get(e.Pai.id), e)) throw new Error('save inválido: ciclo de pais em "' + (e.nome || e.id) + '"');
+      }
       scene.entities = tmp.entities; scene.nextId = tmp.nextId; scene.estado = tmp.estado; scene._remover = new Set();
       return scene;
     }

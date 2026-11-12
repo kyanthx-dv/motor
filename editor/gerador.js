@@ -18,6 +18,7 @@
     if (o === 'proprio' || o === undefined) return 'e';
     if (o === 'outro') return "(typeof d !== 'undefined' && d ? ctx.scene.get(d.outro) : null)";
     if (o === 'cada') return 'it';
+    if (o === 'pai') return '((o) => (o && o.Pai ? ctx.scene.get(o.Pai.id) : null))(e)';
     if (typeof o === 'string' && o.startsWith('p:') && o.length > 2 && o.length < 35) return '((tag) => { let m = null, dm = Infinity; for (const o of ctx.scene.query("Etiquetas", "Transform")) { if (o !== e && o.Etiquetas.includes(tag)) { const dx = o.Transform.x - e.Transform.x, dy = o.Transform.y - e.Transform.y, dd = dx * dx + dy * dy; if (dd < dm) { dm = dd; m = o; } } } return m; })(' + JSON.stringify(o.slice(2)) + ')';
     if (typeof o === 'string' && o.startsWith('n:') && o.length > 2 && o.length < 45) return 'ctx.scene.find(' + JSON.stringify(o.slice(2)) + ')';
     throw erro('objeto inválido: ' + o);
@@ -94,6 +95,8 @@
     somar_attr: { cat: 'Objeto', menu: 'somar a um atributo de um objeto', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }],
       ger: b => { const d = attrDef(b.a); if (d.t === 'txt') throw erro('só dá para somar em atributos numéricos'); const ini = INI[d.c] || '', ok = (INI[d.c] ? 'true' : 'o.' + d.c);
         return ['{', '  const o = ' + objExpr(b.o) + ', v = Number(' + valor(b.v) + ');', '  if (o && isFinite(v) && ' + ok + ') { ' + ini + 'o.' + d.c + '.' + d.p + ' = (Number(o.' + d.c + '.' + d.p + ') || 0) + v; }', '}']; } },
+    adotar: { cat: 'Objeto', menu: 'tornar filho de outro objeto', campos: [{ t: 'tornar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { t: 'filho de' }, { n: 'p', tipo: 'obj', padrao: 'outro' }], ger: b => ['ctx.scene.adotar(' + objExpr(b.o) + ', ' + objExpr(b.p) + ');'] },
+    soltar: { cat: 'Objeto', menu: 'soltar do pai', campos: [{ t: 'soltar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { t: 'do pai' }], ger: b => ['ctx.scene.soltar(' + objExpr(b.o) + ');'] },
     etiquetar: { cat: 'Objeto', menu: 'dar etiqueta a um objeto', campos: [{ t: 'dar a' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { t: 'a etiqueta' }, { n: 'tag', tipo: 'txt', padrao: 'inimigo' }], ger: b => ['{', '  const o = ' + objExpr(b.o) + ', t = ' + tagStr(b.tag) + ';', '  if (o) { if (!o.Etiquetas) o.Etiquetas = []; if (!o.Etiquetas.includes(t) && o.Etiquetas.length < 20) o.Etiquetas.push(t); }', '}'] },
     clonar: { cat: 'Objeto', menu: 'criar cópia de um objeto (modelo)', campos: [{ t: 'criar cópia de' }, { n: 'nome', tipo: 'objn', padrao: '' }, { t: 'em x' }, { n: 'vx', tipo: 'valor', padrao: { k: 'x' } }, { t: 'y' }, { n: 'vy', tipo: 'valor', padrao: { k: 'y' } }],
       ger: b => { if (typeof b.nome !== 'string' || !b.nome) throw erro('escolha o objeto a copiar'); return ['{', '  const src = ctx.scene.find(' + JSON.stringify(b.nome) + ');', '  if (src) ctx.scene.clonar(src, { x: ' + valor(b.vx) + ', y: ' + valor(b.vy) + ' });', '}']; } },

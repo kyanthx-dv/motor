@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','variaveis','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','variaveis','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -274,6 +274,16 @@ const nova=()=>new C.Engine();
  const sem=new C.Engine({padrao:false});sem.scene.create({nome:'a',Transform:{x:0,y:0},Sprite:{w:10,h:10}});sem.input=ptr(0,0,false,true);sem.passo();ok(sem.ctx.sobre(sem.scene.find('a'))===true,'ctx.sobre funciona com padrao:false (sem o sistema ui)');}
 // 9f) câmera: limites sem tamanho são ignorados (antes prendiam a câmera em 0,0)
 {const e=nova();e.scene.create({nome:'a',Transform:{x:300,y:200}});e.scene.estado.camera={x:400,y:225,zoom:2,suavizar:50,seguir:'a',limites:{x0:0,y0:0,x1:0,y1:0}};for(let i=0;i<60;i++)e.passo();ok(Math.abs(e.scene.estado.camera.x-300)<1&&Math.abs(e.scene.estado.camera.y-200)<1,'câmera segue o alvo mesmo com limites 0,0,0,0 (ignorados)');}
+// 9g) hierarquia: filhos seguem o pai, remoção em cascata, ciclos recusados, save checado
+{const e=nova(),S=e.scene,pai=S.create({nome:'pai',Transform:{x:100,y:100},Velocity:{vx:60,vy:0}}),fil=S.create({nome:'filho',Transform:{x:0,y:0},Pai:{id:pai.id,dx:10,dy:-5}}),neto=S.create({nome:'neto',Transform:{x:0,y:0},Pai:{id:fil.id,dx:1,dy:1}});
+ e.passo();ok(Math.abs(fil.Transform.x-(pai.Transform.x+10))<1e-9&&fil.Transform.y===95&&Math.abs(neto.Transform.x-(fil.Transform.x+1))<1e-9,'filho e neto seguem o pai (posição + deslocamento)');
+ const pf=nova(),A=pf.scene.create({nome:'a',Transform:{x:0,y:0}}),B=pf.scene.create({nome:'b',Transform:{x:50,y:20}});ok(pf.scene.adotar(B,A)&&B.Pai.dx===50&&B.Pai.dy===20&&!pf.scene.adotar(A,B)&&!pf.scene.adotar(A,A),'adotar mantém a posição e recusa ciclo e auto-adoção');
+ pf.scene.soltar(B);ok(!B.Pai,'soltar remove o pai');pf.scene.adotar(B,A);pf.scene.destroy(A.id);pf.scene.flush();ok(!pf.scene.get(B.id),'remover o pai remove os filhos');
+ const lim=fn=>{try{fn();return''}catch(x){return x.message}};
+ ok(/Pai/.test(lim(()=>nova().scene.create({Pai:{id:'x'}})))&&/Pai/.test(lim(()=>nova().scene.create({id:3,Pai:{id:3}}))),'validação do componente Pai');
+ const sv=C.Serializer.paraJSON(S);const e2=nova();C.Serializer.deJSON(e2.scene,JSON.parse(JSON.stringify(sv)));ok(e2.scene.find('neto').Pai.id===fil.id,'Pai salva e carrega');
+ const ruim=JSON.parse(JSON.stringify(sv));ruim.entidades.find(x=>x.nome==='filho').Pai.id=999;ok(/pai que não existe/.test(lim(()=>C.Serializer.deJSON(nova().scene,ruim))),'save com pai inexistente é recusado');
+ const ciclo=JSON.parse(JSON.stringify(sv));ciclo.entidades.find(x=>x.nome==='pai').Pai={id:neto.id,dx:0,dy:0};ok(/ciclo/.test(lim(()=>C.Serializer.deJSON(nova().scene,ciclo))),'save com ciclo de pais é recusado');}
 // 10) perfil por sistema
 {const e=nova();e.perfil=true;e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1,vy:0}});for(let i=0;i<5;i++)e.passo();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');

@@ -26,7 +26,9 @@
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
       this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
-        this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts); this.usar('fisica', C.Systems.fisica);
+        this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
+        if (C.Systems.hierarquia) this.usar('hierarquia', C.Systems.hierarquia);   // filhos seguem o pai (opcional: jogos sem hierarquia não precisam carregar o arquivo)
+        this.usar('fisica', C.Systems.fisica); if (C.Systems.hierarquia) this.usar('hierarquia2', C.Systems.hierarquia);
         this.usar('animacao', C.Systems.animacao); this.usar('camera', C.Systems.camera);
       }
       // Eventos com { para: id } vão para o script da entidade (def.eventos[nome])

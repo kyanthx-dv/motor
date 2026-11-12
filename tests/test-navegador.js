@@ -237,6 +237,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#e-parar');
   await p.fill('#projeto-nome', 'Vazio2'); await p.click('#projeto-criar'); await p.waitForTimeout(200);
   ok(await p.evaluate(() => document.getElementById('bl').children.length === 0 && document.getElementById('e-jogar').textContent === 'Tela cheia'), 'projeto novo: painel de blocos sem sobra do projeto anterior; botão Tela cheia');
+  // hierarquia no editor: escolher pai, filho segue o pai, lista com recuo, remover pai leva os filhos
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.evaluate(() => { editor.cena.create({ nome: 'dono', Transform: { x: 100, y: 100 }, Sprite: { w: 20, h: 20, cor: '#fff' } }); editor.cena.create({ nome: 'arma', Transform: { x: 130, y: 100 }, Sprite: { w: 10, h: 10, cor: '#f00' } }); editor.json(); editor.selecionar(editor.cena.find('arma').id); });
+  await p.selectOption('select[aria-label="Pai do objeto"]', { label: 'dono #' + await p.evaluate(() => editor.cena.find('dono').id) }); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => { const a = editor.cena.find('arma'); return a.Pai && a.Pai.dx === 30 && a.Pai.dy === 0; }), 'editor: escolher pai guarda o deslocamento');
+  await p.evaluate(() => { const d = editor.cena.find('dono'); d.Transform.x = 200; editor.redesenhar(); }); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => editor.cena.find('arma').Transform.x === 230), 'editor: mover o pai leva o filho');
+  ok(await p.evaluate(() => /↳ arma/.test(document.getElementById('lista').textContent)), 'lista de objetos mostra o filho recuado');
+  await p.evaluate(() => { editor.cena.destroy(editor.cena.find('dono').id); editor.cena.flush(); }); ok(await p.evaluate(() => !editor.cena.find('dono') && !editor.cena.find('arma')), 'remover o pai remove o filho');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

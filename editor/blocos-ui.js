@@ -86,7 +86,7 @@
       return w;
     }
     function campoObj(h, n) {
-      const nomes = opc.objetos ? opc.objetos() : [], ops = [['proprio', 'este objeto'], ['outro', 'o outro objeto'], ['cada', 'cada objeto (dentro de "para cada")'], ...(opc.etiquetas ? opc.etiquetas() : []).map(t => ['p:' + t, 'o mais próximo com etiqueta ' + t]), ...nomes.map(x => ['n:' + x, x])];
+      const nomes = opc.objetos ? opc.objetos() : [], ops = [['proprio', 'este objeto'], ['outro', 'o outro objeto'], ['cada', 'cada objeto (dentro de "para cada")'], ['pai', 'o pai deste objeto'], ...(opc.etiquetas ? opc.etiquetas() : []).map(t => ['p:' + t, 'o mais próximo com etiqueta ' + t]), ...nomes.map(x => ['n:' + x, x])];
       if (!ops.some(o => o[0] === h[n])) ops.push([h[n], (h[n] || '').replace(/^n:/, '') + ' (não existe)']);
       return sel(ops, h[n] === undefined ? 'proprio' : h[n], x => { h[n] = x; mudou(); }, 'objeto');
     }

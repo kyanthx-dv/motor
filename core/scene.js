@@ -26,6 +26,10 @@
       }
     }
     if (e.Etiquetas !== undefined && !(Array.isArray(e.Etiquetas) && e.Etiquetas.length <= 20 && e.Etiquetas.every(t => typeof t === 'string' && t.length >= 1 && t.length <= 30))) throw new Error('entidade "' + n + '": Etiquetas precisa ser uma lista de até 20 textos (1 a 30 letras)');
+    if (e.Pai !== undefined) {
+      const P = e.Pai; if (P === null || typeof P !== 'object' || Array.isArray(P) || !Number.isInteger(P.id) || P.id < 0 || P.id === e.id) throw new Error('entidade "' + n + '": Pai precisa ser { id: inteiro de OUTRA entidade, dx, dy }');
+      for (const k of ['dx', 'dy']) if (P[k] !== undefined && !(typeof P[k] === 'number' && isFinite(P[k]))) throw new Error('entidade "' + n + '": Pai.' + k + ' precisa ser número');
+    }
     if (e.Modelo !== undefined && (e.Modelo === null || typeof e.Modelo !== 'object')) throw new Error('entidade "' + n + '": Modelo precisa ser um objeto');
     if (e.Body) {
       const b = e.Body, circ = b.forma === 'circulo' || (!b.forma && b.raio !== undefined);
@@ -70,7 +74,18 @@
     find(nome) { for (const e of this.entities.values()) if (e.nome === nome) return e; return null; }
     findAll(nome) { return [...this.entities.values()].filter(e => e.nome === nome); }
     // Marca para remover no fim do passo (remover no meio quebraria os laços dos sistemas).
-    destroy(id) { this._remover.add(id); }
+    destroy(id) {   // remover um pai remove todos os descendentes
+      this._remover.add(id);
+      for (let mudou = true; mudou;) { mudou = false; for (const e of this.entities.values()) if (e.Pai && this._remover.has(e.Pai.id) && !this._remover.has(e.id)) { this._remover.add(e.id); mudou = true; } }
+    }
+    filhos(id) { return [...this.entities.values()].filter(e => e.Pai && e.Pai.id === id); }
+    descendeDe(e, ancestral) { let x = e, n = 0; while (x && x.Pai && n++ < 100) { if (x.Pai.id === ancestral.id) return true; x = this.entities.get(x.Pai.id); } return false; }
+    // Torna `filho` filho de `pai` mantendo a posição atual. Recusa ciclos e auto-adoção. Devolve true/false.
+    adotar(filho, pai) {
+      if (!filho || !pai || filho === pai || this.descendeDe(pai, filho) || !filho.Transform || !pai.Transform) return false;
+      filho.Pai = { id: pai.id, dx: filho.Transform.x - pai.Transform.x, dy: filho.Transform.y - pai.Transform.y }; return true;
+    }
+    soltar(filho) { if (filho && filho.Pai) { delete filho.Pai; return true; } return false; }
     flush() { for (const id of this._remover) this.entities.delete(id); this._remover.clear(); }
     // Cria uma cópia de uma entidade (usada com objetos "Modelo"): sem id, sem a marca Modelo, na posição pedida.
     clonar(origem, ajustes = {}) {
