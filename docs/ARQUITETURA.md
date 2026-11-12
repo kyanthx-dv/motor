@@ -166,3 +166,11 @@ Em vez de um bloco por ação, há blocos com menus: **mudar / somar [objeto ▾
 
 ## 23. Várias cenas por projeto (editor)
 A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `localStorage` (`motor.editor.cenas.v1`: `{ projeto: { atual, cenas: { nome: json } } }`), trocadas por `EditorCenas.irPara`. No Play, `EditorCenas.registrar(engine)` registra todas com `engine.registrarCenaJSON`, e o bloco "ir para a cena" troca entre elas; "reiniciar o jogo" volta ao começo da cena atual. Renomear uma cena atualiza os blocos "ir para a cena" de todas. Ao baixar/abrir arquivo de projeto use `EditorCenas.exportar()`.
+
+## 24. Hierarquia (pai e filhos)
+- **Componente `Pai: { id, dx, dy }`** (validado em `core/scene.js`): o filho segue o pai, com `Transform = Transform do pai + (dx, dy)`. Só posição (não herda rotação). O sistema `hierarquia` (`core/systems/hierarquia.js`, opcional) roda antes e depois da física, então o filho nunca fica um quadro atrasado; ciclos são ignorados.
+- **Uso típico:** sensores, armas, efeitos e textos presos a um objeto. Filhos com `Body` dinâmico são sobrescritos pelo pai; use sensores ou objetos sem física.
+- **Cena:** `scene.adotar(filho, pai)` (mantém a posição atual; recusa ciclo e auto-adoção), `scene.soltar(filho)`, `scene.filhos(id)`, `scene.descendeDe(e, ancestral)`. `scene.destroy(pai)` remove todos os descendentes.
+- **Save:** `Serializer.deJSON` recusa pai inexistente e ciclo de pais.
+- **Blocos:** "tornar [objeto] filho de [objeto]", "soltar [objeto] do pai" e o objeto "o pai deste objeto".
+- **Editor:** campo "pai" no painel Marcas; a lista de objetos mostra os filhos recuados sob o pai; mover o pai leva os filhos e mover um filho muda só o deslocamento dele.
