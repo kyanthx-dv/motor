@@ -61,6 +61,8 @@
   function inicializarProjetos() { projetos = lerProjetos(); const nomes = Object.keys(projetos).sort(); if (!nomes.length) { projetoAtual = 'Exemplo'; projetos[projetoAtual] = C.Serializer.paraJSON(cena); guardarProjetos(); } else abrirProjeto(nomes[0]); atualizarProjetos(); }
 
   // ---- lista de objetos
+  $('lista').addEventListener('dragover', ev => { if ([...ev.dataTransfer.types].includes('text/x-motor-id')) ev.preventDefault(); });
+  $('lista').addEventListener('drop', ev => { const id = Number(ev.dataTransfer.getData('text/x-motor-id')); if (!id && id !== 0) return; ev.preventDefault(); if (cena.get(id) && cena.get(id).Pai) { cena.soltar(cena.get(id)); msg('Objeto solto do pai.', 'ok'); listar(); props(); redesenhar(); json(); registrarSnapshot(); } });
   function listar() {
     const ul = $('lista'); ul.innerHTML = ''; const todos = [...cena.entities.values()];
     $('n-obj').textContent = '(' + todos.length + ')';
@@ -68,7 +70,10 @@
     for (const e of todos) if (!e.Pai || !cena.get(e.Pai.id)) visita(e, 0);   // raízes primeiro; filhos logo abaixo do pai, com recuo
     for (const [e, prof] of ordem) {
       const li = el('li'), b = el('button'); b.type = 'button'; b.style.paddingLeft = (0.6 + prof * 1.1) + 'rem'; b.append(el('span', null, (prof ? '↳ ' : '') + (e.nome || 'sem nome')), el('i', null, '#' + e.id));
-      if (e.id === sel) b.setAttribute('aria-current', 'true'); b.addEventListener('click', () => selecionar(e.id)); li.append(b); ul.append(li);
+      if (e.id === sel) b.setAttribute('aria-current', 'true'); b.addEventListener('click', () => selecionar(e.id)); b.draggable = !engine.rodando; b.addEventListener('dragstart', ev => { ev.dataTransfer.setData('text/x-motor-id', String(e.id)); ev.dataTransfer.effectAllowed = 'move'; });
+      li.addEventListener('dragover', ev => { if ([...ev.dataTransfer.types].includes('text/x-motor-id')) { ev.preventDefault(); li.classList.add('alvo'); } }); li.addEventListener('dragleave', () => li.classList.remove('alvo'));
+      li.addEventListener('drop', ev => { li.classList.remove('alvo'); const id = Number(ev.dataTransfer.getData('text/x-motor-id')); if (!ev.dataTransfer.types.includes('text/x-motor-id')) return; ev.preventDefault(); ev.stopPropagation(); if (id === e.id) return; if (!cena.get(id) || !cena.adotar(cena.get(id), e)) return msg('Não dá para usar esse objeto como pai (ciclo).', 'erro'); msg('"' + (cena.get(id).nome || id) + '" agora é filho de "' + (e.nome || e.id) + '".', 'ok'); listar(); props(); redesenhar(); json(); registrarSnapshot(); });
+      li.append(b); ul.append(li);
     }
   }
   function atualizarAcoes() { const tem = sel != null && !!cena.get(sel); $('e-duplicar').disabled = !tem || engine.rodando; $('e-remover').disabled = !tem || engine.rodando; $('e-criar').disabled = engine.rodando; $('e-play').disabled = engine.rodando; $('e-parar').disabled = !engine.rodando; atualizarHistorico(); }
@@ -122,6 +127,7 @@
     for (const o of cena.entities.values()) if (o !== e && !cena.descendeDe(o, e)) pai.append(new Option((o.nome || 'sem nome') + ' #' + o.id, String(o.id)));
     pai.value = e.Pai ? String(e.Pai.id) : '';
     pai.addEventListener('change', () => { if (pai.value === '') cena.soltar(e); else if (!cena.adotar(e, cena.get(Number(pai.value)))) { msg('Não dá para usar esse objeto como pai.', 'erro'); return props(); } msg('', ''); listar(); props(); redesenhar(); json(); registrarSnapshot(); });
+    if (window.EditorInspetorScript) EditorInspetorScript.montar(box, e);
     const m = el('div', 'grupo'); m.append(el('b', null, 'Marcas'));
     const et = el('input'); et.value = (e.Etiquetas || []).join(', '); et.placeholder = 'inimigo, moeda'; et.addEventListener('change', () => definir('Etiquetas', et.value.split(',').map(x => x.trim()).filter(Boolean)));
     const at = el('input'); at.value = Object.entries(e.Attr || {}).map(([k, v]) => k + '=' + v).join(', '); at.placeholder = 'vida=3, nome=Zé';

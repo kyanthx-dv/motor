@@ -185,3 +185,7 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **`scene.estado.imagens = {nome: dataURL}`** (até 30 por cena, PNG/JPG/WEBP/GIF, ≤600 mil caracteres cada; validado no `deJSON`). O editor encolhe para no máximo 1024 px ao importar. `editor/imagens.js` registra cada uma em `renderer.assets`, então `Sprite.imagem` (com `quadroW`, `quadroH`, `escala`, `espelhar`) já desenha. Limitação: as imagens pertencem à cena onde foram importadas.
 - **Importar:** aba "Imagens" (botão) ou arrastar o arquivo para o canvas (vira objeto na posição do mouse). "Usar" aplica ao objeto selecionado.
 - **Play** agora entra direto em tela cheia (evita estados inconsistentes do editor); sair com Esc ou "Sair do jogo". A vista do editor é guardada e restaurada sem reenquadrar enquanto o layout ainda está em tela cheia (era o bug da grade depois do Play).
+
+## 27. Inspetor de script e árvore por arrastar
+- **Inspetor** (`editor/inspetor-script.js`): grupo "Script" no objeto selecionado: escolher, "+ Novo (blocos)" (cria `<objeto>_script` e abre a janela grande), "✎ Editar", "⧉ Copiar" (`_copia`, `_copia2`…) e "⬇ Baixar .js". Os scripts continuam em `estado.scripts`; o objeto guarda só `Script {nome}`.
+- **Árvore:** na lista de Objetos, arrastar um item sobre outro o torna filho (`scene.adotar`); largar no fundo da lista o solta do pai. Recusa ciclos.

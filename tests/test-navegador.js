@@ -170,6 +170,18 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(n => editor.cena.entities.size === n, antesN), 'Parar descarta os objetos criados durante o jogo');
 
 
+
+  // inspetor por objeto: script (novo/copiar/trocar) e árvore por arrastar
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('.sc-obj >> text=+ Novo (blocos)'); await p.waitForTimeout(200);
+  ok(await p.evaluate(() => { const s = editor.cena.estado.scripts, b = editor.cena.find('bola'); return !!s.bola_script && b.Script.nome === 'bola_script' && document.getElementById('scripts-pane').classList.contains('scripts-grande'); }), 'inspetor: novo script de blocos anexa ao objeto e abre a janela grande');
+  await p.keyboard.press('Escape'); await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id));
+  await p.click('.sc-obj >> text=⧉ Copiar'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => editor.cena.find('bola').Script.nome === 'bola_script_copia' && !!editor.cena.estado.scripts.bola_script_copia), 'inspetor: copiar script cria e anexa a cópia');
+  await p.selectOption('.sc-obj select', ''); ok(await p.evaluate(() => !editor.cena.find('bola').Script), 'inspetor: (nenhum) desanexa o script');
+  const pai = await p.evaluate(() => { const a = editor.cena.find('jogador').id, b = editor.cena.find('bola').id; return { a, b }; });
+  await p.dragAndDrop('#lista li:has-text("bola") button', '#lista li:has-text("jogador") button'); await p.waitForTimeout(150);
+  ok(await p.evaluate(q => editor.cena.get(q.b).Pai && editor.cena.get(q.b).Pai.id === q.a, pai), 'árvore: arrastar um objeto sobre outro o torna filho');
   // imagens: importar, guardar na cena, aplicar ao objeto, sobreviver a salvar/abrir
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   const png = await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 64; c.height = 48; const g = c.getContext('2d'); g.fillStyle = '#e11'; g.fillRect(0, 0, 64, 48); return c.toDataURL('image/png').split(',')[1]; });
