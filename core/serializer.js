@@ -42,6 +42,14 @@
         for (const k in sc) if (!C.Variaveis.NOME.test(k) || !isObj(sc[k]) || typeof sc[k].fonte !== 'string' || sc[k].fonte.length > 50000 || (sc[k].blocos !== undefined && (!Array.isArray(sc[k].blocos) || JSON.stringify(sc[k].blocos).length > 200000))) throw new Error('save inválido: script "' + k + '" (nome inválido ou fonte ausente/grande demais)');
       }
       const tam = d.estado && d.estado.tamanho; if (tam !== undefined && (!isObj(tam) || !(tam.largura >= 100 && tam.largura <= 10000) || !(tam.altura >= 100 && tam.altura <= 10000))) throw new Error('save inválido: estado.tamanho precisa de largura e altura entre 100 e 10000');
+      const ls = d.estado && d.estado.listas;
+      if (ls !== undefined) {
+        if (!isObj(ls) || Object.keys(ls).length > 50) throw new Error('save inválido: estado.listas precisa ser um objeto com até 50 listas');
+        for (const [n, arr] of Object.entries(ls)) {
+          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(n)) throw new Error('save inválido: nome de lista "' + n.slice(0, 30) + '"');
+          if (!Array.isArray(arr) || arr.length > 1000 || !arr.every(C.Listas ? C.Listas.itemOk : (v => typeof v !== 'object'))) throw new Error('save inválido: lista "' + n + '" (até 1000 itens: número, texto ou verdadeiro/falso)');
+        }
+      }
       const ims = d.estado && d.estado.imagens;
       if (ims !== undefined) {
         if (!isObj(ims) || Object.keys(ims).length > 30) throw new Error('save inválido: estado.imagens precisa ser um objeto com até 30 imagens');

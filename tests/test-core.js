@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','variaveis','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -317,5 +317,22 @@ const nova=()=>new C.Engine();
   ok(erros === 6, 'depois/tween recusam argumentos inválidos');
   let boom = null; e.events.on('erro-script', d => { boom = d; }); e.ctx.depois(0, () => { throw new Error('x'); }); e.passo(); ok(boom && /x/.test(boom.mensagem), 'erro dentro do depois vira erro-script e não derruba o motor');
   let rodou = 0; e.ctx.depois(0.1, () => rodou++); e.reiniciar(); for (let i = 0; i < 20; i++) e.passo(); ok(rodou === 0, 'reiniciar cancela temporizadores pendentes');
+}
+
+// 9i. listas
+{
+  const e = nova(), L = e.listas;
+  ok(L.tamanho('inv') === 0 && L.item('inv', 0) === undefined && !L.existe('inv'), 'lista inexistente lê como vazia (sem criar)');
+  L.adicionar('inv', 'espada'); L.adicionar('inv', 3); L.adicionar('inv', true);
+  ok(L.tamanho('inv') === 3 && L.item('inv', 0) === 'espada' && L.contem('inv', 3) && !L.contem('inv', 'arco'), 'adicionar, tamanho, item e contem');
+  L.definir('inv', 1, 9); ok(L.item('inv', 1) === 9, 'definir troca o item');
+  ok(L.remover('inv', 0) === 'espada' && L.tamanho('inv') === 2 && L.item('inv', 0) === 9, 'remover tira e devolve o item');
+  let erros = 0; for (const f of [() => L.adicionar('inv', NaN), () => L.adicionar('inv', {}), () => L.adicionar('1x', 1), () => L.definir('inv', 5, 1), () => L.remover('inv', -1), () => L.adicionar('inv', 'x'.repeat(201))]) { try { f(); } catch (x) { erros++; } }
+  ok(erros === 6, 'listas recusam item inválido, nome inválido e posição fora');
+  for (let i = 0; i < 1000; i++) { try { L.adicionar('cheia', i); } catch (x) { break; } } let cheia = false; try { L.adicionar('cheia', 1); } catch (x) { cheia = true; } ok(L.tamanho('cheia') === 1000 && cheia, 'lista tem limite de 1000 itens');
+  const json = C.Serializer.paraJSON(e.scene), e2 = nova(); C.Serializer.deJSON(e2.scene, JSON.parse(JSON.stringify(json))); ok(e2.listas.item('inv', 0) === 9 && e2.listas.tamanho('inv') === 2, 'listas salvam e carregam');
+  const ruim = JSON.parse(JSON.stringify(json)); ruim.estado.listas.inv = [{ a: 1 }]; let rec = false; try { C.Serializer.deJSON(nova().scene, ruim); } catch (x) { rec = /lista/.test(x.message); } ok(rec, 'save com item de lista inválido é recusado');
+  e.listas.limpar('inv'); ok(e.listas.tamanho('inv') === 0, 'limpar esvazia'); 
+  const e3 = nova(); e3.registrarCena('a', { montar() {} }); e3.registrarCena('b', { montar() {} }); e3.listas.adicionar('bolsa', 1); e3.irPara('a'); e3.irPara('b'); ok(e3.listas.tamanho('bolsa') === 1, 'listas atravessam a troca de cena');
 }
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

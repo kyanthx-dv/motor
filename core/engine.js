@@ -14,7 +14,7 @@
     constructor(opts = {}) {
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
       if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
-      this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this); this.observados = {};
+      this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this); this.listas = C.Listas ? new C.Listas(this) : null; this.observados = {};
       this.input = opts.input || null; this.renderer = opts.renderer || null; this.audio = opts.audio || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
@@ -24,7 +24,7 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, listas: this.listas, get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
         if (C.Systems.tempo) { C.Tempo.instalar(this); this.usar('tempo', C.Systems.tempo); }   // esperar/tween (opcional)
@@ -57,7 +57,7 @@
     }
     _aplicarCena() {
       const { nome, dados } = this._proxima; this._proxima = null;
-      this._limparTempo(); const vars = this.scene.estado.vars; this.scene.clear(); this.events.fila.length = 0; if (vars) this.scene.estado.vars = vars;   // variáveis atravessam a troca de cena
+      this._limparTempo(); const vars = this.scene.estado.vars, listas = this.scene.estado.listas; this.scene.clear(); this.events.fila.length = 0; if (vars) this.scene.estado.vars = vars; if (listas) this.scene.estado.listas = listas;   // variáveis atravessam a troca de cena
       this.scene.estado.cena = nome;   // o nome da cena é salvo junto
       this.cenas[nome].montar(this, dados);
     }
@@ -65,9 +65,9 @@
     // (as da cena nova só entram se ainda não existirem) e religa os scripts da cena.
     registrarCenaJSON(nome, json) {
       return this.registrarCena(nome, { montar: eng => {
-        const antes = eng.scene.estado.vars || {};
+        const antes = eng.scene.estado.vars || {}, antesL = eng.scene.estado.listas || {};
         C.Serializer.deJSON(eng.scene, typeof json === 'string' ? JSON.parse(json) : JSON.parse(JSON.stringify(json)));
-        const novas = eng.scene.estado.vars || {}; eng.scene.estado.vars = Object.assign({}, novas, antes); eng.scene.estado.cena = nome;
+        const novas = eng.scene.estado.vars || {}; eng.scene.estado.vars = Object.assign({}, novas, antes); if (Object.keys(antesL).length || eng.scene.estado.listas) eng.scene.estado.listas = Object.assign({}, eng.scene.estado.listas || {}, antesL); eng.scene.estado.cena = nome;
         eng.compilarScripts();
         eng._inicial = JSON.stringify(C.Serializer.paraJSON(eng.scene));   // "reiniciar" volta para o começo da cena em que o jogador está
       } });
