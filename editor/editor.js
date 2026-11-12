@@ -2,7 +2,7 @@
    Por quê: o editor de celular (Flutter/WebView) vai editar o MESMO formato. */
 (function () {
   const C = Core, $ = id => document.getElementById(id), tela = $('tela');
-  const renderer = new C.CanvasRenderer(tela, { largura: 800, altura: 450, fundo: '#2b3a4a' });
+  const renderer = new C.CanvasRenderer(tela, { largura: 800, altura: 450, fundo: '#2b3a4a', assets: new C.Assets() });
   const engine = new C.Engine({ renderer }), cena = engine.scene;
   engine.events.on('erro-script', d => { const m = document.getElementById('msg'); if (m) { m.textContent = 'Erro no script "' + d.script + '" (' + d.fase + '): ' + d.mensagem; m.className = 'msg erro'; } });
   let sel = null, sujo = true, arrastando = null, salvoPlay = null, input = null, projetoAtual = null, projetos = {}, modoJogo = false, desfazerHistorico = [], refazerHistorico = [], historicoAplicando = false, historicoSuspenso = false;
@@ -87,7 +87,7 @@
   const CAMPOS = {
     Transform: [['x', 'num'], ['y', 'num']],
     Body: [['forma', 'sel', ['circulo', 'retangulo']], ['raio', 'num'], ['w', 'num'], ['h', 'num'], ['massa', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['sensor', 'bool']],
-    Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['corSobre', 'cor'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['alinhar', 'sel', ['left', 'center', 'right']], ['fonte', 'txt'], ['fixo', 'bool']],
+    Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['corSobre', 'cor'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['alinhar', 'sel', ['left', 'center', 'right']], ['fonte', 'txt'], ['fixo', 'bool'], ['imagem', 'txt'], ['quadroW', 'num'], ['quadroH', 'num'], ['escala', 'num'], ['espelhar', 'bool']],
     Controller: [['aceleracao', 'num'], ['velMax', 'num']]
   };
   function campo(rotulo, entrada) { const d = el('div', 'campo'), l = el('label', null, rotulo); entrada.id = 'f-' + rotulo + Math.random().toString(36).slice(2, 6); l.htmlFor = entrada.id; d.append(l, entrada); return d; }
@@ -198,7 +198,7 @@
     selecionar(sel); variaveis(); redesenhar(); json();
   });
   $('e-criar').addEventListener('click', criar); $('e-texto').addEventListener('click', criarTexto); $('e-botao').addEventListener('click', criarBotao); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
-  $('e-play').addEventListener('click', play); $('e-parar').addEventListener('click', parar); $('e-jogar').addEventListener('click', jogar); $('e-sair-jogar').addEventListener('click', parar); $('e-desfazer').addEventListener('click', desfazer); $('e-refazer').addEventListener('click', refazer);
+  $('e-play').addEventListener('click', jogar); $('e-parar').addEventListener('click', parar); $('e-jogar').addEventListener('click', jogar); $('e-sair-jogar').addEventListener('click', parar); $('e-desfazer').addEventListener('click', desfazer); $('e-refazer').addEventListener('click', refazer);
   document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey || ev.target.closest?.('input,textarea') || ev.target.matches('select') || ev.target.isContentEditable) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
   // Exemplo pronto vira um projeto novo (nunca sobrescreve o seu).
   $('p-exemplo').addEventListener('click', () => {
@@ -226,6 +226,6 @@
 
   exemplo(); listar(); props(); variaveis(); json();
   function importarProjeto(nome, viva, todas) { if (engine.rodando) parar(); projetos[nome] = viva; if (window.EditorCenas && EditorCenas.importar) EditorCenas.importar(nome, todas); guardarProjetos(); abrirProjeto(nome); }
-  window.editor = { carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, importarProjeto, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get projetoAtual() { return projetoAtual; } };
+  window.editor = { play, parar, jogar, carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, importarProjeto, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get projetoAtual() { return projetoAtual; } };
   inicializarProjetos(); historicoLimpar(); loop();
 })();
