@@ -189,3 +189,8 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 ## 27. Inspetor de script e árvore por arrastar
 - **Inspetor** (`editor/inspetor-script.js`): grupo "Script" no objeto selecionado: escolher, "+ Novo (blocos)" (cria `<objeto>_script` e abre a janela grande), "✎ Editar", "⧉ Copiar" (`_copia`, `_copia2`…) e "⬇ Baixar .js". Os scripts continuam em `estado.scripts`; o objeto guarda só `Script {nome}`.
 - **Árvore:** na lista de Objetos, arrastar um item sobre outro o torna filho (`scene.adotar`); largar no fundo da lista o solta do pai. Recusa ciclos.
+
+## 28. Tempo: esperar e tween
+- **`core/systems/tempo.js`** (opcional, como a hierarquia): `ctx.depois(segundos, fn)` e `ctx.tween(alvo, campo, valor, duracao, curva, fim)`; curvas `linear`, `suave`, `entrada`, `saida`. Rodam no relógio do jogo (dt fixo): pausa pausa; `iniciar`, `reiniciar` e troca de cena cancelam tudo. Argumentos inválidos lançam erro claro; erro dentro do callback vira evento `erro-script`. Um tween novo no mesmo campo substitui o anterior. Limite de 5000 ativos.
+- **Blocos:** "aguardar N segundos" (o que vem depois dele na mesma lista vira o callback; dentro de um laço, só o resto daquela volta espera) e "alterar [atributo] de [objeto] para V em N s, curva C" (só atributos numéricos).
+- **Teste de núcleo:** o final de `tests/test-core.js` agora fica depois dos testes novos (antes alguns blocos finais nunca rodavam por causa do `process.exit`).

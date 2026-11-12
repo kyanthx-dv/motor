@@ -171,6 +171,19 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
 
 
 
+
+  // blocos aguardar e alterar aos poucos (engine do editor, passo a passo)
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  const r2 = await p.evaluate(() => {
+    const N = v => ({ k: 'num', v }), fonte = EditorBlocos.gerar([{ t: 'evento_inicio', f: [
+      { t: 'alterar_grad', o: 'proprio', a: 'x', v: N(300), s: N(1), cv: 'linear' },
+      { t: 'aguardar', s: N(0.5) }, { t: 'mudar_attr', o: 'proprio', a: 'y', v: N(77) }] }]);
+    const eng = new Core.Engine(), e = eng.scene.create({ nome: 'z', Transform: { x: 0, y: 0 }, Script: { nome: 's' } });
+    eng.scene.estado.scripts = { s: { fonte } }; eng.compilarScripts();
+    const lido = []; for (let i = 0; i < 61; i++) { eng.passo(); if (i === 20) lido.push(e.Transform.y); if (i === 40) lido.push(e.Transform.y, Math.round(e.Transform.x)); } lido.push(e.Transform.x);
+    return { lido, fonte };
+  });
+  ok(r2.lido[0] === 0 && r2.lido[1] === 77 && r2.lido[2] > 100 && r2.lido[2] < 250 && r2.lido[3] === 300, 'blocos: aguardar adia o que vem depois e alterar aos poucos chega ao valor (' + r2.lido.join(',') + ')');
   // inspetor por objeto: script (novo/copiar/trocar) e árvore por arrastar
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('.sc-obj >> text=+ Novo (blocos)'); await p.waitForTimeout(200);

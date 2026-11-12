@@ -27,6 +27,7 @@
       this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
+        if (C.Systems.tempo) { C.Tempo.instalar(this); this.usar('tempo', C.Systems.tempo); }   // esperar/tween (opcional)
         if (C.Systems.hierarquia) this.usar('hierarquia', C.Systems.hierarquia);   // filhos seguem o pai (opcional: jogos sem hierarquia não precisam carregar o arquivo)
         this.usar('fisica', C.Systems.fisica); if (C.Systems.hierarquia) this.usar('hierarquia2', C.Systems.hierarquia);
         this.usar('animacao', C.Systems.animacao); this.usar('camera', C.Systems.camera);
@@ -56,7 +57,7 @@
     }
     _aplicarCena() {
       const { nome, dados } = this._proxima; this._proxima = null;
-      const vars = this.scene.estado.vars; this.scene.clear(); this.events.fila.length = 0; if (vars) this.scene.estado.vars = vars;   // variáveis atravessam a troca de cena
+      this._limparTempo(); const vars = this.scene.estado.vars; this.scene.clear(); this.events.fila.length = 0; if (vars) this.scene.estado.vars = vars;   // variáveis atravessam a troca de cena
       this.scene.estado.cena = nome;   // o nome da cena é salvo junto
       this.cenas[nome].montar(this, dados);
     }
@@ -118,11 +119,12 @@
     // Reinicia o jogo para o estado de quando iniciar() foi chamado (objetos, variáveis, tempo dos scripts). Dentro de um passo, vale no fim dele.
     reiniciar() { if (this._emPasso) this._reiniciar = true; else this._aplicarReinicio(); }
     _aplicarReinicio() {
-      this._reiniciar = false; if (!this._inicial || !C.Serializer) return;
+      this._reiniciar = false; this._limparTempo(); if (!this._inicial || !C.Serializer) return;
       C.Serializer.deJSON(this.scene, JSON.parse(this._inicial)); this.events.fila.length = 0;
     }
+    _limparTempo() { if (C.Tempo) C.Tempo.limpar(this); }
     iniciar() {
-      if (this.rodando) return; this.observados = {}; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
+      if (this.rodando) return; this._limparTempo(); this.observados = {}; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
       const quadro = agora => {
         if (!this.rodando) return;
         let delta = (agora - ultimo) / 1000; ultimo = agora;
