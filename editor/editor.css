@@ -67,3 +67,6 @@ body.tem-scripts-grande .bottom-dock{z-index:31}
 .modo-jogo .topo,.modo-jogo .tree-dock,.modo-jogo .inspector-dock,.modo-jogo .bottom-dock,.modo-jogo .mobile-tabs,.modo-jogo .splitter,.modo-jogo .vista-barra{display:none!important}
 .modo-jogo .editor-shell{position:fixed;inset:0;height:100vh;display:block}.modo-jogo .work-area{display:block;height:100vh}
 .modo-jogo .canvas-dock{display:block;width:100vw;height:100vh}.modo-jogo .canvas-dock .palco{width:100vw;height:100vh;background:#000}
+
+.img-lista li{display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--linha)}.img-lista img{width:40px;height:40px;object-fit:contain;background:#0e1319;border-radius:4px;flex:none}.img-lista .nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.img-lista button{padding:2px 7px;width:auto}
+.palco.solte{outline:3px dashed var(--acento);outline-offset:-3px}

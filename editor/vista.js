@@ -40,5 +40,5 @@
   });
   const fim = () => { pan = null; tela.style.cursor = ''; };
   tela.addEventListener('pointerup', fim); tela.addEventListener('pointercancel', fim);
-  root.EditorVista = { fit, suspender(on) { if (on) { salva = r.vista; r.vista = null; suspensa = true; r.redimensionar(); } else { r.vista = salva || null; suspensa = false; if (r.vista) r.ajustarVista(); r.redimensionar(); } ed.redesenhar(); } };
+  root.EditorVista = { fit, suspender(on) { if (on) { salva = r.vista || salva; r.vista = null; suspensa = true; } else { r.vista = salva || null; suspensa = false; } ed.redesenhar(); } };
 })(window);

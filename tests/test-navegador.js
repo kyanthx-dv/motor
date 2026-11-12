@@ -88,12 +88,12 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#e-desfazer'); await p.waitForTimeout(50); ok(await p.evaluate(() => !editor.cena.find('texto')), 'Novo texto desfaz'); await p.click('#e-refazer'); await p.waitForTimeout(50); ok(await p.evaluate(() => !!editor.cena.find('texto')), 'Novo texto refaz'); await p.click('#e-desfazer'); await p.waitForTimeout(50);
   await p.click('#e-botao'); await p.waitForTimeout(50); ok(await p.evaluate(() => { const e = editor.cena.find('botao'); return !!e && editor.sel === e.id && !!e.Botao && e.Sprite.fixo === true && e.Sprite.rotulo === 'Botão' && e.Sprite.corSobre === '#3b82f6'; }), 'Novo botão cria botão fixo com estado de hover');
   await p.click('#e-desfazer'); await p.waitForTimeout(50); ok(await p.evaluate(() => !editor.cena.find('botao')), 'Novo botão desfaz'); await p.click('#e-refazer'); await p.waitForTimeout(50);
-  const passosEditor = await p.evaluate(() => ({ passos: editor.engine.passos, x: editor.cena.find('bola').Transform.x })); await p.click('#e-play'); await p.waitForTimeout(180); const playState = await p.evaluate(p0 => ({ rodando: editor.engine.rodando, andou: editor.engine.passos > p0.passos, historicoDesabilitado: document.getElementById('e-desfazer').disabled && document.getElementById('e-refazer').disabled }), passosEditor); await p.click('#e-parar'); await p.waitForTimeout(80); const stopState = await p.evaluate(p0 => ({ rodando: editor.engine.rodando, desabilitaPlay: document.getElementById('e-play').disabled, restaurou: Math.abs(editor.cena.find('bola').Transform.x - p0.x) < 0.001 }), passosEditor);
+  const passosEditor = await p.evaluate(() => ({ passos: editor.engine.passos, x: editor.cena.find('bola').Transform.x })); await p.evaluate(() => editor.play()); await p.waitForTimeout(180); const playState = await p.evaluate(p0 => ({ rodando: editor.engine.rodando, andou: editor.engine.passos > p0.passos, historicoDesabilitado: document.getElementById('e-desfazer').disabled && document.getElementById('e-refazer').disabled }), passosEditor); await p.evaluate(() => editor.parar()); await p.waitForTimeout(80); const stopState = await p.evaluate(p0 => ({ rodando: editor.engine.rodando, desabilitaPlay: document.getElementById('e-play').disabled, restaurou: Math.abs(editor.cena.find('bola').Transform.x - p0.x) < 0.001 }), passosEditor);
   ok(playState.rodando && playState.andou, 'editor E2 Play inicia o motor'); ok(playState.historicoDesabilitado, 'M12 Play desabilita o histórico'); ok(!stopState.rodando && !stopState.desabilitaPlay && stopState.restaurou, 'editor E2 Parar interrompe e restaura a cena');
   const jogadorX = await p.evaluate(() => ({ x: editor.cena.find('jogador').Transform.x, input: editor.engine.input })); ok(jogadorX.input === null, 'editor M8 não mantém Input fora do Play');
-  await p.click('#e-play'); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(240); await p.keyboard.up('ArrowRight'); const inputPlay = await p.evaluate(x => ({ move: editor.cena.find('jogador').Transform.x > x + 10, ativo: !!editor.engine.input }), jogadorX.x); ok(inputPlay.move && inputPlay.ativo, 'editor M8 no Play: seta move o jogador com Controller');
-  await p.click('#e-parar'); await p.waitForTimeout(80); ok(await p.evaluate(x => editor.engine.input === null && Math.abs(editor.cena.find('jogador').Transform.x - x) < 0.001, jogadorX.x), 'editor M8 Parar destrói o Input e restaura a cena');
-  await p.click('#e-jogar'); await p.waitForTimeout(180); ok(await p.evaluate(() => document.body.classList.contains('modo-jogo') && editor.engine.rodando && !!editor.engine.input), 'M11 Jogar entra em tela cheia com entrada ligada');
+  await p.evaluate(() => editor.play()); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(240); await p.keyboard.up('ArrowRight'); const inputPlay = await p.evaluate(x => ({ move: editor.cena.find('jogador').Transform.x > x + 10, ativo: !!editor.engine.input }), jogadorX.x); ok(inputPlay.move && inputPlay.ativo, 'editor M8 no Play: seta move o jogador com Controller');
+  await p.evaluate(() => editor.parar()); await p.waitForTimeout(80); ok(await p.evaluate(x => editor.engine.input === null && Math.abs(editor.cena.find('jogador').Transform.x - x) < 0.001, jogadorX.x), 'editor M8 Parar destrói o Input e restaura a cena');
+  await p.click('#e-play'); await p.waitForTimeout(180); ok(await p.evaluate(() => document.body.classList.contains('modo-jogo') && editor.engine.rodando && !!editor.engine.input), 'M11 Jogar entra em tela cheia com entrada ligada');
   await p.click('#e-sair-jogar'); await p.waitForTimeout(120); ok(await p.evaluate(() => !document.body.classList.contains('modo-jogo') && !editor.engine.rodando && editor.engine.input === null), 'M11 Sair do jogo interrompe e desliga a entrada');
   await p.screenshot({ path: process.env.EDITOR_PNG || '/tmp/editor.png' });
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(200);
@@ -107,15 +107,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#e-desfazer'); await p.waitForTimeout(60); ok(await p.evaluate(() => !editor.cena.find('bola').Script), 'M12 desfaz anexação de script'); await p.click('#e-refazer'); await p.waitForTimeout(60); ok(await p.evaluate(() => editor.cena.find('bola').Script && editor.cena.find('bola').Script.nome === 'andar'), 'M12 refaz anexação de script');
   const fonteAntesUndo = await p.inputValue('#sc-fonte'); const cenaAntesUndo = await p.evaluate(() => JSON.stringify(Core.Serializer.paraJSON(editor.cena))); await p.locator('#sc-fonte').press('End'); await p.keyboard.type('X'); await p.keyboard.press('Control+Z'); await p.waitForTimeout(60); ok(await p.inputValue('#sc-fonte') === fonteAntesUndo && await p.evaluate(x => JSON.stringify(Core.Serializer.paraJSON(editor.cena)) === x, cenaAntesUndo), 'Ctrl+Z em #sc-fonte usa o desfazer nativo e não o histórico da cena');
   await p.locator('#json').press('End'); const jsonAntesUndo = await p.inputValue('#json'); await p.keyboard.type('X'); await p.keyboard.press('Control+Z'); await p.waitForTimeout(60); ok(await p.inputValue('#json') === jsonAntesUndo && await p.evaluate(x => JSON.stringify(Core.Serializer.paraJSON(editor.cena)) === x, cenaAntesUndo), 'Ctrl+Z em #json usa o desfazer nativo e não o histórico da cena');
-  await p.click('#e-play'); await p.waitForTimeout(600);
+  await p.evaluate(() => editor.play()); await p.waitForTimeout(600);
   ok(await p.evaluate(() => editor.cena.find('bola').Transform.x > 360 && editor.engine.vars.ler('pontos') > 10), 'Play compila e roda o script (move o objeto e usa variáveis)');
-  await p.click('#e-parar'); await p.waitForTimeout(150);
+  await p.evaluate(() => editor.parar()); await p.waitForTimeout(150);
   ok(await p.evaluate(x => Math.abs(editor.cena.find('bola').Transform.x - x) < 0.001 && !!editor.cena.estado.scripts.andar && editor.engine.vars.ler('pontos') === 0, scriptX), 'Parar restaura a cena e mantém o script');
   await p.fill('#sc-fonte', 'function atualizar( {');
   ok(await p.evaluate(() => /sintaxe/i.test(document.getElementById('sc-msg').textContent)), 'erro de sintaxe aparece enquanto digita');
   await p.click('#e-play'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => editor.engine.rodando && /Ao iniciar/.test(document.getElementById('sc-msg').textContent)), 'Play com script quebrado avisa e não derruba o motor');
-  await p.click('#e-parar');
+  await p.evaluate(() => editor.parar());
   await p.click('#sc-remover'); ok(await p.evaluate(() => !editor.cena.find('bola').Script && !('andar' in editor.cena.estado.scripts)), 'remover script também desanexa dos objetos');
   // editor E3b: blocos pela interface
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
@@ -126,9 +126,9 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.waitForTimeout(100);
   ok(await p.evaluate(() => /function atualizar/.test(document.getElementById('sc-fonte').value) && /ctx\.vars\.somar\("pontos", 1\)/.test(document.getElementById('sc-fonte').value) && document.getElementById('sc-fonte').readOnly), 'blocos geram o código (somente leitura) conforme você monta');
   const codigoBlocos = await p.inputValue('#sc-fonte'); await p.click('#e-desfazer'); await p.waitForTimeout(60); await p.click('#e-refazer'); await p.waitForTimeout(60); ok(await p.inputValue('#sc-fonte') === codigoBlocos, 'M12 desfaz/refaz alteração de bloco');
-  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.click('#e-play'); await p.waitForTimeout(700); 
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.evaluate(() => editor.play()); await p.waitForTimeout(700); 
   ok(await p.evaluate(() => editor.engine.vars.ler('pontos') > 10 && editor.cena.find('bola').Transform.x > 350), 'Play roda o script feito com blocos');
-  await p.click('#e-parar');
+  await p.evaluate(() => editor.parar());
   await p.locator('#bl .bloco:not(.hat)', { hasText: 'mudar x em' }).locator('button[aria-label="Remover bloco"]').click(); await p.waitForTimeout(100);
   ok(await p.evaluate(() => !/Transform\.x \+=/.test(document.getElementById('sc-fonte').value)), 'remover bloco atualiza o código');
   await p.click('#sc-conv'); ok(await p.evaluate(() => !document.getElementById('sc-fonte').readOnly && !editor.cena.estado.scripts.contar.blocos), 'converter em código libera a edição do texto');
@@ -146,10 +146,10 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#bl button.tecla'); await p.keyboard.press('x'); await p.waitForTimeout(100);
   await p.locator('#bl .hat > .pilha > .bloco > select.add').first().selectOption('var_somar'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => /keys\.has\("x"\)/.test(document.getElementById('sc-fonte').value)), 'escolher "qualquer tecla" capturando a tecla apertada');
-  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.click('#e-play'); await p.waitForTimeout(300);
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.evaluate(() => editor.play()); await p.waitForTimeout(300);
   const antes = await p.evaluate(() => editor.engine.vars.ler('pontos')); await p.keyboard.down('x'); await p.waitForTimeout(300); await p.keyboard.up('x'); await p.waitForTimeout(100);
   const dep = await p.evaluate(() => editor.engine.vars.ler('pontos'));
-  ok(antes === 0 && dep > 5, 'no Play, a tecla escolhida dispara o bloco (sem tecla = nada)'); await p.click('#e-parar');
+  ok(antes === 0 && dep > 5, 'no Play, a tecla escolhida dispara o bloco (sem tecla = nada)'); await p.evaluate(() => editor.parar());
   // blocos novos pela interface: temporizador + criar objeto
   await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.fill('#sc-nome', 'chuva'); await p.click('#sc-novo-b');
@@ -163,12 +163,26 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#sc-grande'); ok(await p.evaluate(() => document.getElementById('scripts-pane').classList.contains('scripts-grande')), 'janela grande de scripts abre'); await p.waitForTimeout(100);
   const origemArraste = p.locator('#bl > .pilha > .bloco.hat').first().locator(':scope > .pilha > .bloco.cat-Movimento').first(), destinoArraste = p.locator('#bl > .pilha > .bloco.hat').nth(1).locator(':scope > .pilha'); const bo = await origemArraste.boundingBox(), bd = await destinoArraste.boundingBox(); await p.mouse.move(bo.x + bo.width / 2, bo.y + 8); await p.mouse.down(); await p.mouse.move(bd.x + bd.width / 2, bd.y + bd.height / 2, { steps: 5 }); await p.mouse.up(); await p.waitForTimeout(100);
   ok(await p.evaluate(() => { const s = editor.cena.estado.scripts.chuva, primeiro = s.blocos[0].f, segundo = s.blocos[1].f; return !primeiro.some(b => b.t === 'mover_x') && segundo.filter(b => b.t === 'mover_x').length === 1 && segundo.some(b => b.t === 'mover_y'); }), 'arraste move bloco para outro evento sem copiar'); await p.keyboard.press('Escape'); ok(await p.evaluate(() => !document.getElementById('scripts-pane').classList.contains('scripts-grande')), 'Esc fecha a janela grande de scripts');
-  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); const antesN = await p.evaluate(() => editor.cena.entities.size); await p.click('#sc-anexar'); await p.click('#e-play'); await p.waitForTimeout(1500);
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); const antesN = await p.evaluate(() => editor.cena.entities.size); await p.click('#sc-anexar'); await p.evaluate(() => editor.play()); await p.waitForTimeout(1500);
   const criados = await p.evaluate(() => [...editor.cena.entities.values()].filter(x => x.nome === 'criado').length);
   ok(criados >= 1, 'Play: o temporizador cria objetos durante o jogo (' + criados + ')');
-  await p.click('#e-parar'); await p.waitForTimeout(150);
+  await p.evaluate(() => editor.parar()); await p.waitForTimeout(150);
   ok(await p.evaluate(n => editor.cena.entities.size === n, antesN), 'Parar descarta os objetos criados durante o jogo');
 
+
+  // imagens: importar, guardar na cena, aplicar ao objeto, sobreviver a salvar/abrir
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  const png = await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 64; c.height = 48; const g = c.getContext('2d'); g.fillStyle = '#e11'; g.fillRect(0, 0, 64, 48); return c.toDataURL('image/png').split(',')[1]; });
+  await p.setInputFiles('#img-arquivo', { name: 'Meu Herói!.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') }); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => { const im = editor.cena.estado.imagens; return im && Object.keys(im).join() === 'Meu_Her_i_' && /^data:image\/png;base64,/.test(im.Meu_Her_i_) && !!editor.renderer.assets.get('Meu_Her_i_'); }), 'imagem importada fica na cena e em Assets (nome limpo)');
+  ok(await p.evaluate(() => document.querySelectorAll('#img-lista li').length === 1), 'lista de imagens mostra a importada');
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#img-lista li button'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => { const s = editor.cena.find('bola').Sprite; return s.imagem === 'Meu_Her_i_' && s.quadroW === 64 && s.quadroH === 48; }), 'Usar aplica imagem e tamanho ao objeto selecionado');
+  const salvoJ = await p.evaluate(() => JSON.parse(JSON.stringify(Core.Serializer.paraJSON(editor.cena))));
+  await p.evaluate(j => editor.carregarCena({ formato: j.formato, estado: {}, entidades: [] }), salvoJ); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => !editor.cena.estado.imagens && document.querySelectorAll('#img-lista li').length === 0), 'cena vazia não tem imagens');
+  await p.evaluate(j => editor.carregarCena(j), salvoJ); await p.waitForTimeout(250);
+  ok(await p.evaluate(() => !!editor.cena.estado.imagens.Meu_Her_i_ && editor.cena.find('bola').Sprite.imagem === 'Meu_Her_i_' && document.querySelectorAll('#img-lista li').length === 1), 'imagens voltam ao abrir o save');
   // vista do editor: grade, tamanho da cena, zoom, abas reais e tela cheia limpa
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   ok(await p.evaluate(() => !!editor.renderer.vista && editor.renderer.grade === true), 'vista do editor com grade ligada');
@@ -179,27 +193,28 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#v-ajustar'); ok(await p.evaluate(z => Math.abs(editor.renderer.vista.z - z) < 1e-6, z0), 'Ajustar vista volta ao enquadramento');
   await p.fill('#v-w', '1600'); await p.fill('#v-h', '900'); await p.dispatchEvent('#v-h', 'change'); await p.dispatchEvent('#v-w', 'change'); await p.waitForTimeout(150);
   ok(await p.evaluate(() => editor.cena.estado.tamanho.largura === 1600 && editor.renderer.largura === 1600 && editor.renderer.altura === 900), 'tamanho da cena muda a largura e a altura');
-  await p.click('#e-play'); await p.waitForTimeout(150); ok(await p.evaluate(() => editor.renderer.vista === null && editor.engine.ctx.tela.largura === 1600), 'Play desliga a vista/grade e usa o tamanho da cena');
-  await p.click('#e-parar'); await p.waitForTimeout(100); ok(await p.evaluate(() => !!editor.renderer.vista), 'Parar volta para a vista do editor');
-  await p.click('#e-jogar'); await p.waitForTimeout(250); ok(await p.evaluate(() => ['.bottom-dock', '.tree-dock', '.inspector-dock', '.topo'].every(q => getComputedStyle(document.querySelector(q)).display === 'none')), 'tela cheia esconde todos os painéis do editor'); await p.click('#e-sair-jogar'); await p.waitForTimeout(150);
+  await p.evaluate(() => editor.play()); await p.waitForTimeout(150); ok(await p.evaluate(() => editor.renderer.vista === null && editor.engine.ctx.tela.largura === 1600), 'Play desliga a vista/grade e usa o tamanho da cena');
+  await p.evaluate(() => editor.parar()); await p.waitForTimeout(100); ok(await p.evaluate(() => !!editor.renderer.vista), 'Parar volta para a vista do editor');
+  await p.click('#e-play'); await p.waitForTimeout(250); ok(await p.evaluate(() => ['.bottom-dock', '.tree-dock', '.inspector-dock', '.topo'].every(q => getComputedStyle(document.querySelector(q)).display === 'none')), 'tela cheia esconde todos os painéis do editor'); await p.click('#e-sair-jogar'); await p.waitForTimeout(150);
+  await p.waitForTimeout(250); ok(await p.evaluate(() => { const v = { ...editor.renderer.vista }; editor.renderer.ajustarVista(); const ok = Math.abs(v.z - editor.renderer.vista.z) < 0.01 && editor.renderer.grade; return ok; }), 'depois do Play em tela cheia a grade e a vista voltam enquadradas');
   // exemplo pelo editor: abre, roda, moedas nascem
   await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400); await p.click('#p-exemplo'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => !!editor.cena.find('jogador') && editor.cena.estado.scripts.moeda && document.getElementById('projetos').value === 'Pega-moedas'), 'botão abre o exemplo Pega-moedas como projeto novo');
-  await p.click('#e-play'); await p.waitForTimeout(300); const xj0 = await p.evaluate(() => editor.cena.find('jogador').Transform.x); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(500); await p.keyboard.up('ArrowRight'); ok(await p.evaluate(() => editor.cena.find('jogador').Transform.x) > xj0 + 20, 'exemplo: seta direita move o jogador'); await p.waitForTimeout(400); const encontrouMoeda = await p.evaluate(() => { const m = [...editor.cena.entities.values()].find(x => x.nome === 'moeda'), j = editor.cena.find('jogador'); if (!m || !j) return false; j.Transform.x = m.Transform.x; j.Transform.y = m.Transform.y; return true; }); await p.waitForTimeout(300);
+  await p.evaluate(() => editor.play()); await p.waitForTimeout(300); const xj0 = await p.evaluate(() => editor.cena.find('jogador').Transform.x); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(500); await p.keyboard.up('ArrowRight'); ok(await p.evaluate(() => editor.cena.find('jogador').Transform.x) > xj0 + 20, 'exemplo: seta direita move o jogador'); await p.waitForTimeout(400); const encontrouMoeda = await p.evaluate(() => { const m = [...editor.cena.entities.values()].find(x => x.nome === 'moeda'), j = editor.cena.find('jogador'); if (!m || !j) return false; j.Transform.x = m.Transform.x; j.Transform.y = m.Transform.y; return true; }); await p.waitForTimeout(300);
   const placar = await p.evaluate(moeda => ({ moeda, pontos: editor.engine.vars.ler('pontos'), texto: editor.cena.find('placar').Sprite.rotulo }), encontrouMoeda);
   ok(placar.moeda && placar.pontos >= 1 && /Pontos: [1-9]/.test(placar.texto), 'exemplo coleta uma moeda e atualiza o placar');
   const pixelsPlacar = await p.evaluate(() => { const c = document.getElementById('tela'), g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 220 && d[i + 1] > 220 && d[i + 2] > 220 && d[i + 3] > 0) n++; return n; });
   ok(pixelsPlacar > 0, 'exemplo desenha pixels do texto do placar');
-  await p.screenshot({ path: process.env.EX_PNG || '/tmp/ex.png' }); await p.click('#e-parar');
+  await p.screenshot({ path: process.env.EX_PNG || '/tmp/ex.png' }); await p.evaluate(() => editor.parar());
   ok(await p.evaluate(() => { const d = document.createElement('div'), n = x => ({ k: 'num', v: x }), sc = { blocos: [{ t: 'evento_quadro', f: [EditorBlocos.novo('mudar_attr'), EditorBlocos.novo('somar_attr'), Object.assign(EditorBlocos.novo('se'), { c: { k: 'ou', a: { k: 'nao', a: { k: 'cmp', a: { k: 'attr', o: 'n:jogador', a: 'x' }, op: '>', b: { k: 'op', a: n(1), o: '+', b: n(2) } } }, b: { k: 'tecla', acao: 'acao', modo: 'down' } } })] }] }; EditorBlocos.montar(d, sc, { vars: () => [], scripts: () => [], objetos: () => ['jogador'], aoMudar() {} }); return d.querySelectorAll('select[aria-label="objeto"]').length === 3 && d.querySelectorAll('select[aria-label="atributo"]').length >= 3 && d.querySelectorAll('select[aria-label="conta"]').length === 1; }), 'interface dos blocos mostra atributo, conta e lógica (e/ou/não)');
   await p.evaluate(() => editor.selecionar(editor.cena.find('jogador').id)); await p.waitForTimeout(100);
   await p.fill('input[placeholder="inimigo, moeda"]', 'heroi, rapido'); await p.press('input[placeholder="inimigo, moeda"]', 'Tab'); await p.fill('input[placeholder="vida=3, nome=Zé"]', 'vida=3, nome=Zé'); await p.press('input[placeholder="vida=3, nome=Zé"]', 'Tab'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => { const e = editor.cena.find('jogador'); return e.Etiquetas.join() === 'heroi,rapido' && e.Attr.vida === 3 && e.Attr.nome === 'Zé'; }), 'painel Marcas: etiquetas e atributos próprios');
   ok(await p.evaluate(() => { const d = document.createElement('div'); const bl = Object.keys(EditorBlocos.BLOCOS).map(t => { const b = EditorBlocos.novo(t); if (t === 'clonar') b.nome = ''; return b; }); EditorBlocos.montar(d, { blocos: [{ t: 'evento_quadro', f: bl }] }, { vars: () => [], scripts: () => [], objetos: () => ['jogador'], etiquetas: () => ['heroi'], atributos: () => ['vida'], aoMudar() {} }); return d.querySelectorAll('.bloco:not(.hat)').length >= bl.length; }), 'interface desenha todos os blocos, inclusive os da Fase A');
   await p.evaluate(() => { editor.cena.estado.scripts.quebra = { fonte: 'function atualizar(e, dt, ctx) { ctx.engine.naoExiste(); }' }; editor.cena.find('jogador').Script = { nome: 'quebra' }; });
-  await p.click('#e-play'); await p.waitForTimeout(300);
+  await p.evaluate(() => editor.play()); await p.waitForTimeout(300);
   ok(await p.evaluate(() => /Erro no script "quebra"/.test(document.getElementById('msg').textContent)), 'erro de script aparece na mensagem do editor');
-  await p.click('#e-parar');
+  await p.evaluate(() => editor.parar());
   // arrastar: soltar fora do lugar não pode quebrar o script (bloco comum no topo / evento dentro de evento)
   await p.evaluate(() => { document.getElementById('bl-teste')?.remove(); const d = document.createElement('div'); d.id = 'bl-teste'; d.style.cssText = 'position:fixed;left:10px;top:10px;width:700px;height:420px;background:#111;z-index:5000;overflow:auto'; document.body.append(d); window.__sc = { blocos: [{ t: 'evento_inicio', f: [EditorBlocos.novo('reiniciar')] }, { t: 'evento_quadro', f: [] }] }; EditorBlocos.montar(d, window.__sc, { vars: () => [], scripts: () => [], aoMudar() {} }); });
   const caixa = async sel => (await p.locator(sel).first().boundingBox());
@@ -218,9 +233,9 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.selectOption('#cenas-lista', 'principal'); await p.click('#cena-abrir'); await p.waitForTimeout(150);
   ok(await p.evaluate(() => !!editor.cena.find('marca1') && !editor.cena.find('marca2')), 'cenas: voltar para a cena anterior mantém os objetos de cada uma');
   await p.evaluate(() => { const bl = [{ t: 'evento_inicio', f: [Object.assign(EditorBlocos.novo('ir_cena'), { cena: 'fase2' })] }]; editor.cena.estado.scripts.vai = { blocos: bl, fonte: EditorBlocos.gerar(bl) }; editor.cena.find('marca1').Script = { nome: 'vai' }; editor.json(); });
-  await p.click('#e-play'); await p.waitForTimeout(400);
+  await p.evaluate(() => editor.play()); await p.waitForTimeout(400);
   ok(await p.evaluate(() => editor.engine.scene.estado.cena === 'fase2' && !!editor.engine.scene.find('marca2') && !editor.engine.scene.find('marca1')), 'cenas: Play + bloco "ir para a cena" troca para a outra cena');
-  await p.click('#e-parar'); await p.waitForTimeout(200);
+  await p.evaluate(() => editor.parar()); await p.waitForTimeout(200);
   ok(await p.evaluate(() => !!editor.cena.find('marca1') && EditorCenas.nomes().length === 2), 'cenas: Parar volta para a cena que estava aberta no editor');
   await p.fill('#cena-nome', 'mapa'); await p.selectOption('#cenas-lista', 'fase2'); await p.click('#cena-renomear'); await p.waitForTimeout(150);
   ok(await p.evaluate(() => EditorCenas.nomes().join() === 'mapa,principal' && editor.cena.estado.scripts.vai.blocos[0].f[0].cena === 'mapa' && /"mapa"/.test(editor.cena.estado.scripts.vai.fonte)), 'cenas: renomear atualiza os blocos "ir para a cena"');
@@ -245,11 +260,11 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(() => { const e = editor.cena.find('j'); return e.Body && e.Body.forma === 'retangulo' && e.Velocity; }), '+ componente: hitbox retangular com Velocity');
   await p.locator('button[aria-label="Remover o componente Body"]').click(); await p.waitForTimeout(100);
   ok(await p.evaluate(() => !editor.cena.find('j').Body), '✕ remove o componente');
-  await p.click('#e-play'); await p.waitForTimeout(200);
+  await p.evaluate(() => editor.play()); await p.waitForTimeout(200);
   const pos0 = await p.evaluate(() => JSON.stringify(editor.cena.find('j').Transform)); const bx = await p.locator('#tela').boundingBox();
   await p.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2); await p.mouse.down(); await p.mouse.move(bx.x + 20, bx.y + 20, { steps: 5 }); await p.mouse.up();
   ok(await p.evaluate(p0 => JSON.stringify(editor.engine.scene.find('j').Transform) === p0 && document.getElementById('e-criar').disabled, pos0), 'Play: editor somente leitura (não arrasta nem cria)');
-  await p.click('#e-parar');
+  await p.evaluate(() => editor.parar());
   await p.fill('#projeto-nome', 'Vazio2'); await p.click('#projeto-criar'); await p.waitForTimeout(200);
   ok(await p.evaluate(() => document.getElementById('bl').children.length === 0 && document.getElementById('e-jogar').textContent === 'Tela cheia'), 'projeto novo: painel de blocos sem sobra do projeto anterior; botão Tela cheia');
   // hierarquia no editor: escolher pai, filho segue o pai, lista com recuo, remover pai leva os filhos

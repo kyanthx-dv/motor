@@ -289,3 +289,14 @@ const nova=()=>new C.Engine();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');
  const f=nova();f.passo();ok(Object.keys(f.tempos).length===0,'sem perfil não mede nada');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
+
+// imagens e tamanho da cena no save
+{
+  const base = () => ({ formato: C.Serializer.FORMATO, estado: {}, entidades: [] });
+  const tenta = f => { const d = base(); f(d); try { C.Serializer.deJSON(new C.Scene(), d); return null; } catch (x) { return x.message; } };
+  ok(tenta(d => { d.estado.imagens = { a: 'data:image/png;base64,AAAA' }; }) === null, 'save aceita imagem png em data URL');
+  ok(/imagem/.test(tenta(d => { d.estado.imagens = { a: 'http://x/y.png' }; })), 'save recusa imagem que não é data URL');
+  ok(/imagem/.test(tenta(d => { d.estado.imagens = { a: 'data:image/png;base64,' + 'A'.repeat(600001) }; })), 'save recusa imagem enorme');
+  ok(/tamanho/.test(tenta(d => { d.estado.tamanho = { largura: 5, altura: 450 }; })), 'save recusa tamanho de cena inválido');
+  ok(tenta(d => { d.estado.tamanho = { largura: 1600, altura: 900 }; }) === null, 'save aceita tamanho de cena válido');
+}

@@ -42,6 +42,11 @@
         for (const k in sc) if (!C.Variaveis.NOME.test(k) || !isObj(sc[k]) || typeof sc[k].fonte !== 'string' || sc[k].fonte.length > 50000 || (sc[k].blocos !== undefined && (!Array.isArray(sc[k].blocos) || JSON.stringify(sc[k].blocos).length > 200000))) throw new Error('save inválido: script "' + k + '" (nome inválido ou fonte ausente/grande demais)');
       }
       const tam = d.estado && d.estado.tamanho; if (tam !== undefined && (!isObj(tam) || !(tam.largura >= 100 && tam.largura <= 10000) || !(tam.altura >= 100 && tam.altura <= 10000))) throw new Error('save inválido: estado.tamanho precisa de largura e altura entre 100 e 10000');
+      const ims = d.estado && d.estado.imagens;
+      if (ims !== undefined) {
+        if (!isObj(ims) || Object.keys(ims).length > 30) throw new Error('save inválido: estado.imagens precisa ser um objeto com até 30 imagens');
+        for (const [n, v] of Object.entries(ims)) if (n.length < 1 || n.length > 40 || typeof v !== 'string' || !/^data:image\/(png|jpeg|webp|gif);base64,/.test(v) || v.length > 600000) throw new Error('save inválido: imagem "' + n.slice(0, 40) + '" inválida ou grande demais');
+      }
       const cam = d.estado && d.estado.camera; if (cam !== undefined && (!isObj(cam) || (cam.zoom !== undefined && !(isFinite(cam.zoom) && cam.zoom > 0)))) throw new Error('save inválido: estado.camera (zoom precisa ser > 0)');
       const tmp = new C.Scene(); tmp.estado = d.estado || {};
       d.entidades.forEach((e, i) => {

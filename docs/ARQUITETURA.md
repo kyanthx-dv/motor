@@ -180,3 +180,8 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **Vista do editor** (`renderer.vista = {cx, cy, z}`, só com o motor parado): a cena é um retângulo azul num espaço escuro, com pan (arrastar o fundo, botão do meio ou Espaço) e zoom (roda). `ajustarVista()` enquadra a cena. No Play a vista é desligada e vale o enquadramento do jogo.
 - **Guias** (`_guias`, só na vista): grade com números nas bordas (passo adaptado ao zoom), moldura da cena e o retângulo tracejado da câmera do jogo (`estado.camera`). Nada disso aparece no Play nem na tela cheia.
 - **Editor:** `editor/vista.js` (grade liga/desliga salva no navegador, campos largura × altura). Abas do dock esquerdo e inferior são reais; `?abas=todas` mostra tudo (usado nos testes). Scripts têm "Janela grande" (botão ou "Scripts ⤢"; Esc fecha). Tela cheia esconde todos os docks.
+
+## 26. Imagens (sprites) e Play em tela cheia
+- **`scene.estado.imagens = {nome: dataURL}`** (até 30 por cena, PNG/JPG/WEBP/GIF, ≤600 mil caracteres cada; validado no `deJSON`). O editor encolhe para no máximo 1024 px ao importar. `editor/imagens.js` registra cada uma em `renderer.assets`, então `Sprite.imagem` (com `quadroW`, `quadroH`, `escala`, `espelhar`) já desenha. Limitação: as imagens pertencem à cena onde foram importadas.
+- **Importar:** aba "Imagens" (botão) ou arrastar o arquivo para o canvas (vira objeto na posição do mouse). "Usar" aplica ao objeto selecionado.
+- **Play** agora entra direto em tela cheia (evita estados inconsistentes do editor); sair com Esc ou "Sair do jogo". A vista do editor é guardada e restaurada sem reenquadrar enquanto o layout ainda está em tela cheia (era o bug da grade depois do Play).
