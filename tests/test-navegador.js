@@ -172,6 +172,20 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
 
 
 
+
+  // blocos de lista
+  const r3 = await p.evaluate(() => {
+    const N = v => ({ k: 'num', v }), T = v => ({ k: 'txt', v });
+    const fonte = EditorBlocos.gerar([{ t: 'evento_inicio', f: [
+      { t: 'lista_add', v: T('espada'), l: 'inv' }, { t: 'lista_add', v: T('poção'), l: 'inv' }, { t: 'lista_add', v: T('chave'), l: 'inv' },
+      { t: 'lista_rem', i: N(1), l: 'inv' }, { t: 'lista_set', i: N(1), l: 'inv', v: T('elixir') },
+      { t: 'para_cada_item', l: 'inv', f: [{ t: 'lista_add', v: { k: 'it' }, l: 'copia' }] },
+      { t: 'var_definir', var: 'total', v: { k: 'tam', l: 'copia' } }] }]);
+    const eng = new Core.Engine(); eng.vars.declarar('total', 0); eng.scene.create({ nome: 'z', Transform: { x: 0, y: 0 }, Script: { nome: 's' } });
+    eng.scene.estado.scripts = { s: { fonte } }; eng.compilarScripts(); eng.passo();
+    return { inv: eng.listas.todos('inv'), copia: eng.listas.todos('copia'), total: eng.vars.ler('total'), fonte };
+  });
+  ok(JSON.stringify(r3.inv) === '["elixir","chave"]' && JSON.stringify(r3.copia) === '["elixir","chave"]' && r3.total === 2, 'blocos de lista: adicionar, remover, trocar, para cada item e tamanho (' + JSON.stringify(r3.inv) + ')');
   // blocos aguardar e alterar aos poucos (engine do editor, passo a passo)
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   const r2 = await p.evaluate(() => {

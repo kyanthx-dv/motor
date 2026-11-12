@@ -75,11 +75,13 @@
     }
     function campoValor(obj, nome, rotulo) {
       const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val');
-      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : { k }; redesenhar(); }, rotulo));
+      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : k === 'item' ? { k, l: 'inventario', i: { k: 'num', v: 1 } } : k === 'tam' || k === 'itemrand' ? { k, l: 'inventario' } : { k }; redesenhar(); }, rotulo));
       if (v.k === 'num') w.append(entrada('number', v.v, x => { v.v = x === '' ? 0 : +x; mudou(); }, rotulo + ' (número)'));
       if (v.k === 'txt') w.append(entrada('text', v.v, x => { v.v = x; mudou(); }, rotulo + ' (texto)'));
       if (v.k === 'var') w.append(campoVar(v, 'n'));
       if (v.k === 'attr') w.append(campoObj(v, 'o'), campoAttr(v, 'a'));
+      if (v.k === 'item') w.append(campoValor(v, 'i', 'posição'), el('span', null, 'da lista'), entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
+      if (v.k === 'tam' || v.k === 'itemrand') w.append(entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
       if (v.k === 'contar') w.append(entrada('text', v.tag || '', x => { v.tag = x; mudou(); }, 'etiqueta'));
       if (v.k === 'op') w.append(el('span', null, '('), campoValor(v, 'a', 'A'), sel(B.CONTAS, v.o, x => { v.o = x; mudou(); }, 'conta'), campoValor(v, 'b', 'B'), el('span', null, ')'));
       if (v.k === 'rand') w.append(entrada('number', v.min, x => { v.min = +x; mudou(); }, rotulo + ' mínimo'), el('span', null, 'e'), entrada('number', v.max, x => { v.max = +x; mudou(); }, rotulo + ' máximo'));
@@ -107,10 +109,11 @@
     }
     function campoCond(h, n) {
       const c = h[n], w = el('span', 'val'), cmp0 = () => ({ k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } });
-      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : k === 'mouse' ? { k, modo: 'pressed' } : k === 'sobre' ? { k, o: 'proprio' } : cmp0(); redesenhar(); }, 'tipo de condição'));
+      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : k === 'contem' ? { k, l: 'inventario', v: { k: 'txt', v: 'chave' } } : k === 'mouse' ? { k, modo: 'pressed' } : k === 'sobre' ? { k, o: 'proprio' } : cmp0(); redesenhar(); }, 'tipo de condição'));
       if (c.k === 'e' || c.k === 'ou') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, c.k === 'e' ? 'E' : 'OU'), campoCond(c, 'b'), el('span', null, ')'));
       if (c.k === 'mouse') w.append(sel([['pressed', 'clicou agora'], ['down', 'está apertado']], c.modo || 'pressed', x => { c.modo = x; mudou(); }, 'modo do mouse'));
       if (c.k === 'sobre') w.append(el('span', null, 'está sobre'), campoObj(c, 'o'));
+      if (c.k === 'contem') w.append(entrada('text', c.l || '', x => { c.l = x; mudou(); }, 'lista'), el('span', null, 'contém'), campoValor(c, 'v', 'valor'));
       if (c.k === 'etiq') w.append(campoObj(c, 'o'), el('span', null, 'tem a etiqueta'), entrada('text', c.tag || '', x => { c.tag = x; mudou(); }, 'etiqueta'));
       if (c.k === 'nao') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, ')'));
       if (c.k === 'tecla') {

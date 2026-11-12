@@ -8,9 +8,9 @@
   const OPS = ['<', '<=', '=', '!=', '>=', '>'];
   const erro = m => new Error(m);
   E.ACOES = ACOES; E.OPS = OPS;
-  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta', mx: 'mouse: posição x (mundo)', my: 'mouse: posição y (mundo)' };
+  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta', item: 'item N da lista', tam: 'tamanho da lista', itemrand: 'item aleatório da lista', it: 'item atual (dentro de "para cada item")', mx: 'mouse: posição x (mundo)', my: 'mouse: posição y (mundo)' };
   E.CONTAS = [['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷'], ['%', 'resto'], ['min', 'menor de'], ['max', 'maior de']];
-  E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não'], ['etiq', 'tem etiqueta'], ['mouse', 'mouse'], ['sobre', 'mouse sobre objeto']];
+  E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não'], ['etiq', 'tem etiqueta'], ['mouse', 'mouse'], ['sobre', 'mouse sobre objeto'], ['contem', 'lista contém']];
   // Atributos que os blocos genéricos sabem ler/mudar: componente, propriedade e tipo
   const ATTRS = E.ATTRS = { x: { c: 'Transform', p: 'x', t: 'num' }, y: { c: 'Transform', p: 'y', t: 'num' }, vx: { c: 'Velocity', p: 'vx', t: 'num' }, vy: { c: 'Velocity', p: 'vy', t: 'num' }, cor: { c: 'Sprite', p: 'cor', t: 'txt' }, texto: { c: 'Sprite', p: 'rotulo', t: 'txt' }, corTexto: { c: 'Sprite', p: 'corTexto', t: 'txt' }, raio: { c: 'Sprite', p: 'raio', t: 'num' }, tamanhoTexto: { c: 'Sprite', p: 'tamanhoTexto', t: 'num' }, alinhar: { c: 'Sprite', p: 'alinhar', t: 'txt' }, fonte: { c: 'Sprite', p: 'fonte', t: 'txt' } };
   E.ATTR_NOMES = [['x', 'x'], ['y', 'y'], ['vx', 'velocidade x'], ['vy', 'velocidade y'], ['cor', 'cor'], ['texto', 'texto'], ['corTexto', 'cor do texto'], ['raio', 'raio (visual)'], ['tamanhoTexto', 'tamanho do texto'], ['alinhar', 'alinhamento (esquerda/centro/direita)'], ['fonte', 'fonte do texto']];
@@ -24,6 +24,7 @@
     throw erro('objeto inválido: ' + o);
   }
   function tagStr(t) { if (typeof t !== 'string' || t.length < 1 || t.length > 30) throw erro('escreva uma etiqueta (1 a 30 letras)'); return JSON.stringify(t); }
+  function listaStr(n) { if (typeof n !== 'string' || !NOME.test(n)) throw erro('escolha um nome de lista (letras, números e _)'); return JSON.stringify(n); }
   function attrDef(a) { if (typeof a === 'string' && a.startsWith('a:')) { if (!NOME.test(a.slice(2))) throw erro('nome de atributo inválido: ' + a.slice(2)); return { c: 'Attr', p: a.slice(2), t: 'any' }; } const d = ATTRS[a]; if (!d) throw erro('atributo desconhecido: ' + a); return d; }
 
   function nomeVar(n) { if (typeof n !== 'string' || !NOME.test(n)) throw erro('escolha uma variável válida'); return JSON.stringify(n); }
@@ -45,6 +46,10 @@
       case 'attr': { const d = attrDef(v.a); if (d.t === 'any') return '((o) => (o && o.' + d.c + ' && o.' + d.c + '.' + d.p + ' !== undefined ? o.' + d.c + '.' + d.p + ' : 0))(' + objExpr(v.o) + ')'; return '((o) => (o && o.' + d.c + ' ? o.' + d.c + '.' + d.p + ' : ' + (d.t === 'num' ? '0' : "''") + '))(' + objExpr(v.o) + ')'; }
       case 'mx': return 'ctx.input.pointer.x';
       case 'my': return 'ctx.input.pointer.y';
+      case 'item': return '(ctx.listas.item(' + listaStr(v.l) + ', Math.floor(Number(' + valor(v.i) + ')) - 1) ?? 0)';
+      case 'tam': return 'ctx.listas.tamanho(' + listaStr(v.l) + ')';
+      case 'itemrand': return '(ctx.listas.aleatorio(' + listaStr(v.l) + ') ?? 0)';
+      case 'it': return '_item';
       case 'contar': return 'ctx.scene.query("Etiquetas").filter(o => o.Etiquetas.includes(' + tagStr(v.tag) + ')).length';
       case 'op': {
         const o = v.o, a = valor(v.a), b = valor(v.b);
@@ -72,6 +77,7 @@
     if (c.k === 'e' || c.k === 'ou') return '(' + cond(c.a) + (c.k === 'e' ? ' && ' : ' || ') + cond(c.b) + ')';
     if (c.k === 'mouse') return 'ctx.input.pointer.' + (c.modo === 'pressed' ? 'pressed' : 'down');
     if (c.k === 'sobre') return '((o) => !!o && ctx.sobre(o))(' + objExpr(c.o) + ')';
+    if (c.k === 'contem') return 'ctx.listas.contem(' + listaStr(c.l) + ', ' + valor(c.v) + ')';
     if (c.k === 'etiq') return '((o) => !!(o && o.Etiquetas && o.Etiquetas.includes(' + tagStr(c.tag) + ')))(' + objExpr(c.o) + ')';
     if (c.k === 'nao') return '(!' + cond(c.a) + ')';
     throw erro('condição desconhecida: ' + c.k);
@@ -95,6 +101,14 @@
     somar_attr: { cat: 'Objeto', menu: 'somar a um atributo de um objeto', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }],
       ger: b => { const d = attrDef(b.a); if (d.t === 'txt') throw erro('só dá para somar em atributos numéricos'); const ini = INI[d.c] || '', ok = (INI[d.c] ? 'true' : 'o.' + d.c);
         return ['{', '  const o = ' + objExpr(b.o) + ', v = Number(' + valor(b.v) + ');', '  if (o && isFinite(v) && ' + ok + ') { ' + ini + 'o.' + d.c + '.' + d.p + ' = (Number(o.' + d.c + '.' + d.p + ') || 0) + v; }', '}']; } },
+    lista_add: { cat: 'Listas', menu: 'adicionar à lista', campos: [{ t: 'adicionar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'à lista' }, { n: 'l', tipo: 'txt', padrao: 'inventario' }], ger: b => ['ctx.listas.adicionar(' + listaStr(b.l) + ', ' + valor(b.v) + ');'] },
+    lista_set: { cat: 'Listas', menu: 'trocar item da lista', campos: [{ t: 'trocar o item' }, { n: 'i', tipo: 'valor', padrao: N(1) }, { t: 'da lista' }, { n: 'l', tipo: 'txt', padrao: 'inventario' }, { t: 'por' }, { n: 'v', tipo: 'valor', padrao: N(0) }],
+      ger: b => ['{', '  const n = ' + listaStr(b.l) + ', i = Math.floor(Number(' + valor(b.i) + ')) - 1;', '  if (i >= 0 && i < ctx.listas.tamanho(n)) ctx.listas.definir(n, i, ' + valor(b.v) + ');', '}'] },
+    lista_rem: { cat: 'Listas', menu: 'remover item da lista', campos: [{ t: 'remover o item' }, { n: 'i', tipo: 'valor', padrao: N(1) }, { t: 'da lista' }, { n: 'l', tipo: 'txt', padrao: 'inventario' }],
+      ger: b => ['{', '  const n = ' + listaStr(b.l) + ', i = Math.floor(Number(' + valor(b.i) + ')) - 1;', '  if (i >= 0 && i < ctx.listas.tamanho(n)) ctx.listas.remover(n, i);', '}'] },
+    lista_limpar: { cat: 'Listas', menu: 'esvaziar lista', campos: [{ t: 'esvaziar a lista' }, { n: 'l', tipo: 'txt', padrao: 'inventario' }], ger: b => ['ctx.listas.limpar(' + listaStr(b.l) + ');'] },
+    para_cada_item: { cat: 'Listas', menu: 'para cada item da lista', campos: [{ t: 'para cada item da lista' }, { n: 'l', tipo: 'txt', padrao: 'inventario' }, { t: 'faça (use "item atual")' }], filhos: ['f'],
+      ger: (b, g) => ['for (const _item of ctx.listas.todos(' + listaStr(b.l) + ')) {', ...g.lista(b.f), '}'] },
     aguardar: { cat: 'Controle', menu: 'aguardar N segundos', campos: [{ t: 'aguardar' }, { n: 's', tipo: 'valor', padrao: N(1) }, { t: 'segundos e então continuar' }], espera: true, ger: () => [] },
     alterar_grad: { cat: 'Objeto', menu: 'alterar um atributo aos poucos', campos: [{ t: 'alterar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(100) }, { t: 'em' }, { n: 's', tipo: 'valor', padrao: N(1) }, { t: 's, curva' }, { n: 'cv', tipo: 'sel', ops: [['suave', 'suave'], ['linear', 'constante'], ['entrada', 'acelera'], ['saida', 'desacelera']], padrao: 'suave' }],
       ger: b => { const d = attrDef(b.a); if (d.t === 'txt') throw erro('só dá para alterar aos poucos atributos numéricos'); const cv = b.cv || 'suave'; if (!['suave', 'linear', 'entrada', 'saida'].includes(cv)) throw erro('curva inválida: ' + cv);

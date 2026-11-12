@@ -71,3 +71,4 @@ body.tem-scripts-grande .bottom-dock{z-index:31}
 .img-lista li{display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--linha)}.img-lista img{width:40px;height:40px;object-fit:contain;background:#0e1319;border-radius:4px;flex:none}.img-lista .nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.img-lista button{padding:2px 7px;width:auto}
 .palco.solte{outline:3px dashed var(--acento);outline-offset:-3px}
 .lista li.alvo>button{outline:2px dashed var(--acento);outline-offset:-2px}.sc-obj .linha button{padding:3px 8px}.sc-obj select{width:100%}
+.bloco.cat-Listas{border-left-color:#84cc16}.bloco.cat-Listas>.pilha{border-left-color:#84cc16}.bloco.cat-Listas>.pilha:before{border-top-color:#84cc16}

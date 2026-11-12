@@ -194,3 +194,8 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **`core/systems/tempo.js`** (opcional, como a hierarquia): `ctx.depois(segundos, fn)` e `ctx.tween(alvo, campo, valor, duracao, curva, fim)`; curvas `linear`, `suave`, `entrada`, `saida`. Rodam no relógio do jogo (dt fixo): pausa pausa; `iniciar`, `reiniciar` e troca de cena cancelam tudo. Argumentos inválidos lançam erro claro; erro dentro do callback vira evento `erro-script`. Um tween novo no mesmo campo substitui o anterior. Limite de 5000 ativos.
 - **Blocos:** "aguardar N segundos" (o que vem depois dele na mesma lista vira o callback; dentro de um laço, só o resto daquela volta espera) e "alterar [atributo] de [objeto] para V em N s, curva C" (só atributos numéricos).
 - **Teste de núcleo:** o final de `tests/test-core.js` agora fica depois dos testes novos (antes alguns blocos finais nunca rodavam por causa do `process.exit`).
+
+## 29. Listas
+- **`core/listas.js`** (`engine.listas`, `ctx.listas`): listas em `scene.estado.listas = {nome: [itens]}`; até 50 listas × 1000 itens; item = número finito, texto (≤200) ou verdadeiro/falso. API: `adicionar, definir, remover, limpar, item, tamanho, contem, aleatorio, todos, nomes, garantir`. Leitura tolerante (inexistente → vazio/undefined); escrita inválida lança erro claro. Índices do núcleo começam em 0.
+- Salvam/carregam (validadas no `deJSON`), voltam ao reiniciar e **atravessam a troca de cena** (inventário).
+- **Blocos** (categoria Listas, índices começam em 1): adicionar, trocar item, remover item, esvaziar, para cada item (valor "item atual"); valores: item N, tamanho, item aleatório; condição "lista contém".
