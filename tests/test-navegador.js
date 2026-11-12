@@ -47,7 +47,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   });
   ok(r.depois === true && r.fim === false, 'multitoque: soltar o 2º dedo mantém o 1º; soltar o 1º encerra');
   // editor E1: lista, seleção por clique, edição validada pelo motor, variáveis e JSON transacional
-  await p.setViewportSize({ width: 1300, height: 760 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  await p.setViewportSize({ width: 1300, height: 760 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   ok(await p.evaluate(() => document.querySelectorAll('#projetos option').length === 1 && editor.projetoAtual === 'Exemplo'), 'M11 cria projeto inicial na lista local');
   await p.fill('#projeto-nome', 'Projeto 2'); await p.click('#projeto-criar'); await p.waitForTimeout(80); ok(await p.evaluate(() => document.querySelectorAll('#projetos option').length === 2 && editor.projetoAtual === 'Projeto 2' && editor.cena.entities.size === 0), 'M11 cria projeto vazio');
   await p.fill('#projeto-nome', 'Projeto Renomeado'); await p.click('#projeto-renomear'); await p.waitForTimeout(50); ok(await p.evaluate(() => editor.projetoAtual === 'Projeto Renomeado' && ![...document.querySelectorAll('#projetos option')].some(o => o.value === 'Projeto 2')), 'M11 renomeia projeto');
@@ -99,7 +99,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(200);
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'editor sem rolagem horizontal no celular');
   // editor E3a: scripts em JS dentro da cena
-  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.fill('#sc-nome', 'andar'); await p.click('#sc-novo');
   await p.fill('#sc-fonte', 'function atualizar(e, dt, ctx) { e.Transform.x += 100 * dt; ctx.vars.somar("pontos"); }');
   await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('#sc-anexar'); await p.waitForTimeout(100); const scriptX = await p.evaluate(() => editor.cena.find('bola').Transform.x);
@@ -118,7 +118,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.click('#e-parar');
   await p.click('#sc-remover'); ok(await p.evaluate(() => !editor.cena.find('bola').Script && !('andar' in editor.cena.estado.scripts)), 'remover script também desanexa dos objetos');
   // editor E3b: blocos pela interface
-  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.fill('#sc-nome', 'contar'); await p.click('#sc-novo-b');
   await p.locator('#bl > select.add').selectOption('evento_quadro');
   await p.locator('#bl .hat select.add').selectOption('var_somar');
@@ -139,7 +139,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   const audioDisponivel = await p.evaluate(async () => { const a = new Core.Audio(); await a.carregar({ beep: 'beep.wav' }); const source = a.tocar('beep', { volume: 0.4 }); return { disponivel: a.disponivel, source: !!source, carregado: __audioTeste.decodificado, iniciado: __audioTeste.iniciado }; });
   ok(audioIndisponivel && audioDisponivel.disponivel && audioDisponivel.source && audioDisponivel.carregado === 1 && audioDisponivel.iniciado === 1, 'audio: detecta WebAudio, carrega por nome e toca');
   // tecla livre pela interface
-  await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.fill('#sc-nome', 'tz'); await p.click('#sc-novo-b');
   await p.locator('#bl > select.add').selectOption('evento_quadro'); await p.locator('#bl .hat select.add').selectOption('se');
   await p.locator('#bl select[aria-label="tipo de condição"]').selectOption('tecla'); await p.locator('#bl select[aria-label="tipo de tecla"]').selectOption('livre');
@@ -151,7 +151,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   const dep = await p.evaluate(() => editor.engine.vars.ler('pontos'));
   ok(antes === 0 && dep > 5, 'no Play, a tecla escolhida dispara o bloco (sem tecla = nada)'); await p.click('#e-parar');
   // blocos novos pela interface: temporizador + criar objeto
-  await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.fill('#sc-nome', 'chuva'); await p.click('#sc-novo-b');
   await p.locator('#bl > select.add').selectOption('evento_quadro'); await p.locator('#bl .hat select.add').selectOption('temporizador'); await p.waitForTimeout(100);
   await p.locator('#bl .bloco.cat-Controle select.add').first().selectOption('criar'); await p.waitForTimeout(100);
@@ -160,20 +160,35 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.locator('select[aria-label="script do objeto criado"]').evaluate(s => s.style.borderColor === 'red' && s.title === 'script não existe'), 'bloco criar marca script órfão');
   await p.locator('#bl > .pilha > .bloco.hat').first().locator(':scope > select.add').selectOption('mover_x'); await p.locator('#bl > select.add').selectOption('evento_inicio'); await p.locator('#bl > .pilha > .bloco.hat').nth(1).locator(':scope > select.add').selectOption('mover_y'); await p.waitForTimeout(100);
   await p.setViewportSize({ width: 1280, height: 1800 }); await p.waitForTimeout(100);   // os dois blocos precisam estar visíveis na janela
+  await p.click('#sc-grande'); ok(await p.evaluate(() => document.getElementById('scripts-pane').classList.contains('scripts-grande')), 'janela grande de scripts abre'); await p.waitForTimeout(100);
   const origemArraste = p.locator('#bl > .pilha > .bloco.hat').first().locator(':scope > .pilha > .bloco.cat-Movimento').first(), destinoArraste = p.locator('#bl > .pilha > .bloco.hat').nth(1).locator(':scope > .pilha'); const bo = await origemArraste.boundingBox(), bd = await destinoArraste.boundingBox(); await p.mouse.move(bo.x + bo.width / 2, bo.y + 8); await p.mouse.down(); await p.mouse.move(bd.x + bd.width / 2, bd.y + bd.height / 2, { steps: 5 }); await p.mouse.up(); await p.waitForTimeout(100);
-  ok(await p.evaluate(() => { const s = editor.cena.estado.scripts.chuva, primeiro = s.blocos[0].f, segundo = s.blocos[1].f; return !primeiro.some(b => b.t === 'mover_x') && segundo.filter(b => b.t === 'mover_x').length === 1 && segundo.some(b => b.t === 'mover_y'); }), 'arraste move bloco para outro evento sem copiar');
+  ok(await p.evaluate(() => { const s = editor.cena.estado.scripts.chuva, primeiro = s.blocos[0].f, segundo = s.blocos[1].f; return !primeiro.some(b => b.t === 'mover_x') && segundo.filter(b => b.t === 'mover_x').length === 1 && segundo.some(b => b.t === 'mover_y'); }), 'arraste move bloco para outro evento sem copiar'); await p.keyboard.press('Escape'); ok(await p.evaluate(() => !document.getElementById('scripts-pane').classList.contains('scripts-grande')), 'Esc fecha a janela grande de scripts');
   await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); const antesN = await p.evaluate(() => editor.cena.entities.size); await p.click('#sc-anexar'); await p.click('#e-play'); await p.waitForTimeout(1500);
   const criados = await p.evaluate(() => [...editor.cena.entities.values()].filter(x => x.nome === 'criado').length);
   ok(criados >= 1, 'Play: o temporizador cria objetos durante o jogo (' + criados + ')');
   await p.click('#e-parar'); await p.waitForTimeout(150);
   ok(await p.evaluate(n => editor.cena.entities.size === n, antesN), 'Parar descarta os objetos criados durante o jogo');
+
+  // vista do editor: grade, tamanho da cena, zoom, abas reais e tela cheia limpa
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => !!editor.renderer.vista && editor.renderer.grade === true), 'vista do editor com grade ligada');
+  ok(await p.evaluate(() => { const v = id => getComputedStyle(document.getElementById(id)).display !== 'none'; return v('projetos-pane') && !v('cenas-pane') && !v('objetos-pane'); }), 'aba Projetos mostra só o próprio painel');
+  await p.click('[data-tab-target="objetos-pane"]'); ok(await p.evaluate(() => { const v = id => getComputedStyle(document.getElementById(id)).display !== 'none'; return !v('projetos-pane') && v('objetos-pane'); }), 'clicar na aba Objetos troca o painel');
+  const z0 = await p.evaluate(() => editor.renderer.vista.z); const bt = await p.locator('#tela').boundingBox(); await p.mouse.move(bt.x + bt.width / 2, bt.y + bt.height / 2); await p.mouse.wheel(0, -300); await p.waitForTimeout(100);
+  ok(await p.evaluate(z => editor.renderer.vista.z > z * 1.05, z0), 'roda do mouse dá zoom na vista');
+  await p.click('#v-ajustar'); ok(await p.evaluate(z => Math.abs(editor.renderer.vista.z - z) < 1e-6, z0), 'Ajustar vista volta ao enquadramento');
+  await p.fill('#v-w', '1600'); await p.fill('#v-h', '900'); await p.dispatchEvent('#v-h', 'change'); await p.dispatchEvent('#v-w', 'change'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => editor.cena.estado.tamanho.largura === 1600 && editor.renderer.largura === 1600 && editor.renderer.altura === 900), 'tamanho da cena muda a largura e a altura');
+  await p.click('#e-play'); await p.waitForTimeout(150); ok(await p.evaluate(() => editor.renderer.vista === null && editor.engine.ctx.tela.largura === 1600), 'Play desliga a vista/grade e usa o tamanho da cena');
+  await p.click('#e-parar'); await p.waitForTimeout(100); ok(await p.evaluate(() => !!editor.renderer.vista), 'Parar volta para a vista do editor');
+  await p.click('#e-jogar'); await p.waitForTimeout(250); ok(await p.evaluate(() => ['.bottom-dock', '.tree-dock', '.inspector-dock', '.topo'].every(q => getComputedStyle(document.querySelector(q)).display === 'none')), 'tela cheia esconde todos os painéis do editor'); await p.click('#e-sair-jogar'); await p.waitForTimeout(150);
   // exemplo pelo editor: abre, roda, moedas nascem
-  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400); await p.click('#p-exemplo'); await p.waitForTimeout(300);
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400); await p.click('#p-exemplo'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => !!editor.cena.find('jogador') && editor.cena.estado.scripts.moeda && document.getElementById('projetos').value === 'Pega-moedas'), 'botão abre o exemplo Pega-moedas como projeto novo');
   await p.click('#e-play'); await p.waitForTimeout(300); const xj0 = await p.evaluate(() => editor.cena.find('jogador').Transform.x); await p.keyboard.down('ArrowRight'); await p.waitForTimeout(500); await p.keyboard.up('ArrowRight'); ok(await p.evaluate(() => editor.cena.find('jogador').Transform.x) > xj0 + 20, 'exemplo: seta direita move o jogador'); await p.waitForTimeout(400); const encontrouMoeda = await p.evaluate(() => { const m = [...editor.cena.entities.values()].find(x => x.nome === 'moeda'), j = editor.cena.find('jogador'); if (!m || !j) return false; j.Transform.x = m.Transform.x; j.Transform.y = m.Transform.y; return true; }); await p.waitForTimeout(300);
   const placar = await p.evaluate(moeda => ({ moeda, pontos: editor.engine.vars.ler('pontos'), texto: editor.cena.find('placar').Sprite.rotulo }), encontrouMoeda);
   ok(placar.moeda && placar.pontos >= 1 && /Pontos: [1-9]/.test(placar.texto), 'exemplo coleta uma moeda e atualiza o placar');
-  const pixelsPlacar = await p.evaluate(() => { const c = document.getElementById('tela'), g = c.getContext('2d'), d = g.getImageData(0, 0, Math.min(c.width, 240), Math.min(c.height, 80)).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 220 && d[i + 1] > 220 && d[i + 2] > 220 && d[i + 3] > 0) n++; return n; });
+  const pixelsPlacar = await p.evaluate(() => { const c = document.getElementById('tela'), g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 220 && d[i + 1] > 220 && d[i + 2] > 220 && d[i + 3] > 0) n++; return n; });
   ok(pixelsPlacar > 0, 'exemplo desenha pixels do texto do placar');
   await p.screenshot({ path: process.env.EX_PNG || '/tmp/ex.png' }); await p.click('#e-parar');
   ok(await p.evaluate(() => { const d = document.createElement('div'), n = x => ({ k: 'num', v: x }), sc = { blocos: [{ t: 'evento_quadro', f: [EditorBlocos.novo('mudar_attr'), EditorBlocos.novo('somar_attr'), Object.assign(EditorBlocos.novo('se'), { c: { k: 'ou', a: { k: 'nao', a: { k: 'cmp', a: { k: 'attr', o: 'n:jogador', a: 'x' }, op: '>', b: { k: 'op', a: n(1), o: '+', b: n(2) } } }, b: { k: 'tecla', acao: 'acao', modo: 'down' } } })] }] }; EditorBlocos.montar(d, sc, { vars: () => [], scripts: () => [], objetos: () => ['jogador'], aoMudar() {} }); return d.querySelectorAll('select[aria-label="objeto"]').length === 3 && d.querySelectorAll('select[aria-label="atributo"]').length >= 3 && d.querySelectorAll('select[aria-label="conta"]').length === 1; }), 'interface dos blocos mostra atributo, conta e lógica (e/ou/não)');
@@ -195,7 +210,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.evaluate(() => document.getElementById('bl-teste').remove());
   // várias cenas
   p.on('dialog', d => d.accept());
-  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.evaluate(() => { editor.cena.create({ nome: 'marca1', Transform: { x: 10, y: 10 } }); editor.json(); });
   await p.fill('#cena-nome', 'fase2'); await p.click('#cena-nova'); await p.waitForTimeout(150);
   ok(await p.evaluate(() => EditorCenas.nomes().join() === 'fase2,principal' && editor.cena.entities.size === 0 && document.getElementById('cenas-lista').value === 'fase2'), 'cenas: nova cena abre vazia e a lista mostra as duas');
@@ -222,7 +237,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.evaluate(x => EditorArquivos.importar(JSON.stringify(x)), exportado.cena); await p.waitForTimeout(120);
   ok(await p.evaluate(() => editor.projetoAtual === 'Importado 2' && EditorCenas.nomes().length === 1), 'arquivos: abrir cena antiga cria projeto compatível');
   // ajustes do editor: câmera sem limites falsos, + componente, Play somente leitura, scripts sem sobra
-  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.evaluate(() => { editor.cena.create({ nome: 'j', Transform: { x: 100, y: 100 }, Sprite: { forma: 'circulo', raio: 16, cor: '#4af' } }); editor.json(); editor.selecionar(editor.cena.find('j').id); });
   await p.click('#cam-aplicar'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => { const c = editor.cena.estado.camera; return c && c.x === 400 && c.zoom === 1 && c.limites === undefined; }), 'câmera: Aplicar com campos de limite vazios não cria limites 0,0,0,0');
@@ -238,7 +253,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.fill('#projeto-nome', 'Vazio2'); await p.click('#projeto-criar'); await p.waitForTimeout(200);
   ok(await p.evaluate(() => document.getElementById('bl').children.length === 0 && document.getElementById('e-jogar').textContent === 'Tela cheia'), 'projeto novo: painel de blocos sem sobra do projeto anterior; botão Tela cheia');
   // hierarquia no editor: escolher pai, filho segue o pai, lista com recuo, remover pai leva os filhos
-  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index')); await p.waitForTimeout(400);
+  await p.evaluate(() => localStorage.clear()); await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
   await p.evaluate(() => { editor.cena.create({ nome: 'dono', Transform: { x: 100, y: 100 }, Sprite: { w: 20, h: 20, cor: '#fff' } }); editor.cena.create({ nome: 'arma', Transform: { x: 130, y: 100 }, Sprite: { w: 10, h: 10, cor: '#f00' } }); editor.json(); editor.selecionar(editor.cena.find('arma').id); });
   await p.selectOption('select[aria-label="Pai do objeto"]', { label: 'dono #' + await p.evaluate(() => editor.cena.find('dono').id) }); await p.waitForTimeout(150);
   ok(await p.evaluate(() => { const a = editor.cena.find('arma'); return a.Pai && a.Pai.dx === 30 && a.Pai.dy === 0; }), 'editor: escolher pai guarda o deslocamento');

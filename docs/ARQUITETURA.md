@@ -174,3 +174,9 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **Save:** `Serializer.deJSON` recusa pai inexistente e ciclo de pais.
 - **Blocos:** "tornar [objeto] filho de [objeto]", "soltar [objeto] do pai" e o objeto "o pai deste objeto".
 - **Editor:** campo "pai" no painel Marcas; a lista de objetos mostra os filhos recuados sob o pai; mover o pai leva os filhos e mover um filho muda só o deslocamento dele.
+
+## 25. Vista do editor, grade e tamanho da cena
+- **`scene.estado.tamanho = {largura, altura}`** (100–10000, validado no `deJSON`). O renderer adota esse tamanho (`ctx.tela` também) e o Play usa a mesma janela lógica.
+- **Vista do editor** (`renderer.vista = {cx, cy, z}`, só com o motor parado): a cena é um retângulo azul num espaço escuro, com pan (arrastar o fundo, botão do meio ou Espaço) e zoom (roda). `ajustarVista()` enquadra a cena. No Play a vista é desligada e vale o enquadramento do jogo.
+- **Guias** (`_guias`, só na vista): grade com números nas bordas (passo adaptado ao zoom), moldura da cena e o retângulo tracejado da câmera do jogo (`estado.camera`). Nada disso aparece no Play nem na tela cheia.
+- **Editor:** `editor/vista.js` (grade liga/desliga salva no navegador, campos largura × altura). Abas do dock esquerdo e inferior são reais; `?abas=todas` mostra tudo (usado nos testes). Scripts têm "Janela grande" (botão ou "Scripts ⤢"; Esc fecha). Tela cheia esconde todos os docks.

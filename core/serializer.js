@@ -41,6 +41,7 @@
         if (!isObj(sc)) throw new Error('save inválido: estado.scripts precisa ser um objeto');
         for (const k in sc) if (!C.Variaveis.NOME.test(k) || !isObj(sc[k]) || typeof sc[k].fonte !== 'string' || sc[k].fonte.length > 50000 || (sc[k].blocos !== undefined && (!Array.isArray(sc[k].blocos) || JSON.stringify(sc[k].blocos).length > 200000))) throw new Error('save inválido: script "' + k + '" (nome inválido ou fonte ausente/grande demais)');
       }
+      const tam = d.estado && d.estado.tamanho; if (tam !== undefined && (!isObj(tam) || !(tam.largura >= 100 && tam.largura <= 10000) || !(tam.altura >= 100 && tam.altura <= 10000))) throw new Error('save inválido: estado.tamanho precisa de largura e altura entre 100 e 10000');
       const cam = d.estado && d.estado.camera; if (cam !== undefined && (!isObj(cam) || (cam.zoom !== undefined && !(isFinite(cam.zoom) && cam.zoom > 0)))) throw new Error('save inválido: estado.camera (zoom precisa ser > 0)');
       const tmp = new C.Scene(); tmp.estado = d.estado || {};
       d.entidades.forEach((e, i) => {
