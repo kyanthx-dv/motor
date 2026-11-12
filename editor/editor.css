@@ -50,9 +50,20 @@ html,body{height:100%;overflow:hidden}.topo{height:52px;min-height:52px;flex-wra
 .cab-comp { display: flex; justify-content: space-between; align-items: center; }
 .cab-comp .mini { padding: 0 .4rem; min-width: 0; line-height: 1.4; opacity: .7; }
 
-/* Compatibilidade: os elementos continuam no fluxo e os docks fazem a rolagem. */
-.tree-dock>.dock-pane[hidden],.bottom-dock>.bottom-pane[hidden]{display:block}
-.bottom-dock{overflow:auto}.bottom-dock>.bottom-pane[hidden]{display:block;flex:0 0 auto}
-.tree-dock>.dock-pane[hidden],.bottom-dock>.bottom-pane[hidden]{display:block !important}
-.bottom-dock>.bottom-pane[hidden]{position:fixed;left:-10000px;top:0;width:620px;height:220px;display:block !important;flex:none;overflow:auto}
-.canvas-dock .palco{flex:0 1 auto;aspect-ratio:16/9;height:auto}
+/* Docks: abas de verdade (só o painel ativo aparece). ?abas=todas mostra tudo (testes e acessibilidade). */
+.abas-todas .dock-pane[hidden],.abas-todas .bottom-pane[hidden]{display:block!important}
+.abas-todas .bottom-dock{overflow:auto}
+/* Canvas: ocupa todo o dock (sem faixas pretas); a cena é um retângulo dentro da vista do editor. */
+.canvas-dock{padding:0;gap:0}.canvas-dock .palco{flex:1;min-height:0;aspect-ratio:auto;border:0;border-radius:0;background:#0e1319;position:relative}
+.vista-barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:5px 10px;border-bottom:1px solid var(--linha);background:var(--painel);font-size:12px;color:var(--mudo)}
+.vista-barra input[type=number]{width:70px;padding:2px 5px}.vista-barra button{padding:2px 8px}.vista-barra label{display:flex;gap:4px;align-items:center}.vista-barra .status{margin:0 0 0 auto}
+.canvas-dock>.status{display:none}
+/* Scripts em janela grande */
+.scripts-grande{position:fixed!important;inset:52px 0 0 0;z-index:30;background:var(--painel);padding:14px 18px!important;overflow:auto!important;display:block!important}
+.scripts-grande .codigo{height:60vh}.scripts-grande .blocos{min-height:50vh}
+body.tem-scripts-grande .bottom-dock{z-index:31}
+.bottom-dock .sc-grande{margin-left:auto}
+/* Tela cheia / Play em tela cheia: só o jogo aparece */
+.modo-jogo .topo,.modo-jogo .tree-dock,.modo-jogo .inspector-dock,.modo-jogo .bottom-dock,.modo-jogo .mobile-tabs,.modo-jogo .splitter,.modo-jogo .vista-barra{display:none!important}
+.modo-jogo .editor-shell{position:fixed;inset:0;height:100vh;display:block}.modo-jogo .work-area{display:block;height:100vh}
+.modo-jogo .canvas-dock{display:block;width:100vw;height:100vh}.modo-jogo .canvas-dock .palco{width:100vw;height:100vh;background:#000}

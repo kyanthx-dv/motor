@@ -33,6 +33,17 @@
     document.querySelectorAll('[data-mobile-pane]').forEach(button => button.addEventListener('click', () => shell.dataset.mobilePane = button.dataset.mobilePane));
     document.addEventListener('focusin', ev => { const pane = ev.target.closest?.('.bottom-pane[hidden]'); if (!pane) return; pane.hidden = false; pane.classList.add('active'); });
   }
+  if (/[?&]abas=todas/.test(location.search)) document.body.classList.add('abas-todas');
+  function scriptsGrande(on) {
+    const pane = document.getElementById('scripts-pane'); if (!pane) return;
+    const ativo = on === undefined ? !pane.classList.contains('scripts-grande') : on;
+    if (ativo) { document.querySelector('[data-tab-target="scripts-pane"]')?.click(); }
+    pane.classList.toggle('scripts-grande', ativo); document.body.classList.toggle('tem-scripts-grande', ativo);
+    const b = document.getElementById('sc-grande'); if (b) b.textContent = ativo ? '✕ Fechar janela' : '⤢ Janela grande';
+  }
+  document.getElementById('sc-grande')?.addEventListener('click', () => scriptsGrande());
+  document.getElementById('e-scripts')?.addEventListener('click', () => scriptsGrande(true));
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape') scriptsGrande(false); });
   apply(); tabs(); shell.dataset.mobilePane = 'canvas'; work.append(splitter('left'), splitter('right')); shell.append(splitter('h')); window.addEventListener('resize', () => { document.querySelector('.bottom-dock').scrollTop = 0; document.querySelectorAll('.bottom-pane').forEach(p => p.scrollTop = 0); apply(); if (innerHeight > 1200) document.documentElement.style.setProperty('--bottom-h', '700px'); });
   window.EditorLayout = { read, save: () => write(state), apply };
 })();
