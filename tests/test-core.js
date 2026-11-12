@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','variaveis','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','variaveis','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -288,7 +288,6 @@ const nova=()=>new C.Engine();
 {const e=nova();e.perfil=true;e.scene.create({Transform:{x:0,y:0},Velocity:{vx:1,vy:0}});for(let i=0;i<5;i++)e.passo();
  ok(['controles','ui','scripts','fisica','animacao','camera'].every(n=>typeof e.tempos[n]==='number'&&e.tempos[n]>=0),'perfil mede o tempo de cada sistema');
  const f=nova();f.passo();ok(Object.keys(f.tempos).length===0,'sem perfil não mede nada');}
-console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
 
 // imagens e tamanho da cena no save
 {
@@ -300,3 +299,23 @@ console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(f
   ok(/tamanho/.test(tenta(d => { d.estado.tamanho = { largura: 5, altura: 450 }; })), 'save recusa tamanho de cena inválido');
   ok(tenta(d => { d.estado.tamanho = { largura: 1600, altura: 900 }; }) === null, 'save aceita tamanho de cena válido');
 }
+
+// 9h. esperar (ctx.depois) e tween (ctx.tween)
+{
+  const e = nova(), en = e.scene.create({ nome: 'a', Transform: { x: 0, y: 0 } }); let n = 0;
+  e.ctx.depois(0.5, () => n++);
+  for (let i = 0; i < 29; i++) e.passo(); ok(n === 0, 'depois: ainda não passou 0,5 s (29 passos)');
+  for (let i = 0; i < 2; i++) e.passo(); ok(n === 1, 'depois: roda uma vez depois de 0,5 s');
+  for (let i = 0; i < 30; i++) e.passo(); ok(n === 1, 'depois: não repete');
+  let fim = 0; e.ctx.tween(en.Transform, 'x', 100, 1, 'linear', () => fim++);
+  for (let i = 0; i < 30; i++) e.passo(); ok(Math.abs(en.Transform.x - 50) < 2, 'tween linear: na metade do tempo está perto da metade (' + en.Transform.x.toFixed(1) + ')');
+  for (let i = 0; i < 31; i++) e.passo(); ok(en.Transform.x === 100 && fim === 1, 'tween termina exatamente no valor e chama o callback uma vez');
+  e.ctx.tween(en.Transform, 'x', 0, 1, 'suave'); for (let i = 0; i < 30; i++) e.passo(); ok(Math.abs(en.Transform.x - 50) < 2, 'tween suave: metade do tempo, metade do caminho');
+  e.ctx.tween(en.Transform, 'x', 500, 0); ok(en.Transform.x === 500, 'tween com duração 0 aplica na hora');
+  e.ctx.tween(en.Transform, 'y', 100, 2); for (let i = 0; i < 10; i++) e.passo(); e.ctx.tween(en.Transform, 'y', 0, 1); for (let i = 0; i < 61; i++) e.passo(); ok(en.Transform.y === 0, 'tween novo no mesmo campo substitui o antigo');
+  let erros = 0; for (const f of [() => e.ctx.depois(-1, () => {}), () => e.ctx.depois(1, 5), () => e.ctx.tween(en.Transform, 'zzz', 1, 1), () => e.ctx.tween(en.Transform, 'x', NaN, 1), () => e.ctx.tween(en.Transform, 'x', 1, -1), () => e.ctx.tween(en.Transform, 'x', 1, 1, 'mola')]) { try { f(); } catch (x) { erros++; } }
+  ok(erros === 6, 'depois/tween recusam argumentos inválidos');
+  let boom = null; e.events.on('erro-script', d => { boom = d; }); e.ctx.depois(0, () => { throw new Error('x'); }); e.passo(); ok(boom && /x/.test(boom.mensagem), 'erro dentro do depois vira erro-script e não derruba o motor');
+  let rodou = 0; e.ctx.depois(0.1, () => rodou++); e.reiniciar(); for (let i = 0; i < 20; i++) e.passo(); ok(rodou === 0, 'reiniciar cancela temporizadores pendentes');
+}
+console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

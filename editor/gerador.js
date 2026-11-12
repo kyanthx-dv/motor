@@ -95,6 +95,11 @@
     somar_attr: { cat: 'Objeto', menu: 'somar a um atributo de um objeto', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }],
       ger: b => { const d = attrDef(b.a); if (d.t === 'txt') throw erro('só dá para somar em atributos numéricos'); const ini = INI[d.c] || '', ok = (INI[d.c] ? 'true' : 'o.' + d.c);
         return ['{', '  const o = ' + objExpr(b.o) + ', v = Number(' + valor(b.v) + ');', '  if (o && isFinite(v) && ' + ok + ') { ' + ini + 'o.' + d.c + '.' + d.p + ' = (Number(o.' + d.c + '.' + d.p + ') || 0) + v; }', '}']; } },
+    aguardar: { cat: 'Controle', menu: 'aguardar N segundos', campos: [{ t: 'aguardar' }, { n: 's', tipo: 'valor', padrao: N(1) }, { t: 'segundos e então continuar' }], espera: true, ger: () => [] },
+    alterar_grad: { cat: 'Objeto', menu: 'alterar um atributo aos poucos', campos: [{ t: 'alterar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(100) }, { t: 'em' }, { n: 's', tipo: 'valor', padrao: N(1) }, { t: 's, curva' }, { n: 'cv', tipo: 'sel', ops: [['suave', 'suave'], ['linear', 'constante'], ['entrada', 'acelera'], ['saida', 'desacelera']], padrao: 'suave' }],
+      ger: b => { const d = attrDef(b.a); if (d.t === 'txt') throw erro('só dá para alterar aos poucos atributos numéricos'); const cv = b.cv || 'suave'; if (!['suave', 'linear', 'entrada', 'saida'].includes(cv)) throw erro('curva inválida: ' + cv);
+        const ini = INI[d.c] || '', ok = (INI[d.c] ? 'true' : 'o.' + d.c), alvo = 'o.' + d.c;
+        return ['{', '  const o = ' + objExpr(b.o) + ', v = Number(' + valor(b.v) + '), s = Number(' + valor(b.s) + ');', '  if (o && ' + ok + ' && isFinite(v) && isFinite(s) && s >= 0) { ' + ini + 'if (typeof ' + alvo + '.' + d.p + ' !== "number") ' + alvo + '.' + d.p + ' = 0; ctx.tween(' + alvo + ', ' + JSON.stringify(d.p) + ', v, s, ' + JSON.stringify(cv) + '); }', '}']; } },
     adotar: { cat: 'Objeto', menu: 'tornar filho de outro objeto', campos: [{ t: 'tornar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { t: 'filho de' }, { n: 'p', tipo: 'obj', padrao: 'outro' }], ger: b => ['ctx.scene.adotar(' + objExpr(b.o) + ', ' + objExpr(b.p) + ');'] },
     soltar: { cat: 'Objeto', menu: 'soltar do pai', campos: [{ t: 'soltar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { t: 'do pai' }], ger: b => ['ctx.scene.soltar(' + objExpr(b.o) + ');'] },
     etiquetar: { cat: 'Objeto', menu: 'dar etiqueta a um objeto', campos: [{ t: 'dar a' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { t: 'a etiqueta' }, { n: 'tag', tipo: 'txt', padrao: 'inimigo' }], ger: b => ['{', '  const o = ' + objExpr(b.o) + ', t = ' + tagStr(b.tag) + ';', '  if (o) { if (!o.Etiquetas) o.Etiquetas = []; if (!o.Etiquetas.includes(t) && o.Etiquetas.length < 20) o.Etiquetas.push(t); }', '}'] },
@@ -152,8 +157,11 @@
   function lista(arr, nivel) {
     if (!Array.isArray(arr)) throw erro('lista de blocos inválida');
     const out = [];
-    for (const b of arr) {
-      const def = b && BLOCOS[b.t]; if (!def) throw erro('bloco desconhecido: ' + (b && b.t));
+    for (let i = 0; i < arr.length; i++) {
+      const b = arr[i], def = b && BLOCOS[b.t]; if (!def) throw erro('bloco desconhecido: ' + (b && b.t));
+      if (def.espera) {   // aguardar: tudo que vem depois só roda quando o tempo passar (relógio do jogo; Parar/reiniciar cancela)
+        out.push('ctx.depois(Math.max(0, Number(' + valor(b.s) + ') || 0), () => {', ...ind(lista(arr.slice(i + 1), 0), 1), '});'); break;
+      }
       out.push(...def.ger(b, { lista: l => ind(lista(l, 0), 1), id: () => contador++ }));
     }
     return ind(out, nivel);
