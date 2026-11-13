@@ -88,3 +88,10 @@ body.tem-scripts-grande .bottom-dock{z-index:31}
 .mais-wrap{position:relative;margin:6px 0}.mais-painel{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;margin-top:6px;border:1px solid var(--linha);border-radius:10px;background:var(--painel);box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .mais-painel button{display:flex;gap:6px;align-items:center;justify-content:flex-start;width:100%;text-align:left}.mais-painel .t{font-size:11px;color:var(--mudo);grid-column:1/-1;margin:0}
 #e-mais{font-weight:700;width:100%}.abas-todas .mais-painel[hidden]{display:grid!important}
+
+/* tela cheia: todos os contêineres esticam até a janela */
+.modo-jogo #centro-cena{display:block!important;height:100vh;width:100vw}.modo-jogo #centro-scripts,.modo-jogo .canvas-dock>.status,.modo-jogo #status{display:none!important}
+.modo-jogo .canvas-dock .palco{height:100vh!important;width:100vw!important;flex:none}
+/* observados (bloco "observar valor") */
+.obs-lista{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0;margin:0;font:12px ui-monospace,monospace}.obs-lista:empty{display:none}.obs-lista span{padding:2px 8px;border:1px solid var(--linha);border-radius:999px;background:var(--campo)}.obs-lista b{color:var(--acento)}
+#obs-vivo{display:none;position:fixed;left:10px;top:10px;z-index:50;pointer-events:none;font:13px ui-monospace,monospace;color:#fff;text-shadow:0 1px 2px #000}.modo-jogo #obs-vivo{display:block}#obs-vivo div{background:rgba(0,0,0,.5);padding:2px 8px;margin-bottom:2px;border-radius:4px}

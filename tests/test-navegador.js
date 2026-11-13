@@ -186,6 +186,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(() => { const ent = editor.cena.find('mapa'); editor.cena.find('mapa').Tiles.paleta[1].solido = true; return true; }), 'tiles: paleta editável');
 
 
+
+  // tela cheia ocupa a janela toda (mesmo com o painel de baixo grande) e Output mostra "observar valor"
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  await p.evaluate(() => { document.documentElement.style.setProperty('--bottom-h', '600px'); editor.engine.observar('vidas', 3); }); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => /vidas\s*=\s*3/.test(document.getElementById('out-obs').textContent)), 'Output mostra os valores observados');
+  await p.click('#e-play'); await p.waitForTimeout(300);
+  const tam = await p.evaluate(() => { const r = document.querySelector('.palco').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), innerWidth, innerHeight]; });
+  ok(tam[0] >= tam[2] - 2 && tam[1] >= tam[3] - 2, 'tela cheia: o palco ocupa a janela inteira (' + tam.join('x') + ')');
+  await p.click('#e-sair-jogar'); await p.waitForTimeout(150);
   // painel "+" e blocos não esmagados pelo CSS do topo
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   ok(await p.evaluate(() => !document.querySelector('header.topo #e-criar') && document.getElementById('mais-painel').hidden), 'topo sem "Criar"; painel + começa fechado');

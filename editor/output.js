@@ -17,5 +17,15 @@
   ed.engine.events.on('erro-script', d => add('Erro no script "' + d.script + '" (' + d.fase + '): ' + d.mensagem, 'erro'));
   (function acompanhar() { if (ed.engine.rodando !== rodou) { rodou = ed.engine.rodando; const li = { h: hora(), texto: rodou ? '▶ Play' : '■ Parado', tipo: 'sis' }; itens.push(li); desenhar(); } requestAnimationFrame(acompanhar); })();
   $('out-limpar').addEventListener('click', () => { itens.length = 0; desenhar(); }); $('out-erros').addEventListener('change', desenhar);
+  // valores do bloco "observar valor": ao vivo no Output e, em tela cheia, no canto da tela
+  const vivo = document.createElement('div'); vivo.id = 'obs-vivo'; document.body.append(vivo); let ultimoObs = '';
+  (function observados() {
+    const o = ed.engine.observados || {}, txt = JSON.stringify(o);
+    if (txt !== ultimoObs) {
+      ultimoObs = txt; const caixa = $('out-obs'); caixa.innerHTML = ''; vivo.innerHTML = '';
+      for (const [k, v] of Object.entries(o)) { const sp = document.createElement('span'), b = document.createElement('b'); b.textContent = k; sp.append(b, ' = ' + v); caixa.append(sp); const d = document.createElement('div'); d.textContent = k + ' = ' + v; vivo.append(d); }
+    }
+    requestAnimationFrame(observados);
+  })();
   root.EditorOutput = { add, itens };
 })(window);
