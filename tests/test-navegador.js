@@ -185,6 +185,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.uncheck('#tl-pintar');
   ok(await p.evaluate(() => { const ent = editor.cena.find('mapa'); editor.cena.find('mapa').Tiles.paleta[1].solido = true; return true; }), 'tiles: paleta editável');
 
+
+  // painel "+" e blocos não esmagados pelo CSS do topo
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => !document.querySelector('header.topo #e-criar') && document.getElementById('mais-painel').hidden), 'topo sem "Criar"; painel + começa fechado');
+  await p.click('[data-tab-target="objetos-pane"]'); await p.click('#e-mais'); ok(await p.evaluate(() => !document.getElementById('mais-painel').hidden), '"+ Novo objeto" abre o painel de tipos');
+  await p.click('#e-retangulo'); await p.click('#e-mais'); await p.click('#e-sensor');
+  ok(await p.evaluate(() => { const a = editor.cena.find('parede'), b = editor.cena.find('sensor'); return a && a.Body.forma === 'retangulo' && b && b.Body.sensor === true && document.getElementById('mais-painel').hidden; }), 'painel +: retângulo sólido e sensor criam objetos e fecham o painel');
+  await p.evaluate(() => { EditorCentro.abrir('scripts'); }); await p.click('#sc-nome').catch(() => {}); 
+  ok(await p.evaluate(() => getComputedStyle(document.querySelector('header.topo')).height === '52px'), 'barra do topo mantém 52px');
   // Output: escrever (bloco) e erros; abas do centro
   const o1 = await p.evaluate(() => { const N = v => ({ k: 'txt', v }); const eng = editor.engine; const f = EditorBlocos.gerar([{ t: 'evento_inicio', f: [{ t: 'escrever', v: N('oi output') }] }]); const e = editor.cena.create({ nome: 'sc', Transform: { x: 0, y: 0 }, Script: { nome: 'so' } }); editor.cena.estado.scripts = { so: { fonte: f } }; eng.compilarScripts(); eng.passo(); eng.passo(); return document.getElementById('out').textContent; });
   ok(/oi output/.test(o1), 'Output mostra o que o bloco "escrever no output" manda (' + o1.slice(0, 40) + ')');
