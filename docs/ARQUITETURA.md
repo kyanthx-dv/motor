@@ -231,3 +231,6 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 
 ## 36. Som por arquivo
 `estado.sons {nome: data URL de áudio}` (até 10, ~350 KB cada, validado no save). No Play, o editor chama `audio.carregar(estado.sons)`. `Audio.tocar(nome,{volume,repetir})`, `parar(nome)`, `pararTudo()`, `tem(nome)`. Blocos "tocar som importado" e "parar som"; painel Sons (importar, ouvir, remover).
+
+## 37. Hitbox poligonal
+`Body {forma:'poligono', pontos:[[x,y],...]}` (3 a 16 pontos, convexo, relativos ao Transform, sem rotação). Colisão por eixos separadores (SAT) contra círculo, retângulo e outro polígono; serve também para sensores. `Sprite {forma:'poligono', pontos}` desenha a forma. Retângulo já era suportado. Botão "△ Triângulo" no painel ＋. Côncavo: combine vários polígonos convexos.

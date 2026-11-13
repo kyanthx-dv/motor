@@ -11,6 +11,7 @@
       const b = e.Body, s = e.Sprite || {};
       if (e.Tiles && !e.Sprite && !e.Body) { const T = e.Tiles; return { hw: T.colunas * T.tamanho / 2, hh: T.linhas * T.tamanho / 2, ox: T.colunas * T.tamanho / 2, oy: T.linhas * T.tamanho / 2 }; }
       if (s.imagem) { const k = s.escala || 1; return { hw: (s.quadroW || 32) * k / 2, hh: (s.quadroH || 32) * k / 2, ox: s.offX || 0, oy: s.offY || 0 }; }
+      if (b && b.forma === 'poligono') { let m = 1; for (const q of b.pontos) m = Math.max(m, Math.abs(q[0]), Math.abs(q[1])); return { hw: m, hh: m, ox: 0, oy: 0 }; }
       if (b) { const c = b.forma === 'circulo' || (!b.forma && b.raio !== undefined); return c ? { hw: b.raio, hh: b.raio, ox: 0, oy: 0 } : { hw: b.w / 2, hh: b.h / 2, ox: 0, oy: 0 }; }
       const f = s.forma || (s.raio ? 'circulo' : 'retangulo');
       return f === 'retangulo' ? { hw: (s.w ?? 20) / 2, hh: (s.h ?? 20) / 2, ox: 0, oy: 0 } : { hw: s.raio ?? 10, hh: s.raio ?? 10, ox: 0, oy: 0 };
@@ -98,10 +99,11 @@
         }
         const f = s.forma || b.forma || (s.raio || b.raio ? 'circulo' : 'retangulo');
         const raio = s.raio ?? b.raio ?? 10, w = s.w ?? b.w ?? 20, h = s.h ?? b.h ?? 20;
-        const hx = f === 'retangulo' ? w / 2 : raio, hy = f === 'retangulo' ? h / 2 : raio;
+        const pg = f === 'poligono' ? (s.pontos || b.pontos || []) : null, pm = pg ? pg.reduce((m, q) => Math.max(m, Math.abs(q[0]), Math.abs(q[1])), 1) : 0;
+        const hx = pg ? pm : f === 'retangulo' ? w / 2 : raio, hy = pg ? pm : f === 'retangulo' ? h / 2 : raio;
         if (Math.abs(x - cx) - hx > meioW || Math.abs(y - cy) - hy > meioH) return;
         g.lineWidth = s.larguraBorda || 2; g.beginPath();
-        if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else if (s.arredondar > 0 && g.roundRect) g.roundRect(x - w / 2, y - h / 2, w, h, Math.min(s.arredondar, w / 2, h / 2)); else g.rect(x - w / 2, y - h / 2, w, h);
+        if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else if (pg) { pg.forEach((q, i) => i ? g.lineTo(x + q[0], y + q[1]) : g.moveTo(x + q[0], y + q[1])); g.closePath(); } else if (s.arredondar > 0 && g.roundRect) g.roundRect(x - w / 2, y - h / 2, w, h, Math.min(s.arredondar, w / 2, h / 2)); else g.rect(x - w / 2, y - h / 2, w, h);
         if (f === 'anel') { g.strokeStyle = s.cor || '#fff'; g.stroke(); }
         else { const B = e.Botao; g.fillStyle = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
           if (s.sombra) { g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 8 * this.dpr; g.shadowOffsetY = 3 * this.dpr; }
@@ -127,7 +129,7 @@
         g.strokeStyle = '#ff3b6b'; g.lineWidth = 1.5 / z;
         for (const e of scene.query('Transform', 'Body')) {
           const t = e.Transform, b = e.Body; g.setLineDash(b.sensor ? [5, 4] : []); g.beginPath();
-          if (b.forma === 'circulo' || (!b.forma && b.raio)) g.arc(t.x, t.y, b.raio, 0, Math.PI * 2); else g.rect(t.x - b.w / 2, t.y - b.h / 2, b.w, b.h);
+          if (b.forma === 'circulo' || (!b.forma && b.raio)) g.arc(t.x, t.y, b.raio, 0, Math.PI * 2); else if (b.forma === 'poligono') { b.pontos.forEach((q, i) => i ? g.lineTo(t.x + q[0], t.y + q[1]) : g.moveTo(t.x + q[0], t.y + q[1])); g.closePath(); } else g.rect(t.x - b.w / 2, t.y - b.h / 2, b.w, b.h);
           g.stroke();
         }
         g.setLineDash([]);

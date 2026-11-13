@@ -44,12 +44,17 @@
       const b = e.Body, circ = b.forma === 'circulo' || (!b.forma && b.raio !== undefined);
       if (!e.Transform) throw new Error('entidade "' + n + '": Body precisa de Transform');
       if (b.massa !== undefined) { num(b.massa, n, 'Body.massa'); if (b.massa < 0) throw new Error('entidade "' + n + '": Body.massa não pode ser negativa'); }
-      if (b.forma !== undefined && b.forma !== 'circulo' && b.forma !== 'retangulo') throw new Error('entidade "' + n + '": Body.forma desconhecida: ' + b.forma + ' (use "circulo" ou "retangulo")');
+      if (b.forma !== undefined && b.forma !== 'circulo' && b.forma !== 'retangulo' && b.forma !== 'poligono') throw new Error('entidade "' + n + '": Body.forma desconhecida: ' + b.forma + ' (use "circulo", "retangulo" ou "poligono")');
       if (b.elasticidade !== undefined) { num(b.elasticidade, n, 'Body.elasticidade'); if (b.elasticidade < 0 || b.elasticidade > 1) throw new Error('entidade "' + n + '": Body.elasticidade precisa estar entre 0 e 1'); }
       if (b.amortecimento !== undefined) { num(b.amortecimento, n, 'Body.amortecimento'); if (b.amortecimento < 0) throw new Error('entidade "' + n + '": Body.amortecimento não pode ser negativo'); }
       if (b.camada !== undefined && typeof b.camada !== 'string') throw new Error('entidade "' + n + '": Body.camada precisa ser texto');
       if (b.colide !== undefined && !(Array.isArray(b.colide) && b.colide.every(x => typeof x === 'string'))) throw new Error('entidade "' + n + '": Body.colide precisa ser uma lista de textos');
-      if (circ) { num(b.raio, n, 'Body.raio'); if (b.raio <= 0) throw new Error('entidade "' + n + '": Body.raio precisa ser maior que 0'); }
+      if (b.forma === 'poligono') {
+        const P = b.pontos; if (!Array.isArray(P) || P.length < 3 || P.length > 16 || !P.every(q => Array.isArray(q) && q.length === 2 && Number.isFinite(q[0]) && Number.isFinite(q[1]) && Math.abs(q[0]) <= 5000 && Math.abs(q[1]) <= 5000)) throw new Error('entidade "' + n + '": Body.pontos precisa ter de 3 a 16 pontos [x, y]');
+        let sinal = 0; for (let i = 0; i < P.length; i++) { const a = P[i], c = P[(i + 1) % P.length], d = P[(i + 2) % P.length], z = (c[0] - a[0]) * (d[1] - c[1]) - (c[1] - a[1]) * (d[0] - c[0]); if (z !== 0) { if (sinal && Math.sign(z) !== sinal) throw new Error('entidade "' + n + '": Body.pontos precisa formar um polígono convexo (sem reentrâncias)'); sinal = Math.sign(z); } }
+        if (!sinal) throw new Error('entidade "' + n + '": Body.pontos não pode ficar numa linha reta');
+      }
+      else if (circ) { num(b.raio, n, 'Body.raio'); if (b.raio <= 0) throw new Error('entidade "' + n + '": Body.raio precisa ser maior que 0'); }
       else { num(b.w, n, 'Body.w'); num(b.h, n, 'Body.h'); if (b.w <= 0 || b.h <= 0) throw new Error('entidade "' + n + '": Body.w e Body.h precisam ser maiores que 0'); }
     }
   }
@@ -59,6 +64,7 @@
     const S = e.Sprite, B = e.Body, fixo = S && S.fixo, px = fixo ? p.tx : p.x, py = fixo ? p.ty : p.y;
     if (typeof px !== 'number' || typeof py !== 'number') return false;
     let circ = false, r = 0, w = 0, h = 0;
+    if (B && B.forma === 'poligono') { const xs = B.pontos.map(q => q[0]), ys = B.pontos.map(q => q[1]); const dx0 = px - e.Transform.x, dy0 = py - e.Transform.y; return dx0 >= Math.min(...xs) && dx0 <= Math.max(...xs) && dy0 >= Math.min(...ys) && dy0 <= Math.max(...ys); }
     if (B) { if (B.forma === 'circulo' || (!B.forma && B.raio !== undefined)) { circ = true; r = B.raio; } else { w = B.w; h = B.h; } }
     else if (S) { if (S.forma === 'circulo' || (S.raio !== undefined && S.w === undefined)) { circ = true; r = S.raio ?? 16; } else { w = S.w ?? 32; h = S.h ?? 32; } }
     else return false;
