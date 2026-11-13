@@ -137,12 +137,41 @@
       if (hat) for (const [t, d] of Object.entries(B.HATS)) { const o = el('option', null, d.rotulo); o.value = t; s.append(o); }
       else { const grupos = {}; for (const [t, d] of Object.entries(B.BLOCOS)) { (grupos[d.cat] = grupos[d.cat] || []).push([t, d]); }
         for (const g in grupos) { const og = el('optgroup'); og.label = g; for (const [t, d] of grupos[g]) { const o = el('option', null, d.menu || d.campos.map(c => c.t || '…').join(' ').replace(/\s+/g, ' ')); o.value = t; og.append(o); } s.append(og); } }
-      s.addEventListener('change', () => { if (s.value) { arr.push(B.novo(s.value)); redesenhar(); } }); return s;
+      s.addEventListener('change', () => { if (s.value) { arr.push(B.novo(s.value)); redesenhar(); } });
+      const btn = el('button', 'add-btn', hat ? '＋ evento' : '＋ bloco'); btn.type = 'button'; btn.setAttribute('aria-haspopup', 'dialog');
+      btn.addEventListener('click', () => abrirPicker(btn, hat, t => { s.value = t; s.dispatchEvent(new Event('change')); }));
+      const f = document.createDocumentFragment(); f.append(btn, s); return f;   // o <select> continua no DOM (acessível e usado pelos testes); o botão abre a busca
+    }
+    // Seletor de blocos com busca e categorias (no lugar da lista gigante)
+    let picker = null;
+    function fecharPicker() { if (picker) { picker.remove(); picker = null; document.removeEventListener('pointerdown', foraPicker, true); } }
+    function foraPicker(ev) { if (picker && !picker.contains(ev.target) && !ev.target.closest('.add-btn')) fecharPicker(); }
+    function abrirPicker(ancora, hat, escolher) {
+      fecharPicker();
+      const box = el('div', 'picker'), busca = el('input', 'p-busca'), chips = el('div', 'p-chips'), lista = el('div', 'p-lista');
+      busca.type = 'search'; busca.placeholder = hat ? 'Buscar evento…' : 'Buscar bloco… (ex.: mover, lista, som)'; busca.setAttribute('aria-label', 'Buscar bloco'); box.setAttribute('role', 'dialog');
+      const itens = hat ? Object.entries(B.HATS).map(([t, d]) => ({ t, cat: 'Eventos', txt: d.rotulo })) : Object.entries(B.BLOCOS).map(([t, d]) => ({ t, cat: d.cat, txt: d.menu || d.campos.map(c => c.t || '…').join(' ').replace(/\s+/g, ' ') }));
+      const cats = [...new Set(itens.map(i => i.cat))]; let cat = '', vis = [];
+      const norm = x => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      function pintar() {
+        const q = norm(busca.value.trim()); vis = itens.filter(i => (!cat || i.cat === cat) && (!q || norm(i.txt + ' ' + i.cat + ' ' + i.t).includes(q)));
+        lista.innerHTML = ''; chips.innerHTML = '';
+        for (const c of ['', ...cats]) { const b = el('button', 'p-chip' + (c === cat ? ' on' : ''), c || 'Todos'); b.type = 'button'; if (c) b.classList.add('cat-' + c); b.addEventListener('click', () => { cat = c; pintar(); busca.focus(); }); chips.append(b); }
+        if (!vis.length) lista.append(el('div', 'p-vazio', 'Nenhum bloco encontrado.'));
+        vis.forEach((i, k) => { const b = el('button', 'p-item cat-' + i.cat + (k === 0 && q ? ' first' : ''), i.txt); b.type = 'button'; b.title = i.cat; b.addEventListener('click', () => { fecharPicker(); escolher(i.t); }); lista.append(b); });
+      }
+      busca.addEventListener('input', pintar);
+      busca.addEventListener('keydown', ev => { if (ev.key === 'Escape') { fecharPicker(); ancora.focus(); } else if (ev.key === 'Enter' && vis.length) { ev.preventDefault(); const t = vis[0].t; fecharPicker(); escolher(t); } });
+      box.append(busca, chips, lista); document.body.append(box); picker = box; pintar();
+      const r = ancora.getBoundingClientRect(), w = Math.min(360, innerWidth - 16); box.style.width = w + 'px';
+      box.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px'; const alto = Math.min(innerHeight * .6, 420); box.style.maxHeight = alto + 'px';
+      box.style.top = (r.bottom + alto + 8 < innerHeight ? r.bottom + 4 : Math.max(8, r.top - alto - 4)) + 'px';
+      document.addEventListener('pointerdown', foraPicker, true); busca.focus();
     }
     function botoes(arr, i) {
       const w = el('span', 'bt');
       const mk = (txt, rot, fn, off) => { const b = el('button', null, txt); b.type = 'button'; b.title = rot; b.setAttribute('aria-label', rot); b.disabled = !!off; b.addEventListener('click', fn); return b; };
-      w.append(mk('↑', 'Subir', () => { [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; redesenhar(); }, i === 0), mk('↓', 'Descer', () => { [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; redesenhar(); }, i === arr.length - 1), mk('✕', 'Remover bloco', () => { arr.splice(i, 1); redesenhar(); }));
+      w.append(mk(arr[i].recolhido ? '▸' : '▾', arr[i].recolhido ? 'Expandir' : 'Recolher', () => { if (arr[i].recolhido) delete arr[i].recolhido; else arr[i].recolhido = true; redesenhar(); }), mk('⧉', 'Duplicar bloco', () => { arr.splice(i + 1, 0, JSON.parse(JSON.stringify(arr[i]))); redesenhar(); }), mk('↑', 'Subir', () => { [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; redesenhar(); }, i === 0), mk('↓', 'Descer', () => { [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; redesenhar(); }, i === arr.length - 1), mk('✕', 'Remover bloco', () => { arr.splice(i, 1); redesenhar(); }));
       return w;
     }
     function pilha(arr, hat) {
@@ -151,7 +180,7 @@
       arr.forEach((b, i) => {
         const def = hat ? B.HATS[b.t] : B.BLOCOS[b.t];
         if (!def) { const w = el('div', 'bloco'); w.append(el('span', 'aviso-mini', 'bloco inválido (' + b.t + ') '), botoes(arr, i)); p.append(w); return; }
-        const linha = el('div', hat ? 'bloco hat' : 'bloco cat-' + def.cat);
+        const linha = el('div', (hat ? 'bloco hat' : 'bloco cat-' + def.cat) + (b.recolhido ? ' recolhido' : ''));
         linha.__arr = arr; linha.__bloco = b; linha.style.touchAction = 'none';
         const topo = el('div', 'topo');
         if (hat) topo.append(el('b', null, def.rotulo));

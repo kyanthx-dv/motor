@@ -215,3 +215,8 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 ## 32. Variáveis locais e botões com estados
 - **Locais:** blocos "criar/definir/somar variável local" e o valor "variável local" geram `var _v_nome` dentro do evento/script (não entram em `estado.vars`, não aparecem no painel, somem ao fim do evento; ler uma local inexistente dá 0). Para valor que persiste entre quadros use **atributo do objeto** (`Attr`) ou variável global.
 - **Botões:** `Botao.apertado` (segurando em cima) além de `sobre`. Estilo em `Sprite`: `cor`, `corSobre`, `corApertado`, `borda`, `larguraBorda`, `arredondar`, `sombra`. Painel "▭ Painel (interface)" no "＋ Novo objeto". Interface = `Sprite.fixo:true` (em coordenadas da janela, acima do mundo por `camada`, sem física).
+
+## 33. Blocos: seletor com busca, cores por categoria, duplicar e recolher
+- **Seletor de blocos** (`＋ bloco`/`＋ evento`): popover com busca (sem acento), chips de categoria e lista colorida; Enter insere o primeiro resultado, Esc fecha. O `<select class="add">` continua no DOM (acessível e usado pelos testes): o botão só dispara o mesmo `change`.
+- **Visual:** cada categoria tem uma cor (`--cat`) usada na borda, no fundo suave, nos rótulos (ENTÃO/SENÃO/FAÇA) e no seletor. Cada bloco tem **duplicar** (⧉) e **recolher/expandir** (▾/▸; `recolhido` é guardado no bloco e ignorado pelo gerador).
+- **Output** agrupa mensagens iguais seguidas (`texto ×N`), na lista e no overlay de tela cheia (8 linhas, somem em 15 s).

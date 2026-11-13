@@ -188,6 +188,22 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
 
 
 
+
+  // seletor de blocos com busca, duplicar e recolher; Output agrupa repetidas
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('.sc-obj >> text=+ Novo (blocos)'); await p.waitForTimeout(200);
+  await p.locator('#bl > .add-btn').click(); await p.fill('.picker .p-busca', 'quadro'); await p.keyboard.press('Enter'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => document.querySelectorAll('#bl > .pilha > .bloco.hat').length === 1), 'seletor com busca: digitar "quadro" + Enter adiciona o evento');
+  await p.locator('#bl .hat > .add-btn').click(); await p.fill('.picker .p-busca', 'lista'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => { const it = [...document.querySelectorAll('.picker .p-item')]; return it.length >= 4 && it.every(i => /lista/i.test(i.textContent) || i.title === 'Listas'); }), 'seletor filtra por texto/categoria');
+  await p.click('.picker .p-item >> nth=0'); await p.waitForTimeout(150);
+  await p.click('#bl .bloco:not(.hat) .bt button[title="Duplicar bloco"]'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => document.querySelectorAll('#bl .hat > .pilha > .bloco').length === 2), 'duplicar bloco');
+  await p.click('#bl .bloco:not(.hat) .bt button[title="Recolher"]'); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => document.querySelectorAll('#bl .bloco.recolhido').length === 1), 'recolher bloco');
+  const rep = await p.evaluate(() => { EditorOutput.itens.length = 0; for (let i = 0; i < 50; i++) editor.engine.escrever('tick'); editor.engine.events.fila.length; return 1; });
+  await p.evaluate(() => { editor.engine.passo(); }); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => EditorOutput.itens.filter(i => i.texto === 'tick').length === 1 && EditorOutput.itens.find(i => i.texto === 'tick').n === 50), 'Output soma mensagens repetidas (×50)');
   // variáveis locais (só no script) e botão com estados
   const r4 = await p.evaluate(() => {
     const N = v => ({ k: 'num', v }), L = n => ({ k: 'local', n });
