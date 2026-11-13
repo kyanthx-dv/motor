@@ -89,6 +89,12 @@
     }
     filhos(id) { return [...this.entities.values()].filter(e => e.Pai && e.Pai.id === id); }
     descendeDe(e, ancestral) { let x = e, n = 0; while (x && x.Pai && n++ < 100) { if (x.Pai.id === ancestral.id) return true; x = this.entities.get(x.Pai.id); } return false; }
+    // Troca a animação de uma entidade (reinicia só se mudou, ou se reiniciar=true). Falso se a animação não existe.
+    animar(e, nome, reiniciar) {
+      const a = e && e.Animacao; if (!a || !a.animacoes || !a.animacoes[nome]) return false;
+      if (a.atual !== nome || reiniciar) { a.atual = nome; a.tempo = 0; a.quadro = 0; a.terminou = false; a._ult = nome; }
+      return true;
+    }
     // Torna `filho` filho de `pai` mantendo a posição atual. Recusa ciclos e auto-adoção. Devolve true/false.
     adotar(filho, pai) {
       if (!filho || !pai || filho === pai || this.descendeDe(pai, filho) || !filho.Transform || !pai.Transform) return false;

@@ -364,4 +364,9 @@ const nova=()=>new C.Engine();
   const e2 = nova(); e2.armazem = e.armazem; e2.vars.declarar('pontos', 0); e2.scene.create({ nome: 'j', Transform: { x: 0, y: 0 } }); e2.carregarPartida('slot1'); ok(e2.vars.ler('pontos') === 7, 'partida: outro motor lê o mesmo armazém');
   const e3 = nova(); e3.scene.create({ nome: 'p', Transform: { x: 0, y: 0 }, Velocity: { vx: 60, vy: 0 } }); e3.salvarPartida('m'); for (let i = 0; i < 60; i++) e3.passo(); e3.scene.find('p').Script = undefined; e3.ctx.carregarPartida('m'); e3.passo(); ok(Math.abs(e3.scene.find('p').Transform.x) < 5, 'partida: carregar no meio do passo é aplicado no fim do quadro');
 }
+{const e=nova();const a=e.scene.create({Animacao:{atual:'x',animacoes:{x:{linha:0,quadros:4,fps:10},u:{linha:2,quadros:3,fps:10,repetir:false}}}});
+ for(let i=0;i<20;i++)e.passo();
+ ok(e.scene.animar(a,'u')===true&&a.Animacao.atual==='u'&&a.Animacao.quadro===0,'animar troca e reinicia');
+ for(let i=0;i<60;i++)e.passo();ok(a.Animacao.terminou&&a.Animacao.linha===2,'animar: toca até o fim na linha certa');
+ ok(e.scene.animar(a,'nada')===false&&a.Animacao.atual==='u','animar: nome inexistente é ignorado');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
