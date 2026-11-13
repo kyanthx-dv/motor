@@ -373,4 +373,26 @@ const nova=()=>new C.Engine();
  ok(v({a:'data:audio/wav;base64,AAAA'})===true,'save aceita som em data URL');
  ok(v({a:'http://x/y.wav'})===false&&v({a:'data:image/png;base64,AA'})===false,'save recusa som que não é áudio data URL');
  const ch=[];const au=new C.Audio();ok(typeof au.parar==='function'&&au.parar('x')===false,'Audio.parar sem som em repetição é seguro');}
+{const cr=(b,t,v)=>{const e=nova();e.scene.estado.gravidade={x:0,y:0};return e.scene.create(Object.assign({nome:'p',Transform:t||{x:0,y:0}},b,v||{}))};
+ const tri=[[-30,30],[30,30],[0,-30]];
+ const f=b=>{try{nova().scene.create({Transform:{x:0,y:0},Body:b});return true}catch(x){return false}};
+ ok(f({forma:'poligono',pontos:tri,massa:0})&&!f({forma:'poligono',pontos:[[0,0],[1,1]]})&&!f({forma:'poligono',pontos:[[0,0],[10,0],[20,0]]})&&!f({forma:'poligono',pontos:[[0,0],[10,0],[2,2],[10,10],[0,10]]})&&!f({forma:'poligono'}),'polígono: aceita convexo; recusa poucos pontos, reta e côncavo');
+ const e=nova();e.scene.estado.gravidade={x:0,y:300};
+ e.scene.create({nome:'chao',Transform:{x:0,y:100},Body:{forma:'poligono',pontos:[[-200,-10],[200,-10],[200,10],[-200,10]],massa:0}});
+ const bola=e.scene.create({nome:'bola',Transform:{x:0,y:0},Velocity:{vx:0,vy:0},Body:{forma:'circulo',raio:10,massa:1}});
+ for(let i=0;i<240;i++)e.passo();
+ ok(bola.Transform.y<=91&&bola.Transform.y>80,'círculo pousa em polígono (y '+bola.Transform.y.toFixed(1)+')');
+ const e2=nova();e2.scene.estado.gravidade={x:0,y:300};
+ e2.scene.create({nome:'rampa',Transform:{x:0,y:100},Body:{forma:'poligono',pontos:tri.map(q=>[q[0]*3,q[1]]),massa:0}});
+ const cx=e2.scene.create({nome:'caixa',Transform:{x:0,y:20},Velocity:{vx:0,vy:0},Body:{forma:'retangulo',w:20,h:20,massa:1}});
+ for(let i=0;i<300;i++)e2.passo();
+ ok(Number.isFinite(cx.Transform.y)&&cx.Transform.y<130,'retângulo não atravessa polígono (y '+cx.Transform.y.toFixed(1)+')');
+ const e3=nova();e3.scene.estado.gravidade={x:0,y:0};let g=0;e3.events.on('gatilho',()=>g++);
+ e3.scene.create({nome:'zona',Transform:{x:0,y:0},Body:{forma:'poligono',pontos:tri,massa:0,sensor:true}});
+ e3.scene.create({nome:'pe',Transform:{x:5,y:5},Velocity:{vx:0,vy:0},Body:{forma:'circulo',raio:5,massa:1}});
+ e3.passo();ok(g>0,'sensor poligonal avisa gatilho');
+ const e4=nova();e4.scene.estado.gravidade={x:0,y:0};let g4=0;e4.events.on('gatilho',()=>g4++);
+ e4.scene.create({nome:'zona',Transform:{x:0,y:0},Body:{forma:'poligono',pontos:tri,massa:0,sensor:true}});
+ e4.scene.create({nome:'longe',Transform:{x:200,y:0},Velocity:{vx:0,vy:0},Body:{forma:'circulo',raio:5,massa:1}});
+ e4.passo();ok(g4===0,'sem contato, sem gatilho');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
