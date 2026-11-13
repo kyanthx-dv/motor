@@ -184,6 +184,11 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(() => { const T = editor.cena.find('mapa').Tiles; return T.dados[5 * 25 + 5] === 3 && T.dados[5 * 25 + 7] === 3; }), 'tiles: arrastar no canvas pinta células com o pincel');
   await p.uncheck('#tl-pintar');
   ok(await p.evaluate(() => { const ent = editor.cena.find('mapa'); editor.cena.find('mapa').Tiles.paleta[1].solido = true; return true; }), 'tiles: paleta editável');
+
+  // Output: escrever (bloco) e erros; abas do centro
+  const o1 = await p.evaluate(() => { const N = v => ({ k: 'txt', v }); const eng = editor.engine; const f = EditorBlocos.gerar([{ t: 'evento_inicio', f: [{ t: 'escrever', v: N('oi output') }] }]); const e = editor.cena.create({ nome: 'sc', Transform: { x: 0, y: 0 }, Script: { nome: 'so' } }); editor.cena.estado.scripts = { so: { fonte: f } }; eng.compilarScripts(); eng.passo(); eng.passo(); return document.getElementById('out').textContent; });
+  ok(/oi output/.test(o1), 'Output mostra o que o bloco "escrever no output" manda (' + o1.slice(0, 40) + ')');
+  await p.click('.ctab[data-centro="scripts"]'); ok(await p.evaluate(() => !document.getElementById('centro-scripts').hidden), 'aba Scripts do centro abre'); await p.click('.ctab[data-centro="cena"]');
   // blocos de lista
   const r3 = await p.evaluate(() => {
     const N = v => ({ k: 'num', v }), T = v => ({ k: 'txt', v });
@@ -212,7 +217,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   // inspetor por objeto: script (novo/copiar/trocar) e árvore por arrastar
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id)); await p.click('.sc-obj >> text=+ Novo (blocos)'); await p.waitForTimeout(200);
-  ok(await p.evaluate(() => { const s = editor.cena.estado.scripts, b = editor.cena.find('bola'); return !!s.bola_script && b.Script.nome === 'bola_script' && document.getElementById('scripts-pane').classList.contains('scripts-grande'); }), 'inspetor: novo script de blocos anexa ao objeto e abre a janela grande');
+  ok(await p.evaluate(() => { const s = editor.cena.estado.scripts, b = editor.cena.find('bola'); return !!s.bola_script && b.Script.nome === 'bola_script' && !document.getElementById('centro-scripts').hidden; }), 'inspetor: novo script de blocos anexa ao objeto e abre a aba Scripts do centro');
   await p.keyboard.press('Escape'); await p.evaluate(() => editor.selecionar(editor.cena.find('bola').id));
   await p.click('.sc-obj >> text=⧉ Copiar'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => editor.cena.find('bola').Script.nome === 'bola_script_copia' && !!editor.cena.estado.scripts.bola_script_copia), 'inspetor: copiar script cria e anexa a cópia');
