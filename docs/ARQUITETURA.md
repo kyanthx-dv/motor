@@ -228,3 +228,6 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 
 ## 35. Animação por spritesheet
 `Animacao {atual, animacoes:{nome:{linha,quadros,fps,repetir}}}` + `Sprite {imagem,quadroW,quadroH}` já recortam a folha (uma linha por animação). Novo: `scene.animar(e, nome, reiniciar?)` troca de animação (reinicia só se mudou) e o bloco "tocar animação". `Animacao.terminou` indica fim de animações sem repetição.
+
+## 36. Som por arquivo
+`estado.sons {nome: data URL de áudio}` (até 10, ~350 KB cada, validado no save). No Play, o editor chama `audio.carregar(estado.sons)`. `Audio.tocar(nome,{volume,repetir})`, `parar(nome)`, `pararTudo()`, `tem(nome)`. Blocos "tocar som importado" e "parar som"; painel Sons (importar, ouvir, remover).

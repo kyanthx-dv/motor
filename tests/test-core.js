@@ -369,4 +369,8 @@ const nova=()=>new C.Engine();
  ok(e.scene.animar(a,'u')===true&&a.Animacao.atual==='u'&&a.Animacao.quadro===0,'animar troca e reinicia');
  for(let i=0;i<60;i++)e.passo();ok(a.Animacao.terminou&&a.Animacao.linha===2,'animar: toca até o fim na linha certa');
  ok(e.scene.animar(a,'nada')===false&&a.Animacao.atual==='u','animar: nome inexistente é ignorado');}
+{const base=()=>JSON.parse(JSON.stringify(C.Serializer.paraJSON(new C.Engine().scene)));const v=so=>{const d=base();d.estado=d.estado||{};d.estado.sons=so;try{C.Serializer.deJSON(new C.Scene(),d);return true}catch(x){return false}};
+ ok(v({a:'data:audio/wav;base64,AAAA'})===true,'save aceita som em data URL');
+ ok(v({a:'http://x/y.wav'})===false&&v({a:'data:image/png;base64,AA'})===false,'save recusa som que não é áudio data URL');
+ const ch=[];const au=new C.Audio();ok(typeof au.parar==='function'&&au.parar('x')===false,'Audio.parar sem som em repetição é seguro');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
