@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -334,5 +334,19 @@ const nova=()=>new C.Engine();
   const ruim = JSON.parse(JSON.stringify(json)); ruim.estado.listas.inv = [{ a: 1 }]; let rec = false; try { C.Serializer.deJSON(nova().scene, ruim); } catch (x) { rec = /lista/.test(x.message); } ok(rec, 'save com item de lista inválido é recusado');
   e.listas.limpar('inv'); ok(e.listas.tamanho('inv') === 0, 'limpar esvazia'); 
   const e3 = nova(); e3.registrarCena('a', { montar() {} }); e3.registrarCena('b', { montar() {} }); e3.listas.adicionar('bolsa', 1); e3.irPara('a'); e3.irPara('b'); ok(e3.listas.tamanho('bolsa') === 1, 'listas atravessam a troca de cena');
+}
+
+// 9j. mapa de tiles
+{
+  const e = nova(), dados = []; for (let i = 0; i < 12; i++) dados.push(i < 4 || i >= 8 ? 2 : (i % 4 === 0 || i % 4 === 3 ? 2 : 1));   // 4x3: paredes em volta, grama no meio
+  const mapa = e.scene.create({ nome: 'mapa', Transform: { x: 100, y: 50 }, Tiles: { tamanho: 10, colunas: 4, linhas: 3, paleta: [{ cor: '#0a0' }, { cor: '#888', solido: true }], dados } });
+  e.passo(); const cols = [...e.scene.entities.values()].filter(x => x.nome === '_tile');
+  ok(mapa.Tiles.gerado === true && cols.length === 4 && cols.some(c => c.Body.w === 40 && c.Transform.y === 55) && cols.some(c => c.Body.w === 10), 'tiles: colisores gerados e juntados por linha (4: topo, base e 2 laterais)');
+  ok(C.Tiles.em(mapa, 115, 65) === 1 && C.Tiles.em(mapa, 101, 51) === 2 && C.Tiles.em(mapa, 0, 0) === 0, 'tiles: ler célula pelo mundo');
+  C.Tiles.definir(e.scene, mapa, 115, 65, 2); e.scene.flush(); { const t = [...e.scene.entities.values()].filter(x => x.nome === '_tile'); ok(t.length === 4 && t.some(c => c.Body.w === 20), 'tiles: pintar célula sólida refaz os colisores (junta 2 células)'); }
+  const bola = e.scene.create({ nome: 'b', Transform: { x: 125, y: 65 }, Velocity: { vx: -80, vy: 0 }, Body: { forma: 'circulo', raio: 3, massa: 1 } }); const x0 = bola.Transform.x; for (let i = 0; i < 90; i++) e.passo(); ok(bola.Transform.x > 119, 'tiles: parede sólida segura o corpo (x=' + bola.Transform.x.toFixed(1) + ')');
+  let erros = 0; for (const t of [{ tamanho: 2 }, { colunas: 0 }, { dados: [1] }, { dados: dados.map(() => 9) }, { paleta: [] }]) { try { new C.Scene().create({ Transform: { x: 0, y: 0 }, Tiles: { tamanho: 10, colunas: 4, linhas: 3, paleta: [{ cor: '#000' }], dados: dados.map(() => 1), ...t } }); } catch (x) { erros++; } }
+  ok(erros === 5, 'tiles: dados e limites inválidos são recusados');
+  const json = C.Serializer.paraJSON(nova().scene); const e2 = nova(); C.Serializer.deJSON(e2.scene, JSON.parse(JSON.stringify(C.Serializer.paraJSON(e.scene)))); ok([...e2.scene.entities.values()].filter(x => x.nome === '_tile').length === 4 && e2.scene.find('mapa').Tiles.gerado, 'tiles: salvar e carregar mantém mapa e colisores');
 }
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

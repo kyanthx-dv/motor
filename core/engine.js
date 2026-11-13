@@ -28,6 +28,7 @@
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
         if (C.Systems.tempo) { C.Tempo.instalar(this); this.usar('tempo', C.Systems.tempo); }   // esperar/tween (opcional)
+        if (C.Systems.tiles) this.usar('tiles', C.Systems.tiles);   // colisores do mapa de tiles (opcional)
         if (C.Systems.hierarquia) this.usar('hierarquia', C.Systems.hierarquia);   // filhos seguem o pai (opcional: jogos sem hierarquia não precisam carregar o arquivo)
         this.usar('fisica', C.Systems.fisica); if (C.Systems.hierarquia) this.usar('hierarquia2', C.Systems.hierarquia);
         this.usar('animacao', C.Systems.animacao); this.usar('camera', C.Systems.camera);

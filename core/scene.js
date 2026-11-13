@@ -25,6 +25,15 @@
         if (!((typeof v === 'number' && isFinite(v)) || typeof v === 'boolean' || (typeof v === 'string' && v.length <= 200))) throw new Error('entidade "' + n + '": Attr.' + k + ' precisa ser número, texto (até 200) ou verdadeiro/falso');
       }
     }
+    if (e.Tiles !== undefined) {   // mapa de tiles: grade de células; dados[i] = 0 (vazio) ou k (usa paleta[k-1])
+      const T = e.Tiles, er = m => new Error('entidade "' + n + '": Tiles ' + m);
+      if (T === null || typeof T !== 'object' || Array.isArray(T)) throw er('precisa ser um objeto');
+      for (const k of ['tamanho', 'colunas', 'linhas']) if (!Number.isInteger(T[k])) throw er(k + ' precisa ser inteiro');
+      if (T.tamanho < 4 || T.tamanho > 256 || T.colunas < 1 || T.colunas > 300 || T.linhas < 1 || T.linhas > 300 || T.colunas * T.linhas > 20000) throw er('fora do limite (tamanho 4–256, até 300×300 e 20000 células)');
+      if (!Array.isArray(T.paleta) || T.paleta.length < 1 || T.paleta.length > 32 || !T.paleta.every(p => p && typeof p === 'object' && typeof p.cor === 'string' && p.cor.length <= 40 && (p.imagem === undefined || (typeof p.imagem === 'string' && p.imagem.length <= 40)) && (p.solido === undefined || typeof p.solido === 'boolean'))) throw er('paleta precisa ter de 1 a 32 itens { cor, solido?, imagem? }');
+      if (!Array.isArray(T.dados) || T.dados.length !== T.colunas * T.linhas || !T.dados.every(v => Number.isInteger(v) && v >= 0 && v <= T.paleta.length)) throw er('dados precisa ter colunas×linhas inteiros de 0 até o tamanho da paleta');
+      if (T.acima !== undefined && typeof T.acima !== 'boolean') throw er('acima precisa ser verdadeiro/falso');
+    }
     if (e.Etiquetas !== undefined && !(Array.isArray(e.Etiquetas) && e.Etiquetas.length <= 20 && e.Etiquetas.every(t => typeof t === 'string' && t.length >= 1 && t.length <= 30))) throw new Error('entidade "' + n + '": Etiquetas precisa ser uma lista de até 20 textos (1 a 30 letras)');
     if (e.Pai !== undefined) {
       const P = e.Pai; if (P === null || typeof P !== 'object' || Array.isArray(P) || !Number.isInteger(P.id) || P.id < 0 || P.id === e.id) throw new Error('entidade "' + n + '": Pai precisa ser { id: inteiro de OUTRA entidade, dx, dy }');
