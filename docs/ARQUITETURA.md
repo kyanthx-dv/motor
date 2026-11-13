@@ -220,3 +220,8 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **Seletor de blocos** (`＋ bloco`/`＋ evento`): popover com busca (sem acento), chips de categoria e lista colorida; Enter insere o primeiro resultado, Esc fecha. O `<select class="add">` continua no DOM (acessível e usado pelos testes): o botão só dispara o mesmo `change`.
 - **Visual:** cada categoria tem uma cor (`--cat`) usada na borda, no fundo suave, nos rótulos (ENTÃO/SENÃO/FAÇA) e no seletor. Cada bloco tem **duplicar** (⧉) e **recolher/expandir** (▾/▸; `recolhido` é guardado no bloco e ignorado pelo gerador).
 - **Output** agrupa mensagens iguais seguidas (`texto ×N`), na lista e no overlay de tela cheia (8 linhas, somem em 15 s).
+
+## 34. Salvar e carregar partida
+- **`adapters/armazem.js`**: armazém com `get/set/remove/has`; `Armazem.memoria()` (padrão) e `Armazem.navegador(prefixo)` (localStorage com queda para memória). O editor usa `motor.partida.v1.`; os espaços são compartilhados entre projetos (mesmo nome = mesmo espaço).
+- **Engine:** `salvarPartida(nome)`, `carregarPartida(nome)` (aplicada no fim do quadro; `false` se vazio/corrompido), `existePartida`, `apagarPartida`; também em `ctx`. Guarda a cena inteira (objetos, variáveis, listas) via `Serializer`. Nome: letras, números, `_`, `-` (até 30). Limite de 2 milhões de caracteres.
+- **Blocos:** "salvar partida no espaço", "carregar partida do espaço (se existir)", condição "existe partida salva".

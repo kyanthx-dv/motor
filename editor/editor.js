@@ -3,7 +3,7 @@
 (function () {
   const C = Core, $ = id => document.getElementById(id), tela = $('tela');
   const renderer = new C.CanvasRenderer(tela, { largura: 800, altura: 450, fundo: '#2b3a4a', assets: new C.Assets() });
-  const engine = new C.Engine({ renderer }), cena = engine.scene;
+  const engine = new C.Engine({ renderer }), cena = engine.scene; if (C.Armazem) engine.armazem = C.Armazem.navegador('motor.partida.v1.');
   engine.events.on('erro-script', d => { const m = document.getElementById('msg'); if (m) { m.textContent = 'Erro no script "' + d.script + '" (' + d.fase + '): ' + d.mensagem; m.className = 'msg erro'; } });
   let sel = null, sujo = true, arrastando = null, salvoPlay = null, input = null, projetoAtual = null, projetos = {}, modoJogo = false, desfazerHistorico = [], refazerHistorico = [], historicoAplicando = false, historicoSuspenso = false;
 

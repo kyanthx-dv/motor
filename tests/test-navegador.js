@@ -204,6 +204,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   const rep = await p.evaluate(() => { EditorOutput.itens.length = 0; for (let i = 0; i < 50; i++) editor.engine.escrever('tick'); editor.engine.events.fila.length; return 1; });
   await p.evaluate(() => { editor.engine.passo(); }); await p.waitForTimeout(100);
   ok(await p.evaluate(() => EditorOutput.itens.filter(i => i.texto === 'tick').length === 1 && EditorOutput.itens.find(i => i.texto === 'tick').n === 50), 'Output soma mensagens repetidas (×50)');
+
+  // blocos de partida salva (armazém do navegador)
+  const r5 = await p.evaluate(() => {
+    const N = v => ({ k: 'num', v }), f = EditorBlocos.gerar([{ t: 'evento_inicio', f: [{ t: 'var_definir', var: 'ponto', v: N(5) }, { t: 'partida_salvar', n: 'a1' }, { t: 'var_definir', var: 'ponto', v: N(0) }, { t: 'partida_carregar', n: 'a1' }] }]);
+    const eng = new Core.Engine(); eng.armazem = Core.Armazem.navegador('teste.partida.'); eng.vars.declarar('ponto', 0); eng.scene.create({ nome: 'z', Transform: { x: 0, y: 0 }, Script: { nome: 's' } });
+    eng.scene.estado.scripts = { s: { fonte: f } }; eng.compilarScripts(); eng.passo(); eng.passo();
+    const ok1 = eng.vars.ler('ponto'), tem = eng.existePartida('a1'), ls = localStorage.getItem('teste.partida.partida:a1') !== null; eng.apagarPartida('a1'); return { ok1, tem, ls, depois: eng.existePartida('a1'), ed: editor.engine.armazem !== null };
+  });
+  ok(r5.ok1 === 5 && r5.tem && r5.ls && !r5.depois && r5.ed, 'blocos de partida: salvar, carregar, existe e persiste no localStorage (' + JSON.stringify(r5) + ')');
   // variáveis locais (só no script) e botão com estados
   const r4 = await p.evaluate(() => {
     const N = v => ({ k: 'num', v }), L = n => ({ k: 'local', n });
