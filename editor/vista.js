@@ -7,7 +7,7 @@
   $('v-grade').checked = r.grade;
   const fit = () => { r.ajustarVista(); ed.redesenhar(); };
   r.ajustarVista(); fit();
-  new ResizeObserver(() => { if (r.vista && !r._vistaMexida) r.ajustarVista(); ed.redesenhar(); }).observe(tela);
+  new ResizeObserver(() => { if (!tela.clientWidth) return; if (r.vista && !r._vistaMexida) r.ajustarVista(); ed.redesenhar(); }).observe(tela);
   $('v-grade').addEventListener('change', () => { r.grade = $('v-grade').checked; try { localStorage.setItem(KEY, r.grade ? 'grade' : 'sem-grade'); } catch (e) {} ed.redesenhar(); });
   $('v-ajustar').addEventListener('click', () => { r._vistaMexida = false; fit(); });
   function tamanho() {

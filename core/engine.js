@@ -24,7 +24,7 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, listas: this.listas, get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, listas: this.listas, escrever: (v) => this.escrever(v), get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
         if (C.Systems.tempo) { C.Tempo.instalar(this); this.usar('tempo', C.Systems.tempo); }   // esperar/tween (opcional)
@@ -123,6 +123,8 @@
       this._reiniciar = false; this._limparTempo(); if (!this._inicial || !C.Serializer) return;
       C.Serializer.deJSON(this.scene, JSON.parse(this._inicial)); this.events.fila.length = 0;
     }
+    // ctx.escrever(valor): mensagem para o painel Output do editor (e para quem ouvir o evento 'saida')
+    escrever(v, nivel) { this.events.emit('saida', { texto: String(v).slice(0, 500), nivel: nivel || 'info', t: this.tempo }); }
     _limparTempo() { if (C.Tempo) C.Tempo.limpar(this); }
     iniciar() {
       if (this.rodando) return; this._limparTempo(); this.observados = {}; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();

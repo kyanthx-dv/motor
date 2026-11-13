@@ -1,0 +1,1 @@
+- **Física Matter.js (opcional):** sistema `fisica-matter` com o mesmo componente `Body`, por projeto (polígonos, juntas, empilhamento). Exige `matter.min.js` no repositório. Babylon.js (3D): fora do escopo.

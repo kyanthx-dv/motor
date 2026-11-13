@@ -205,3 +205,8 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **`core/systems/tiles.js`** (opcional): na primeira vez cria colisores estáticos (entidades `_tile` com etiqueta `solido`, um retângulo por sequência horizontal de células sólidas) e marca `Tiles.gerado`. `C.Tiles.em(e,x,y)` lê e `C.Tiles.definir(scene,e,x,y,k)` pinta (refazendo os colisores).
 - **Renderer:** desenha só as células visíveis, abaixo dos sprites (ou acima com `acima:true`).
 - **Editor** (`editor/tiles.js`): botão "Novo mapa de tiles", inspetor (colunas, linhas, tamanho, paleta com cor, sólido e imagem, borracha) e pintar arrastando no canvas.
+
+## 31. Output e abas do centro
+- **Centro:** abas **Cena | Scripts** (`EditorCentro.abrir`); o editor de scripts ocupa a área grande (o botão "Janela grande" ainda abre em tela inteira). **Embaixo:** **Output | Variáveis | JSON**.
+- **Output** (`editor/output.js`): mostra `ctx.escrever(valor)` (evento `saida` da engine; bloco "escrever no output"), erros de script (`erro-script`) e marcas de Play/Parado; filtro "só erros" e Limpar. Em tela cheia as últimas mensagens aparecem num overlay no canto.
+- Backlog: Matter.js como sistema de física opcional (`fisica-matter`, mesmo componente `Body`); 3D (Babylon) fora do escopo.
