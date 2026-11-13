@@ -8,7 +8,7 @@
   const OPS = ['<', '<=', '=', '!=', '>=', '>'];
   const erro = m => new Error(m);
   E.ACOES = ACOES; E.OPS = OPS;
-  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta', item: 'item N da lista', tam: 'tamanho da lista', itemrand: 'item aleatório da lista', it: 'item atual (dentro de "para cada item")', mx: 'mouse: posição x (mundo)', my: 'mouse: posição y (mundo)' };
+  E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta', local: 'variável local', item: 'item N da lista', tam: 'tamanho da lista', itemrand: 'item aleatório da lista', it: 'item atual (dentro de "para cada item")', mx: 'mouse: posição x (mundo)', my: 'mouse: posição y (mundo)' };
   E.CONTAS = [['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷'], ['%', 'resto'], ['min', 'menor de'], ['max', 'maior de']];
   E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não'], ['etiq', 'tem etiqueta'], ['mouse', 'mouse'], ['sobre', 'mouse sobre objeto'], ['contem', 'lista contém']];
   // Atributos que os blocos genéricos sabem ler/mudar: componente, propriedade e tipo
@@ -24,6 +24,7 @@
     throw erro('objeto inválido: ' + o);
   }
   function tagStr(t) { if (typeof t !== 'string' || t.length < 1 || t.length > 30) throw erro('escreva uma etiqueta (1 a 30 letras)'); return JSON.stringify(t); }
+  function localNome(n) { if (typeof n !== 'string' || !NOME.test(n)) throw erro('escolha um nome de variável local (letras, números e _)'); return '_v_' + n; }
   function listaStr(n) { if (typeof n !== 'string' || !NOME.test(n)) throw erro('escolha um nome de lista (letras, números e _)'); return JSON.stringify(n); }
   function attrDef(a) { if (typeof a === 'string' && a.startsWith('a:')) { if (!NOME.test(a.slice(2))) throw erro('nome de atributo inválido: ' + a.slice(2)); return { c: 'Attr', p: a.slice(2), t: 'any' }; } const d = ATTRS[a]; if (!d) throw erro('atributo desconhecido: ' + a); return d; }
 
@@ -50,6 +51,7 @@
       case 'tam': return 'ctx.listas.tamanho(' + listaStr(v.l) + ')';
       case 'itemrand': return '(ctx.listas.aleatorio(' + listaStr(v.l) + ') ?? 0)';
       case 'it': return '_item';
+      case 'local': return '(typeof ' + localNome(v.n) + " === 'undefined' ? 0 : " + localNome(v.n) + ')';
       case 'contar': return 'ctx.scene.query("Etiquetas").filter(o => o.Etiquetas.includes(' + tagStr(v.tag) + ')).length';
       case 'op': {
         const o = v.o, a = valor(v.a), b = valor(v.b);
@@ -110,6 +112,9 @@
     para_cada_item: { cat: 'Listas', menu: 'para cada item da lista', campos: [{ t: 'para cada item da lista' }, { n: 'l', tipo: 'txt', padrao: 'inventario' }, { t: 'faça (use "item atual")' }], filhos: ['f'],
       ger: (b, g) => ['for (const _item of ctx.listas.todos(' + listaStr(b.l) + ')) {', ...g.lista(b.f), '}'] },
     escrever: { cat: 'Controle', menu: 'escrever no output', campos: [{ t: 'escrever no output' }, { n: 'v', tipo: 'valor', padrao: { k: 'txt', v: 'olá' } }], ger: b => ['ctx.escrever(' + valor(b.v) + ');'] },
+    local_criar: { cat: 'Variáveis', menu: 'criar variável local', campos: [{ t: 'variável local' }, { n: 'n', tipo: 'txt', padrao: 'tmp' }, { t: '=' }, { n: 'v', tipo: 'valor', padrao: N(0) }, { t: '(vale só neste script/evento)' }], ger: b => ['var ' + localNome(b.n) + ' = ' + valor(b.v) + ';'] },
+    local_definir: { cat: 'Variáveis', menu: 'definir variável local', campos: [{ t: 'definir local' }, { n: 'n', tipo: 'txt', padrao: 'tmp' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => [localNome(b.n) + ' = ' + valor(b.v) + ';'] },
+    local_somar: { cat: 'Variáveis', menu: 'somar a variável local', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'à local' }, { n: 'n', tipo: 'txt', padrao: 'tmp' }], ger: b => ['var ' + localNome(b.n) + ' = (typeof ' + localNome(b.n) + " === 'number' ? " + localNome(b.n) + ' : 0) + Number(' + valor(b.v) + ');'] },
     aguardar: { cat: 'Controle', menu: 'aguardar N segundos', campos: [{ t: 'aguardar' }, { n: 's', tipo: 'valor', padrao: N(1) }, { t: 'segundos e então continuar' }], espera: true, ger: () => [] },
     alterar_grad: { cat: 'Objeto', menu: 'alterar um atributo aos poucos', campos: [{ t: 'alterar' }, { n: 'o', tipo: 'obj', padrao: 'proprio' }, { n: 'a', tipo: 'attr', padrao: 'x' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(100) }, { t: 'em' }, { n: 's', tipo: 'valor', padrao: N(1) }, { t: 's, curva' }, { n: 'cv', tipo: 'sel', ops: [['suave', 'suave'], ['linear', 'constante'], ['entrada', 'acelera'], ['saida', 'desacelera']], padrao: 'suave' }],
       ger: b => { const d = attrDef(b.a); if (d.t === 'txt') throw erro('só dá para alterar aos poucos atributos numéricos'); const cv = b.cv || 'suave'; if (!['suave', 'linear', 'entrada', 'saida'].includes(cv)) throw erro('curva inválida: ' + cv);

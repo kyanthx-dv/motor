@@ -211,3 +211,7 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **Output** (`editor/output.js`): mostra `ctx.escrever(valor)` (evento `saida` da engine; bloco "escrever no output"), erros de script (`erro-script`) e marcas de Play/Parado; filtro "só erros" e Limpar. Em tela cheia as últimas mensagens aparecem num overlay no canto.
 - Backlog: Matter.js como sistema de física opcional (`fisica-matter`, mesmo componente `Body`); 3D (Babylon) fora do escopo.
 - **Painel "＋ Novo objeto"** (`editor/mais.js`): no painel Objetos, abre os tipos (círculo com física, retângulo sólido, sensor, texto, botão, mapa de tiles, imagem…). O "Criar" do topo saiu. Cuidado de CSS: a classe `.topo` é usada também pelas linhas dos blocos; as regras da barra do topo agora são `header.topo`.
+
+## 32. Variáveis locais e botões com estados
+- **Locais:** blocos "criar/definir/somar variável local" e o valor "variável local" geram `var _v_nome` dentro do evento/script (não entram em `estado.vars`, não aparecem no painel, somem ao fim do evento; ler uma local inexistente dá 0). Para valor que persiste entre quadros use **atributo do objeto** (`Attr`) ou variável global.
+- **Botões:** `Botao.apertado` (segurando em cima) além de `sobre`. Estilo em `Sprite`: `cor`, `corSobre`, `corApertado`, `borda`, `larguraBorda`, `arredondar`, `sombra`. Painel "▭ Painel (interface)" no "＋ Novo objeto". Interface = `Sprite.fixo:true` (em coordenadas da janela, acima do mundo por `camada`, sem física).

@@ -187,6 +187,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
 
 
 
+
+  // variáveis locais (só no script) e botão com estados
+  const r4 = await p.evaluate(() => {
+    const N = v => ({ k: 'num', v }), L = n => ({ k: 'local', n });
+    const f = EditorBlocos.gerar([{ t: 'evento_inicio', f: [{ t: 'local_criar', n: 'soma', v: N(10) }, { t: 'local_somar', n: 'soma', v: N(5) }, { t: 'local_definir', n: 'dobro', v: { k: 'op', a: L('soma'), o: '*', b: N(2) } }, { t: 'var_definir', var: 'res', v: L('dobro') }, { t: 'var_definir', var: 'ausente', v: L('naoexiste') }] }]);
+    const eng = new Core.Engine(); eng.vars.declarar('res', 0); eng.vars.declarar('ausente', 99); eng.scene.create({ nome: 'z', Transform: { x: 0, y: 0 }, Script: { nome: 's' } });
+    eng.scene.estado.scripts = { s: { fonte: f } }; eng.compilarScripts(); eng.passo(); eng.passo();
+    return { res: eng.vars.ler('res'), ausente: eng.vars.ler('ausente'), vaza: eng.vars.existe('soma') };
+  });
+  ok(r4.res === 30 && r4.ausente === 0 && !r4.vaza, 'variáveis locais: criar, somar, definir e ler sem vazar para as globais (' + JSON.stringify(r4) + ')');
+  ok(await p.evaluate(() => { const eng = new Core.Engine(), e = eng.scene.create({ nome: 'b', Transform: { x: 100, y: 100 }, Sprite: { fixo: true, forma: 'retangulo', w: 80, h: 40, cor: '#111', corSobre: '#222', corApertado: '#333', arredondar: 8 }, Botao: { acao: {} } }); eng.input = null; eng.ctx.input.pointer = { x: 100, y: 100, tx: 100, ty: 100, down: true, pressed: false, ativo: true }; Core.Systems.ui(eng.scene, 1 / 60, eng.ctx); return e.Botao.sobre === true && e.Botao.apertado === true; }), 'botão: marca sobre e apertado');
   // tela cheia ocupa a janela toda (mesmo com o painel de baixo grande) e Output mostra "observar valor"
   await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index')); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   await p.evaluate(() => { document.documentElement.style.setProperty('--bottom-h', '600px'); editor.engine.observar('vidas', 3); }); await p.waitForTimeout(150);

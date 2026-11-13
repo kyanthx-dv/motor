@@ -9,6 +9,7 @@
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape') abrir(false); });
   $('e-retangulo').addEventListener('click', () => novo({ nome: nome('parede'), Transform: { x: 400, y: 225 }, Body: { forma: 'retangulo', w: 160, h: 24, massa: 0, elasticidade: 0.2 }, Sprite: { cor: '#6b7280' } }));
   $('e-sensor').addEventListener('click', () => novo({ nome: nome('sensor'), Transform: { x: 400, y: 225 }, Body: { forma: 'retangulo', w: 80, h: 80, massa: 0, sensor: true }, Sprite: { cor: 'rgba(125,220,140,.45)' }, Etiquetas: ['gatilho'] }));
+  $('e-painel').addEventListener('click', () => novo({ nome: nome('painel'), Transform: { x: 400, y: 60 }, Sprite: { fixo: true, forma: 'retangulo', w: 300, h: 70, cor: 'rgba(15,23,42,.75)', borda: '#64748b', larguraBorda: 2, arredondar: 12, sombra: true, camada: -1 } }));
   $('e-imagem').addEventListener('click', () => $('e-imagem-arq').click());
   $('e-imagem-arq').addEventListener('change', async ev => {
     const arqs = [...ev.target.files]; ev.target.value = ''; const lista = await root.EditorImagens.importar(arqs);

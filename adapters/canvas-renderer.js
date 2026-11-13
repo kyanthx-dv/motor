@@ -101,9 +101,11 @@
         const hx = f === 'retangulo' ? w / 2 : raio, hy = f === 'retangulo' ? h / 2 : raio;
         if (Math.abs(x - cx) - hx > meioW || Math.abs(y - cy) - hy > meioH) return;
         g.lineWidth = s.larguraBorda || 2; g.beginPath();
-        if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else g.rect(x - w / 2, y - h / 2, w, h);
+        if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else if (s.arredondar > 0 && g.roundRect) g.roundRect(x - w / 2, y - h / 2, w, h, Math.min(s.arredondar, w / 2, h / 2)); else g.rect(x - w / 2, y - h / 2, w, h);
         if (f === 'anel') { g.strokeStyle = s.cor || '#fff'; g.stroke(); }
-        else { g.fillStyle = (e.Botao && e.Botao.sobre && s.corSobre) || s.cor || '#ccc'; g.fill(); if (s.borda) { g.strokeStyle = s.borda; g.stroke(); } }
+        else { const B = e.Botao; g.fillStyle = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
+          if (s.sombra) { g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 8 * this.dpr; g.shadowOffsetY = 3 * this.dpr; }
+          g.fill(); g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0; if (s.borda) { g.strokeStyle = s.borda; g.stroke(); } }
         if (s.rotulo) { g.fillStyle = s.corTexto || '#fff'; g.font = '600 ' + (s.tamanhoTexto || 14) + 'px ' + (s.fonte || 'system-ui,sans-serif'); g.textAlign = s.alinhar || 'center'; g.textBaseline = 'middle'; const tx = s.alinhar === 'left' ? x - w / 2 + 8 : s.alinhar === 'right' ? x + w / 2 - 8 : x; g.fillText(s.rotulo, tx, y); }
       };
       const vx0 = V ? -this.ox / V.z : cx - L / z / 2, vx1 = V ? (W - this.ox) / V.z : cx + L / z / 2, vy0 = V ? -this.oy / V.z : cy - A / z / 2, vy1 = V ? (H - this.oy) / V.z : cy + A / z / 2;
