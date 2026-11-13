@@ -49,6 +49,7 @@
       }
       return true;
     }
+    // Toca um som carregado. opcoes: {volume 0..1, repetir}. Sons em repetição ficam guardados para parar(nome).
     tocar(nome, opcoes) {
       if (!this.disponivel || !this.ctx) return null;
       const buffer = this.m.get(nome); if (!buffer) return null;
@@ -58,9 +59,13 @@
       gain.gain.value = Math.max(0, Math.min(1, volume));
       source.connect(gain); gain.connect(this.ctx.destination);
       if (this.ctx.state === 'suspended' && this.ctx.resume) this.ctx.resume().catch(() => {});
+      if (opcoes && opcoes.repetir) { source.loop = true; (this.rep = this.rep || new Map()).get(nome) ? this.parar(nome) : 0; this.rep.set(nome, source); }
       source.start(0);
       return source;
     }
+    parar(nome) { const r = this.rep && this.rep.get(nome); if (!r) return false; try { r.stop(); } catch (x) {} this.rep.delete(nome); return true; }
+    pararTudo() { if (this.rep) for (const n of [...this.rep.keys()]) this.parar(n); }
+    tem(nome) { return this.m.has(nome); }
   }
   Audio.EFEITOS = {
     bip: [{ de: 880, dur: 0.08 }],
