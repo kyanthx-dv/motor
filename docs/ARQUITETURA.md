@@ -225,3 +225,6 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **`adapters/armazem.js`**: armazém com `get/set/remove/has`; `Armazem.memoria()` (padrão) e `Armazem.navegador(prefixo)` (localStorage com queda para memória). O editor usa `motor.partida.v1.`; os espaços são compartilhados entre projetos (mesmo nome = mesmo espaço).
 - **Engine:** `salvarPartida(nome)`, `carregarPartida(nome)` (aplicada no fim do quadro; `false` se vazio/corrompido), `existePartida`, `apagarPartida`; também em `ctx`. Guarda a cena inteira (objetos, variáveis, listas) via `Serializer`. Nome: letras, números, `_`, `-` (até 30). Limite de 2 milhões de caracteres.
 - **Blocos:** "salvar partida no espaço", "carregar partida do espaço (se existir)", condição "existe partida salva".
+
+## 35. Animação por spritesheet
+`Animacao {atual, animacoes:{nome:{linha,quadros,fps,repetir}}}` + `Sprite {imagem,quadroW,quadroH}` já recortam a folha (uma linha por animação). Novo: `scene.animar(e, nome, reiniciar?)` troca de animação (reinicia só se mudou) e o bloco "tocar animação". `Animacao.terminou` indica fim de animações sem repetição.
