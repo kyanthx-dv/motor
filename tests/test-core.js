@@ -349,4 +349,19 @@ const nova=()=>new C.Engine();
   ok(erros === 5, 'tiles: dados e limites inválidos são recusados');
   const json = C.Serializer.paraJSON(nova().scene); const e2 = nova(); C.Serializer.deJSON(e2.scene, JSON.parse(JSON.stringify(C.Serializer.paraJSON(e.scene)))); ok([...e2.scene.entities.values()].filter(x => x.nome === '_tile').length === 4 && e2.scene.find('mapa').Tiles.gerado, 'tiles: salvar e carregar mantém mapa e colisores');
 }
+
+// 9k. salvar e carregar partida
+{
+  vm.runInThisContext(fs.readFileSync(__dirname + '/../adapters/armazem.js', 'utf8'));
+  const e = nova(); e.vars.declarar('pontos', 0); const j = e.scene.create({ nome: 'j', Transform: { x: 10, y: 20 } });
+  e.vars.definir('pontos', 7); e.listas.adicionar('bolsa', 'chave'); j.Transform.x = 111;
+  ok(e.existePartida('slot1') === false && e.carregarPartida('slot1') === false, 'partida: espaço vazio não existe e não carrega');
+  e.salvarPartida('slot1'); ok(e.existePartida('slot1'), 'partida: salvar cria o espaço');
+  e.vars.definir('pontos', 99); e.listas.limpar('bolsa'); j.Transform.x = 5; e.scene.create({ nome: 'extra', Transform: { x: 0, y: 0 } }); e.scene.flush();
+  ok(e.carregarPartida('slot1') === true && e.vars.ler('pontos') === 7 && e.listas.item('bolsa', 0) === 'chave' && e.scene.find('j').Transform.x === 111 && !e.scene.find('extra'), 'partida: carregar restaura variáveis, listas e objetos');
+  let erros = 0; for (const f of [() => e.salvarPartida('../x'), () => e.salvarPartida(''), () => e.existePartida(5), () => e.carregarPartida('a'.repeat(31))]) { try { f(); } catch (x) { erros++; } } ok(erros === 4, 'partida: nome de espaço inválido é recusado');
+  e.armazem.set('partida:ruim', '{lixo'); ok(e.carregarPartida('ruim') === false, 'partida: arquivo corrompido não derruba (devolve false)');
+  const e2 = nova(); e2.armazem = e.armazem; e2.vars.declarar('pontos', 0); e2.scene.create({ nome: 'j', Transform: { x: 0, y: 0 } }); e2.carregarPartida('slot1'); ok(e2.vars.ler('pontos') === 7, 'partida: outro motor lê o mesmo armazém');
+  const e3 = nova(); e3.scene.create({ nome: 'p', Transform: { x: 0, y: 0 }, Velocity: { vx: 60, vy: 0 } }); e3.salvarPartida('m'); for (let i = 0; i < 60; i++) e3.passo(); e3.scene.find('p').Script = undefined; e3.ctx.carregarPartida('m'); e3.passo(); ok(Math.abs(e3.scene.find('p').Transform.x) < 5, 'partida: carregar no meio do passo é aplicado no fim do quadro');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

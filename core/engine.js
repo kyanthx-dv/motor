@@ -14,7 +14,7 @@
     constructor(opts = {}) {
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
       if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
-      this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this); this.listas = C.Listas ? new C.Listas(this) : null; this.observados = {};
+      this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this); this.listas = C.Listas ? new C.Listas(this) : null; this.armazem = C.Armazem ? C.Armazem.memoria() : null; this.observados = {};
       this.input = opts.input || null; this.renderer = opts.renderer || null; this.audio = opts.audio || null;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
@@ -24,7 +24,7 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, listas: this.listas, escrever: (v) => this.escrever(v), get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, events: this.events, vars: this.vars, listas: this.listas, escrever: (v) => this.escrever(v), salvarPartida: (n) => this.salvarPartida(n), carregarPartida: (n) => this.carregarPartida(n), existePartida: (n) => this.existePartida(n), get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
         if (C.Systems.tempo) { C.Tempo.instalar(this); this.usar('tempo', C.Systems.tempo); }   // esperar/tween (opcional)
@@ -88,6 +88,7 @@
       finally { this._emPasso = false; }
       if (this._proxima) this._aplicarCena();
       if (this._reiniciar) this._aplicarReinicio();
+      if (this._partidaPendente) this._aplicarPartida(this._partidaPendente);
       this.tempo += dt; this.passos++;
     }
     // Scripts escritos no editor ficam na cena (scene.estado.scripts = { nome: { fonte } }) e viram scripts do motor aqui.
@@ -123,6 +124,21 @@
       this._reiniciar = false; this._limparTempo(); if (!this._inicial || !C.Serializer) return;
       C.Serializer.deJSON(this.scene, JSON.parse(this._inicial)); this.events.fila.length = 0;
     }
+    // Salvar/carregar partida: guarda a cena inteira (objetos, variáveis, listas) num espaço nomeado do armazém.
+    _espaco(n) { if (typeof n !== 'string' || !/^[A-Za-z0-9_-]{1,30}$/.test(n)) throw new Error('nome de espaço de partida inválido: "' + n + '" (letras, números, _ e -; até 30)'); if (!this.armazem) throw new Error('sem armazém de partidas neste motor'); return 'partida:' + n; }
+    salvarPartida(n) {
+      const k = this._espaco(n), txt = JSON.stringify({ v: 1, cena: this.scene.estado.cena || null, dados: C.Serializer.paraJSON(this.scene) });
+      if (txt.length > 2000000) throw new RangeError('partida grande demais (' + txt.length + ' caracteres; limite 2 milhões)');
+      this.armazem.set(k, txt); return true;
+    }
+    existePartida(n) { return !!(this.armazem && this.armazem.has(this._espaco(n))); }
+    apagarPartida(n) { this.armazem.remove(this._espaco(n)); }
+    carregarPartida(n) {   // aplicada no fim do quadro (nunca no meio dos sistemas); devolve false se o espaço está vazio ou corrompido
+      const txt = this.armazem.get(this._espaco(n)); if (txt === null) return false;
+      let d; try { d = JSON.parse(txt); if (!d || d.v !== 1 || !d.dados) return false; } catch (e) { return false; }
+      if (this._emPasso) this._partidaPendente = d; else this._aplicarPartida(d); return true;
+    }
+    _aplicarPartida(d) { this._partidaPendente = null; this._limparTempo(); C.Serializer.deJSON(this.scene, d.dados); this.events.fila.length = 0; this.compilarScripts(); }
     // ctx.escrever(valor): mensagem para o painel Output do editor (e para quem ouvir o evento 'saida')
     escrever(v, nivel) { this.events.emit('saida', { texto: String(v).slice(0, 500), nivel: nivel || 'info', t: this.tempo }); }
     _limparTempo() { if (C.Tempo) C.Tempo.limpar(this); }

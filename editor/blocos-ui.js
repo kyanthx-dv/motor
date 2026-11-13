@@ -110,10 +110,11 @@
     }
     function campoCond(h, n) {
       const c = h[n], w = el('span', 'val'), cmp0 = () => ({ k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } });
-      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : k === 'contem' ? { k, l: 'inventario', v: { k: 'txt', v: 'chave' } } : k === 'mouse' ? { k, modo: 'pressed' } : k === 'sobre' ? { k, o: 'proprio' } : cmp0(); redesenhar(); }, 'tipo de condição'));
+      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : k === 'contem' ? { k, l: 'inventario', v: { k: 'txt', v: 'chave' } } : k === 'partida' ? { k, n: 'slot1' } : k === 'mouse' ? { k, modo: 'pressed' } : k === 'sobre' ? { k, o: 'proprio' } : cmp0(); redesenhar(); }, 'tipo de condição'));
       if (c.k === 'e' || c.k === 'ou') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, c.k === 'e' ? 'E' : 'OU'), campoCond(c, 'b'), el('span', null, ')'));
       if (c.k === 'mouse') w.append(sel([['pressed', 'clicou agora'], ['down', 'está apertado']], c.modo || 'pressed', x => { c.modo = x; mudou(); }, 'modo do mouse'));
       if (c.k === 'sobre') w.append(el('span', null, 'está sobre'), campoObj(c, 'o'));
+      if (c.k === 'partida') w.append(entrada('text', c.n || '', x => { c.n = x; mudou(); }, 'espaço'));
       if (c.k === 'contem') w.append(entrada('text', c.l || '', x => { c.l = x; mudou(); }, 'lista'), el('span', null, 'contém'), campoValor(c, 'v', 'valor'));
       if (c.k === 'etiq') w.append(campoObj(c, 'o'), el('span', null, 'tem a etiqueta'), entrada('text', c.tag || '', x => { c.tag = x; mudou(); }, 'etiqueta'));
       if (c.k === 'nao') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, ')'));
