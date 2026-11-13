@@ -173,6 +173,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
 
 
 
+
+  // mapa de tiles no editor: criar, pintar no canvas, jogar colide
+  await p.setViewportSize({ width: 1300, height: 900 }); await p.goto(url('editor/index') + '?abas=todas'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  await p.click('#e-tiles'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => { const m = editor.cena.find('mapa'); return m && m.Tiles.colunas === 25 && m.Tiles.dados.length === 350 && editor.sel === m.id; }), 'tiles: botão cria mapa 25×14 e seleciona');
+  await p.check('#tl-pintar'); await p.evaluate(() => { EditorTiles.pincel = 3; });
+  const alvo = await p.evaluate(() => { const b = document.getElementById('tela').getBoundingClientRect(), r = editor.renderer; return { x: b.left + r.ox + (5 * 32 + 16) * r.esc, y: b.top + r.oy + (5 * 32 + 16) * r.esc }; });
+  await p.mouse.move(alvo.x, alvo.y); await p.mouse.down(); await p.mouse.move(alvo.x + 32 * 2 * (await p.evaluate(() => editor.renderer.esc)), alvo.y, { steps: 4 }); await p.mouse.up(); await p.waitForTimeout(100);
+  ok(await p.evaluate(() => { const T = editor.cena.find('mapa').Tiles; return T.dados[5 * 25 + 5] === 3 && T.dados[5 * 25 + 7] === 3; }), 'tiles: arrastar no canvas pinta células com o pincel');
+  await p.uncheck('#tl-pintar');
+  ok(await p.evaluate(() => { const ent = editor.cena.find('mapa'); editor.cena.find('mapa').Tiles.paleta[1].solido = true; return true; }), 'tiles: paleta editável');
   // blocos de lista
   const r3 = await p.evaluate(() => {
     const N = v => ({ k: 'num', v }), T = v => ({ k: 'txt', v });

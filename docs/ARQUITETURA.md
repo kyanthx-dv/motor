@@ -199,3 +199,9 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 - **`core/listas.js`** (`engine.listas`, `ctx.listas`): listas em `scene.estado.listas = {nome: [itens]}`; até 50 listas × 1000 itens; item = número finito, texto (≤200) ou verdadeiro/falso. API: `adicionar, definir, remover, limpar, item, tamanho, contem, aleatorio, todos, nomes, garantir`. Leitura tolerante (inexistente → vazio/undefined); escrita inválida lança erro claro. Índices do núcleo começam em 0.
 - Salvam/carregam (validadas no `deJSON`), voltam ao reiniciar e **atravessam a troca de cena** (inventário).
 - **Blocos** (categoria Listas, índices começam em 1): adicionar, trocar item, remover item, esvaziar, para cada item (valor "item atual"); valores: item N, tamanho, item aleatório; condição "lista contém".
+
+## 30. Mapa de tiles
+- **Componente `Tiles`** `{tamanho, colunas, linhas, paleta:[{cor, solido?, imagem?}], dados:[0|k], acima?}` com `Transform` no canto superior esquerdo (validado em `scene.js`: tamanho 4–256, até 300×300 e 20000 células). `dados[i]=0` é vazio e `k` usa `paleta[k-1]`; `imagem` é o nome de uma imagem importada.
+- **`core/systems/tiles.js`** (opcional): na primeira vez cria colisores estáticos (entidades `_tile` com etiqueta `solido`, um retângulo por sequência horizontal de células sólidas) e marca `Tiles.gerado`. `C.Tiles.em(e,x,y)` lê e `C.Tiles.definir(scene,e,x,y,k)` pinta (refazendo os colisores).
+- **Renderer:** desenha só as células visíveis, abaixo dos sprites (ou acima com `acima:true`).
+- **Editor** (`editor/tiles.js`): botão "Novo mapa de tiles", inspetor (colunas, linhas, tamanho, paleta com cor, sólido e imagem, borracha) e pintar arrastando no canvas.

@@ -9,6 +9,7 @@
     // Caixa aproximada de uma entidade (usada pelo depurador para clicar e destacar). Prefere a imagem do Sprite, depois o Body.
     static limitesDe(e) {
       const b = e.Body, s = e.Sprite || {};
+      if (e.Tiles && !e.Sprite && !e.Body) { const T = e.Tiles; return { hw: T.colunas * T.tamanho / 2, hh: T.linhas * T.tamanho / 2, ox: T.colunas * T.tamanho / 2, oy: T.linhas * T.tamanho / 2 }; }
       if (s.imagem) { const k = s.escala || 1; return { hw: (s.quadroW || 32) * k / 2, hh: (s.quadroH || 32) * k / 2, ox: s.offX || 0, oy: s.offY || 0 }; }
       if (b) { const c = b.forma === 'circulo' || (!b.forma && b.raio !== undefined); return c ? { hw: b.raio, hh: b.raio, ox: 0, oy: 0 } : { hw: b.w / 2, hh: b.h / 2, ox: 0, oy: 0 }; }
       const f = s.forma || (s.raio ? 'circulo' : 'retangulo');
@@ -105,7 +106,14 @@
         else { g.fillStyle = (e.Botao && e.Botao.sobre && s.corSobre) || s.cor || '#ccc'; g.fill(); if (s.borda) { g.strokeStyle = s.borda; g.stroke(); } }
         if (s.rotulo) { g.fillStyle = s.corTexto || '#fff'; g.font = '600 ' + (s.tamanhoTexto || 14) + 'px ' + (s.fonte || 'system-ui,sans-serif'); g.textAlign = s.alinhar || 'center'; g.textBaseline = 'middle'; const tx = s.alinhar === 'left' ? x - w / 2 + 8 : s.alinhar === 'right' ? x + w / 2 - 8 : x; g.fillText(s.rotulo, tx, y); }
       };
+      const vx0 = V ? -this.ox / V.z : cx - L / z / 2, vx1 = V ? (W - this.ox) / V.z : cx + L / z / 2, vy0 = V ? -this.oy / V.z : cy - A / z / 2, vy1 = V ? (H - this.oy) / V.z : cy + A / z / 2;
+      const mapas = acima => { for (const e of scene.query('Transform', 'Tiles')) { if (!!e.Tiles.acima !== acima) continue; const T = e.Tiles, S = T.tamanho, t = e.Transform;
+        const c0 = Math.max(0, Math.floor((vx0 - t.x) / S)), c1 = Math.min(T.colunas - 1, Math.floor((vx1 - t.x) / S)), r0 = Math.max(0, Math.floor((vy0 - t.y) / S)), r1 = Math.min(T.linhas - 1, Math.floor((vy1 - t.y) / S));
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const k = T.dados[r * T.colunas + c]; if (!k) continue; const p = T.paleta[k - 1], img = p.imagem && this.assets && this.assets.get(p.imagem);
+          if (img) { g.imageSmoothingEnabled = false; g.drawImage(img, t.x + c * S, t.y + r * S, S, S); } else { g.fillStyle = p.cor; g.fillRect(t.x + c * S, t.y + r * S, S + .5, S + .5); } } } };
+      mapas(false);
       for (const e of todos) if (V || !e.Sprite.fixo) pintar(e, cx, cy, V ? 1e9 : L / z / 2, V ? 1e9 : A / z / 2);
+      mapas(true);
       if (this.selecionada != null) {
         const e = scene.get(this.selecionada);
         if (e && e.Transform) {

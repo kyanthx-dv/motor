@@ -127,7 +127,7 @@
     for (const o of cena.entities.values()) if (o !== e && !cena.descendeDe(o, e)) pai.append(new Option((o.nome || 'sem nome') + ' #' + o.id, String(o.id)));
     pai.value = e.Pai ? String(e.Pai.id) : '';
     pai.addEventListener('change', () => { if (pai.value === '') cena.soltar(e); else if (!cena.adotar(e, cena.get(Number(pai.value)))) { msg('Não dá para usar esse objeto como pai.', 'erro'); return props(); } msg('', ''); listar(); props(); redesenhar(); json(); registrarSnapshot(); });
-    if (window.EditorInspetorScript) EditorInspetorScript.montar(box, e);
+    if (window.EditorInspetorScript) EditorInspetorScript.montar(box, e); if (window.EditorTiles) EditorTiles.montar(box, e);
     const m = el('div', 'grupo'); m.append(el('b', null, 'Marcas'));
     const et = el('input'); et.value = (e.Etiquetas || []).join(', '); et.placeholder = 'inimigo, moeda'; et.addEventListener('change', () => definir('Etiquetas', et.value.split(',').map(x => x.trim()).filter(Boolean)));
     const at = el('input'); at.value = Object.entries(e.Attr || {}).map(([k, v]) => k + '=' + v).join(', '); at.placeholder = 'vida=3, nome=Zé';
