@@ -14,6 +14,7 @@
       const B = e.Botao, S = e.Sprite, px = S.fixo ? p.tx : p.x, py = S.fixo ? p.ty : p.y;
       const w = S.w ?? 100, h = S.h ?? 40;
       B.sobre = p.ativo !== false && px !== undefined && Math.abs(px - e.Transform.x) <= w / 2 && Math.abs(py - e.Transform.y) <= h / 2;
+      B.apertado = !!(B.sobre && p.down);   // segurando o botão do mouse/dedo em cima: desenho usa corApertado
       if (B.sobre && p.pressed && B.acao) {
         if (B.acao.irPara) ctx.engine.irPara(B.acao.irPara, B.acao.dados);
         if (B.acao.evento) ctx.events.emit(B.acao.evento, { para: e.id });

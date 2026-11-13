@@ -75,13 +75,14 @@
     }
     function campoValor(obj, nome, rotulo) {
       const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val');
-      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : k === 'item' ? { k, l: 'inventario', i: { k: 'num', v: 1 } } : k === 'tam' || k === 'itemrand' ? { k, l: 'inventario' } : { k }; redesenhar(); }, rotulo));
+      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : k === 'local' ? { k, n: 'tmp' } : k === 'item' ? { k, l: 'inventario', i: { k: 'num', v: 1 } } : k === 'tam' || k === 'itemrand' ? { k, l: 'inventario' } : { k }; redesenhar(); }, rotulo));
       if (v.k === 'num') w.append(entrada('number', v.v, x => { v.v = x === '' ? 0 : +x; mudou(); }, rotulo + ' (número)'));
       if (v.k === 'txt') w.append(entrada('text', v.v, x => { v.v = x; mudou(); }, rotulo + ' (texto)'));
       if (v.k === 'var') w.append(campoVar(v, 'n'));
       if (v.k === 'attr') w.append(campoObj(v, 'o'), campoAttr(v, 'a'));
       if (v.k === 'item') w.append(campoValor(v, 'i', 'posição'), el('span', null, 'da lista'), entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
       if (v.k === 'tam' || v.k === 'itemrand') w.append(entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
+      if (v.k === 'local') w.append(entrada('text', v.n || '', x => { v.n = x; mudou(); }, 'nome da local'));
       if (v.k === 'contar') w.append(entrada('text', v.tag || '', x => { v.tag = x; mudou(); }, 'etiqueta'));
       if (v.k === 'op') w.append(el('span', null, '('), campoValor(v, 'a', 'A'), sel(B.CONTAS, v.o, x => { v.o = x; mudou(); }, 'conta'), campoValor(v, 'b', 'B'), el('span', null, ')'));
       if (v.k === 'rand') w.append(entrada('number', v.min, x => { v.min = +x; mudou(); }, rotulo + ' mínimo'), el('span', null, 'e'), entrada('number', v.max, x => { v.max = +x; mudou(); }, rotulo + ' máximo'));
