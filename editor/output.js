@@ -5,12 +5,15 @@
   const live = document.createElement('div'); live.id = 'out-vivo'; document.body.append(live);
   const hora = () => { const d = new Date(); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':'); };
   function add(texto, tipo) {
-    itens.push({ h: hora(), texto: String(texto), tipo }); if (itens.length > MAX) itens.shift();
-    desenhar(); const v = document.createElement('div'); v.className = tipo === 'erro' ? 'o-erro' : ''; v.textContent = texto; live.append(v); while (live.children.length > 5) live.firstChild.remove(); setTimeout(() => v.remove(), 6000);
+    const ult = itens[itens.length - 1];   // mensagem igual à anterior: soma ×N em vez de encher a lista (ex.: escrever dentro de "a cada quadro")
+    if (ult && ult.texto === String(texto) && ult.tipo === tipo) { ult.n = (ult.n || 1) + 1; ult.h = hora(); } else { itens.push({ h: hora(), texto: String(texto), tipo, n: 1 }); if (itens.length > MAX) itens.shift(); }
+    desenhar();
+    const uv = live.lastElementChild; if (uv && uv.dataset.t === String(texto) && uv.dataset.k === tipo) { uv.dataset.n = (+uv.dataset.n || 1) + 1; uv.textContent = texto + ' ×' + uv.dataset.n; clearTimeout(uv._to); uv._to = setTimeout(() => uv.remove(), 15000); return; }
+    const v = document.createElement('div'); v.className = tipo === 'erro' ? 'o-erro' : ''; v.textContent = texto; v.dataset.t = String(texto); v.dataset.k = tipo; live.append(v); while (live.children.length > 8) live.firstChild.remove(); v._to = setTimeout(() => v.remove(), 15000);
   }
   function desenhar() {
     const ol = $('out'), so = $('out-erros').checked, lista = itens.filter(i => !so || i.tipo === 'erro'); ol.innerHTML = '';
-    for (const i of lista.slice(-MAX)) { const li = document.createElement('li'), t = document.createElement('span'); li.className = 'o-' + (i.tipo || 'info'); t.className = 't'; t.textContent = i.h; li.append(t, document.createTextNode(i.texto)); ol.append(li); }
+    for (const i of lista.slice(-MAX)) { const li = document.createElement('li'), t = document.createElement('span'); li.className = 'o-' + (i.tipo || 'info'); t.className = 't'; t.textContent = i.h; li.append(t, document.createTextNode(i.texto + (i.n > 1 ? '  ×' + i.n : ''))); ol.append(li); }
     $('n-out').textContent = itens.length ? '(' + itens.length + ')' : ''; ol.scrollTop = ol.scrollHeight;
   }
   ed.engine.events.on('saida', d => add(d.texto, d.nivel === 'erro' ? 'erro' : 'info'));

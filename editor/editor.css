@@ -95,3 +95,18 @@ body.tem-scripts-grande .bottom-dock{z-index:31}
 /* observados (bloco "observar valor") */
 .obs-lista{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0;margin:0;font:12px ui-monospace,monospace}.obs-lista:empty{display:none}.obs-lista span{padding:2px 8px;border:1px solid var(--linha);border-radius:999px;background:var(--campo)}.obs-lista b{color:var(--acento)}
 #obs-vivo{display:none;position:fixed;left:10px;top:10px;z-index:50;pointer-events:none;font:13px ui-monospace,monospace;color:#fff;text-shadow:0 1px 2px #000}.modo-jogo #obs-vivo{display:block}#obs-vivo div{background:rgba(0,0,0,.5);padding:2px 8px;margin-bottom:2px;border-radius:4px}
+
+/* Blocos: visual por categoria (cor própria, fundo suave) */
+.bloco{--cat:var(--acento);border:1px solid color-mix(in srgb,var(--cat) 45%,transparent);border-left:5px solid var(--cat);background:color-mix(in srgb,var(--cat) 9%,var(--campo));border-radius:12px;box-shadow:0 1px 0 rgba(0,0,0,.12)}
+.bloco.hat{--cat:#22c55e;background:color-mix(in srgb,#22c55e 12%,var(--campo));border-radius:14px 14px 12px 12px}
+.bloco.cat-Movimento{--cat:#3b82f6}.bloco.cat-Variáveis{--cat:#a855f7}.bloco.cat-Controle{--cat:#f59e0b}.bloco.cat-Som{--cat:#14b8a6}.bloco.cat-Listas{--cat:#84cc16}.bloco.cat-Objeto{--cat:#ec4899}.bloco.cat-Aparência{--cat:#06b6d4}.bloco.cat-Câmera{--cat:#8b5cf6}.bloco.cat-Cena{--cat:#ef4444}
+.bloco>.pilha,.bloco.cat-Listas>.pilha{border-left-color:var(--cat)}.bloco>.pilha:before{border-top-color:var(--cat)}
+.bloco .rot{color:var(--cat);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+.bloco .bt button{opacity:.55;border-radius:6px}.bloco:hover>.topo .bt button{opacity:1}
+.bloco.recolhido>.pilha,.bloco.recolhido>.rot,.bloco.recolhido>.add-btn,.bloco.recolhido>.add{display:none}.bloco.recolhido>.topo::after{content:"…";color:var(--cat);font-weight:700;padding:0 6px}
+.add{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden}
+.add-btn{margin:6px 0 2px;padding:4px 12px;border:1.5px dashed var(--mudo);border-radius:999px;background:transparent;color:var(--mudo);cursor:pointer;font-weight:600}.add-btn:hover{border-color:var(--acento);color:var(--acento)}
+.picker{position:fixed;z-index:60;display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--linha);border-radius:14px;background:var(--painel);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.picker .p-busca{width:100%;padding:8px 10px;border-radius:10px}.p-chips{display:flex;flex-wrap:wrap;gap:4px}.p-chip{--cat:var(--mudo);padding:2px 10px;border-radius:999px;border:1px solid var(--cat);background:none;color:var(--cat);font-size:12px;cursor:pointer}.p-chip.on{background:var(--cat);color:#fff}
+.p-chip.cat-Movimento,.p-item.cat-Movimento{--cat:#3b82f6}.p-chip.cat-Variáveis,.p-item.cat-Variáveis{--cat:#a855f7}.p-chip.cat-Controle,.p-item.cat-Controle{--cat:#f59e0b}.p-chip.cat-Som,.p-item.cat-Som{--cat:#14b8a6}.p-chip.cat-Listas,.p-item.cat-Listas{--cat:#84cc16}.p-chip.cat-Objeto,.p-item.cat-Objeto{--cat:#ec4899}.p-chip.cat-Aparência,.p-item.cat-Aparência{--cat:#06b6d4}.p-chip.cat-Câmera,.p-item.cat-Câmera{--cat:#8b5cf6}.p-chip.cat-Cena,.p-item.cat-Cena{--cat:#ef4444}.p-chip.cat-Eventos{--cat:#22c55e}.p-item.cat-Eventos{--cat:#22c55e}
+.p-lista{overflow:auto;display:flex;flex-direction:column;gap:3px}.p-item{--cat:var(--acento);text-align:left;padding:6px 10px;border:0;border-left:4px solid var(--cat);border-radius:8px;background:color-mix(in srgb,var(--cat) 10%,var(--campo));color:var(--texto);cursor:pointer}.p-item:hover,.p-item.first{background:color-mix(in srgb,var(--cat) 28%,var(--campo))}.p-vazio{padding:10px;color:var(--mudo)}
