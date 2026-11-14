@@ -27,6 +27,7 @@
       });
       ouvir(window, 'keyup', e => { const k = e.key.toLowerCase(); this.keys.delete(k); const a = this.mapa.get(k); if (a) this.pressionar(a, false); });
       ouvir(window, 'blur', () => { this.keys.clear(); [...this.down].forEach(a => this.pressionar(a, false)); });
+      if (canvas.style) { canvas.style.touchAction = 'none'; canvas.style.userSelect = 'none'; canvas.style.webkitUserSelect = 'none'; canvas.style.webkitTapHighlightColor = 'transparent'; }   // sem isso o navegador do celular rouba o gesto (rolagem) e o joystick morre
       ouvir(canvas, 'pointerdown', e => {
         if (this.ptId !== null) { e.preventDefault(); return; }       // 2º dedo no canvas é ignorado: não corrompe o estado do 1º
         this.ptId = e.pointerId; const p = this.local(e); this.atualizarPonteiro(p, true); this.pEdge = true;

@@ -26,7 +26,7 @@
       super(canvas, op); this.P = P; this.app = app; this.gl = gl; this.mundoExterno = (sc, al, z, cx, cy) => this._mundo(sc, al, z, cx, cy);
       this.itens = new Map(); this.texs = new Map(); this.textos = new Map(); this.camadaTiles = new Map();
       const st = app.stage; this.fundoG = new P.Graphics(); this.mundo = new P.Container(); this.mundo.sortableChildren = true; this.ui = new P.Container(); this.ui.sortableChildren = true; this.mascara = new P.Graphics();
-      this.raiz = new P.Container(); this.raiz.addChild(this.fundoG, this.mundo, this.ui, this.mascara); this.raiz.mask = this.mascara; st.addChild(this.raiz);
+      this.raiz = new P.Container(); this.fadeG = new P.Graphics(); this.raiz.addChild(this.fundoG, this.mundo, this.fadeG, this.ui, this.mascara); this.raiz.mask = this.mascara; st.addChild(this.raiz);
       this.redimensionar();
     }
     ligar(sim) { this.gl.style.display = sim ? 'block' : 'none'; this.gl.style.zIndex = '0'; this.canvas.style.position = sim ? 'relative' : ''; this.canvas.style.zIndex = sim ? '1' : ''; }   // a tela 2D (HUD, fade) fica POR CIMA do WebGL
@@ -84,6 +84,7 @@
       const P = this.P, L = this.largura, A = this.altura, esc = this.esc, ox = this.ox, oy = this.oy, vistos = new Set();
       this.fundoG.clear().rect(ox, oy, L * esc, A * esc).fill(cor(P, sc.estado.fundo || this.fundo, '#2f7d4f'));
       this.mascara.clear().rect(ox, oy, L * esc, A * esc).fill(0xffffff);
+      const FD = sc.efeitos && sc.efeitos.fade; this.fadeG.clear(); if (FD && FD.alpha > 0.001) { const c = cor(P, FD.cor, '#000'); this.fadeG.rect(ox, oy, L * esc, A * esc).fill({ color: c.color, alpha: Math.min(1, FD.alpha) }); }   // fade fica abaixo da interface
       this.mundo.scale.set(esc * z); this.mundo.position.set(ox + esc * (L / 2 - cx * z), oy + esc * (A / 2 - cy * z));
       this.ui.scale.set(esc); this.ui.position.set(ox, oy);
       this._tiles(sc, vistos);

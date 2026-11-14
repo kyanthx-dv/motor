@@ -435,7 +435,7 @@ const nova=()=>new C.Engine();
  ok(js.every(x=>typeof x==='string'&&x.length>10)&&/efeitos\.tremer/.test(js[0])&&/efeitos\.fade/.test(js[1])&&/efeitos\.particulas/.test(js[2])&&/caminho\.ir/.test(js[3])&&/animar/.test(js[5]),'blocos novos (tremer, fade, partículas, ir_ate, animar) geram JS');
  try{new Function('ctx',js.join('\n'));ok(true,'JS dos blocos novos é sintaticamente válido')}catch(x){ok(false,'JS inválido: '+x.message)}}
 {const cena=JSON.parse(fs.readFileSync(__dirname+'/../projetos/mini-rpg/cenas/principal.json','utf8'));
- const novoRpg=()=>{const e=new C.Engine({agendador:{agora:()=>0,pedir:()=>1,cancelar:()=>{}}});e.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:0,y:0,tx:0,ty:0,down:false,pressed:false}})};
+ const novoRpg=()=>{const e=new C.Engine({agendador:{agora:()=>0,pedir:()=>1,cancelar:()=>{}}});e.tap=false;e.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:0,y:0,tx:0,ty:0,down:false,pressed:e.tap}})};
   C.Serializer.deJSON(e.scene,JSON.parse(JSON.stringify(cena)));e.compilarScripts();e.iniciar();e.errs=[];e.events.on('erro-script',d=>e.errs.push(d));return e};
  const a=novoRpg();ok(a.errosScripts.length===0,'mini-rpg: scripts compilam sem erro');
  for(let i=0;i<300;i++)a.passo();const sl=a.scene.find('slime');
@@ -456,4 +456,9 @@ const nova=()=>new C.Engine();
  const b=G.novo('var_definir');const js=G.gerar([{t:'evento_inicio',f:[G.novo('vibrar'),G.novo('tela_cheia'),Object.assign(b,{var:'x',v:{k:'hora'}})]}]);
  ok(/dispositivo.vibrar/.test(js)&&/telaCheia/.test(js)&&/ler\("hora"\)/.test(js),'blocos do aparelho geram JS');
  delete globalThis.navigator;delete globalThis.window;delete globalThis.innerWidth;delete globalThis.innerHeight;delete globalThis.screen;delete globalThis.matchMedia;}
+{const e=(()=>{const x=new C.Engine({agendador:{agora:()=>0,pedir:()=>1,cancelar:()=>{}}});x.tap=false;x.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:0,y:0,tx:0,ty:0,down:false,pressed:x.tap}})};C.Serializer.deJSON(x.scene,JSON.parse(fs.readFileSync(__dirname+'/../projetos/mini-rpg/cenas/principal.json','utf8')));x.compilarScripts();x.iniciar();return x})();
+ for(let i=0;i<1200&&e.vars.ler('fim')==='jogando';i++)e.passo();ok(e.vars.ler('fim')==='perdeu','mini-rpg: perdeu (preparo do teste de reinício)');
+ e.tap=true;e.passo();ok(e.vars.ler('fim')==='perdeu','mini-rpg: toque logo após perder não reinicia (evita reinício sem querer)');
+ e.tap=false;for(let i=0;i<70;i++)e.passo();e.tap=true;e.passo();e.tap=false;e.passo();
+ ok(e.vars.ler('fim')==='jogando'&&e.vars.ler('vida')===3&&e.vars.ler('moedas')===0&&!(e.scene.efeitos&&e.scene.efeitos.fade),'mini-rpg: tocar na tela depois de perder recomeça o jogo (sem F5)');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
