@@ -257,3 +257,6 @@ Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão)
 
 ## 44. Toque no celular
 `Input` agora põe `touch-action:none` (e sem seleção/realce) na tela do jogo: sem isso o Chrome do celular assume o gesto como rolagem, cancela o ponteiro e o joystick virtual (arrastar em qualquer ponto) nunca anda. O fade de tela passa a ser desenhado **abaixo** da interface (`Sprite.fixo`), nos dois renderers, para o texto de vitória/derrota continuar legível. Mini-RPG: depois de perder/vencer, tocar na tela (ou Espaço/Enter) recomeça, pois no celular não existe F5.
+
+## 45. Exportar jogo
+Botão "Exportar jogo (.html)" (aba Projetos): `EditorExportar.gerar()` junta núcleo + adaptadores (sem PixiJS/depuração) + `adapters/player.js` + o projeto inteiro (todas as cenas, imagens e sons) num **único .html** (~110 KB mais os assets) que roda sozinho, sem editor e sem rede, em qualquer navegador (inclusive celular). `Core.Player.iniciar({nome, atual, cenas})` cria a tela cheia, entrada, áudio, dispositivo e armazenamento, e mostra o botão "Jogar" (necessário para liberar áudio e tela cheia). Só funciona com o editor aberto por http(s) (lê os próprios arquivos com fetch). Base do PWA/app. Testado, incluindo arrastar o dedo (toque simulado) movendo o jogador.

@@ -422,6 +422,22 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     ok(await p.evaluate(() => editor.engine.rodando && editor.cena.entities.size > 8 && (editor.engine.errosScripts || []).length === 0), 'mini-rpg roda no editor sem erro de script');
     ok(await p.evaluate(() => getComputedStyle(document.getElementById('tela')).touchAction === 'none'), 'toque: a tela do jogo tem touch-action:none (joystick funciona no celular)');
     if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT }); await p.evaluate(() => editor.parar());
+    // exportar jogo: um .html que roda sozinho (nova página, sem o editor)
+    const html = await p.evaluate(() => EditorExportar.gerar());
+    ok(/Core\.Player\.iniciar/.test(html) && !/pixi/i.test(html) && html.length < 400000, 'exportar: gera um .html único e leve (' + Math.round(html.length / 1024) + ' KB, sem PixiJS)');
+    const p2 = await b.newPage(); const err2 = []; p2.on('pageerror', e => err2.push(e.message)); const reqs = []; p2.on('request', r => { if (!/^(data|about|blob):/.test(r.url())) reqs.push(r.url()); });
+    await p2.setContent(html); await p2.waitForTimeout(500); await p2.click('button'); await p2.waitForTimeout(1500);
+    const jg = await p2.evaluate(() => ({ rodando: Core.Player.engine.rodando, ents: Core.Player.engine.scene.entities.size, canvas: !!document.getElementById('tela'), editor: typeof editor })), vc = await p2.evaluate(() => Core.Player.engine.vars.ler('vida'));
+    ok(jg.rodando && jg.ents > 8 && jg.canvas && jg.editor === 'undefined' && vc === 3 && err2.length === 0 && reqs.length <= 1, 'exportar: o jogo roda sozinho, sem editor e sem rede (' + JSON.stringify(jg) + ' erros ' + err2.length + ' reqs ' + reqs.length + ')');
+    // toque de verdade (celular simulado): arrastar um dedo move o jogador pelo joystick virtual
+    const ctxT = await b.newContext({ hasTouch: true, isMobile: true, viewport: { width: 844, height: 390 } }), p3 = await ctxT.newPage(); await p3.setContent(html); await p3.waitForTimeout(400); await p3.tap('button'); await p3.waitForTimeout(500);
+    const cdp = await ctxT.newCDPSession(p3), x0 = await p3.evaluate(() => Core.Player.engine.scene.find('jogador').Transform.x);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 200, y: 250 }] });
+    for (let i = 1; i <= 6; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 200 + i * 12, y: 250 }] }); await p3.waitForTimeout(80); }
+    await p3.waitForTimeout(300); const x1 = await p3.evaluate(() => Core.Player.engine.scene.find('jogador').Transform.x);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    ok(x1 > x0 + 15, 'toque: arrastar o dedo move o jogador no jogo exportado (x ' + x0.toFixed(0) + ' → ' + x1.toFixed(0) + ')'); await ctxT.close();
+    await p2.close();
     await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/nao-existe/'); await p.waitForTimeout(600);
     ok(await p.evaluate(() => /Não abriu/.test(document.getElementById('pasta-msg').textContent)), '?projeto= inexistente mostra erro');
     srv.close(); for (let i = erros.length - 1; i >= 0; i--) if (/404/.test(erros[i])) erros.splice(i, 1);   // o 404 acima é esperado
