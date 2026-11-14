@@ -1,3 +1,8 @@
+# Motor — engine de jogos 2D por blocos (v1.0.0)
+
+**Testar agora (sem instalar nada):** https://kyanthx-dv.github.io/motor/editor/ · exemplo pronto: https://kyanthx-dv.github.io/motor/editor/?projeto=../projetos/mini-rpg/
+Use Ctrl+F5 depois de cada atualização. Veja `docs/VERSAO-1.md` para o que a v1.0 inclui e o que ainda não.
+
 # Núcleo da Engine
 
 - Jogar o exemplo: abra `index.html` no navegador (duplo clique). Console: objeto `jogo`.

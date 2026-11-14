@@ -10,12 +10,13 @@
     return { agora, pedir: fn => (raf ? requestAnimationFrame(fn) : setTimeout(() => fn(agora()), 16)), cancelar: id => (raf ? cancelAnimationFrame(id) : clearTimeout(id)) };
   };
   const SEM_INPUT = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false } });
+  C.VERSAO = '1.0.0';   // versão do motor (aparece no editor e em ctx.engine.versao)
   class Engine {
     constructor(opts = {}) {
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
       if (opts.padrao !== false && !(C.Systems && C.Systems.fisica && C.Systems.scripts && C.Systems.controles && C.Systems.ui && C.Systems.animacao && C.Systems.camera)) throw new Error('Core: faltam arquivos de core/systems/ (controles, ui, scripts, fisica, animacao, camera)');
       this.scene = new C.Scene(); this.events = new C.Events(); this.vars = new C.Variaveis(this); this.listas = C.Listas ? new C.Listas(this) : null; this.armazem = C.Armazem ? C.Armazem.memoria() : null; this.observados = {};
-      this.input = opts.input || null; this.renderer = opts.renderer || null; this.audio = opts.audio || null;
+      this.input = opts.input || null; this.renderer = opts.renderer || null; this.audio = opts.audio || null; this.dispositivo = opts.dispositivo || null; this.versao = C.VERSAO;
       this.dt = 1 / 60; this.acum = 0; this.tempo = 0; this.passos = 0; this.fps = 60;
       this.pausado = false; this.rodando = false;
       // Política de tempo (decisão do motor, não acidente): se o aparelho atrasa, o jogo NÃO tenta recuperar o tempo perdido.
@@ -24,7 +25,7 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, caminho: C.Caminho, efeitos: C.Efeitos, events: this.events, vars: this.vars, listas: this.listas, escrever: (v) => this.escrever(v), salvarPartida: (n) => this.salvarPartida(n), carregarPartida: (n) => this.carregarPartida(n), existePartida: (n) => this.existePartida(n), get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, caminho: C.Caminho, efeitos: C.Efeitos, events: this.events, vars: this.vars, listas: this.listas, escrever: (v) => this.escrever(v), salvarPartida: (n) => this.salvarPartida(n), carregarPartida: (n) => this.carregarPartida(n), existePartida: (n) => this.existePartida(n), get audio() { return this.engine.audio; }, get dispositivo() { return this.engine.dispositivo; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
         if (C.Systems.tempo) { C.Tempo.instalar(this); this.usar('tempo', C.Systems.tempo); }   // esperar/tween (opcional)
