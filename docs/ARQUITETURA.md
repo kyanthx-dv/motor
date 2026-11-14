@@ -260,3 +260,9 @@ Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão)
 
 ## 45. Exportar jogo
 Botão "Exportar jogo (.html)" (aba Projetos): `EditorExportar.gerar()` junta núcleo + adaptadores (sem PixiJS/depuração) + `adapters/player.js` + o projeto inteiro (todas as cenas, imagens e sons) num **único .html** (~110 KB mais os assets) que roda sozinho, sem editor e sem rede, em qualquer navegador (inclusive celular). `Core.Player.iniciar({nome, atual, cenas})` cria a tela cheia, entrada, áudio, dispositivo e armazenamento, e mostra o botão "Jogar" (necessário para liberar áudio e tela cheia). Só funciona com o editor aberto por http(s) (lê os próprios arquivos com fetch). Base do PWA/app. Testado, incluindo arrastar o dedo (toque simulado) movendo o jogador.
+
+## 46. Motor num Web Worker (jogo exportado)
+`adapters/worker-host.js` (`Core.WorkerHost`): o jogo exportado roda o **motor inteiro num Worker** (física, scripts); a página só desenha (CanvasRenderer), ouve entrada e toca som. A cada passo o worker manda um retrato da cena (entidades, câmera, efeitos, variáveis); entrada, áudio, armazém e dispositivo viram mensagens. O código do motor vai num bloco `<script type="text/plain" id="motor-codigo">` que a página e o worker executam.
+- **Vigia:** sem quadros por 3 s o worker é encerrado e a página mostra "O jogo parou de responder" com o botão "Reiniciar o jogo" (laço infinito não trava mais a página).
+- **Isolamento:** scripts não alcançam `document`, `localStorage` nem cookies (só o armazém de partidas, por mensagem).
+- **Limites conhecidos:** sem interpolação entre passos (a página desenha o último retrato); a cena inteira é copiada a cada passo (custo proporcional ao número de objetos); o **editor ainda roda o Play na própria página** (laço infinito no Play do editor ainda trava a aba — próximo passo: mesmo host no Play); sem Worker disponível o Player cai para o modo direto (`Core.Player.modo`).

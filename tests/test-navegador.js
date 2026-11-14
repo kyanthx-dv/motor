@@ -428,7 +428,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const p2 = await b.newPage(); const err2 = []; p2.on('pageerror', e => err2.push(e.message)); const reqs = []; p2.on('request', r => { if (!/^(data|about|blob):/.test(r.url())) reqs.push(r.url()); });
     await p2.setContent(html); await p2.waitForTimeout(500); await p2.click('button'); await p2.waitForTimeout(1500);
     const jg = await p2.evaluate(() => ({ rodando: Core.Player.engine.rodando, ents: Core.Player.engine.scene.entities.size, canvas: !!document.getElementById('tela'), editor: typeof editor })), vc = await p2.evaluate(() => Core.Player.engine.vars.ler('vida'));
-    ok(jg.rodando && jg.ents > 8 && jg.canvas && jg.editor === 'undefined' && vc === 3 && err2.length === 0 && reqs.length <= 1, 'exportar: o jogo roda sozinho, sem editor e sem rede (' + JSON.stringify(jg) + ' erros ' + err2.length + ' reqs ' + reqs.length + ')');
+    ok(await p2.evaluate(() => Core.Player.modo === 'worker') && jg.rodando && jg.ents > 8 && jg.canvas && jg.editor === 'undefined' && vc === 3 && err2.length === 0 && reqs.length <= 1, 'exportar: o jogo roda sozinho, sem editor e sem rede (' + JSON.stringify(jg) + ' erros ' + err2.length + ' reqs ' + reqs.length + ')');
     // toque de verdade (celular simulado): arrastar um dedo move o jogador pelo joystick virtual
     const ctxT = await b.newContext({ hasTouch: true, isMobile: true, viewport: { width: 844, height: 390 } }), p3 = await ctxT.newPage(); await p3.setContent(html); await p3.waitForTimeout(400); await p3.tap('button'); await p3.waitForTimeout(500);
     const cdp = await ctxT.newCDPSession(p3), x0 = await p3.evaluate(() => Core.Player.engine.scene.find('jogador').Transform.x);
@@ -437,6 +437,16 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await p3.waitForTimeout(300); const x1 = await p3.evaluate(() => Core.Player.engine.scene.find('jogador').Transform.x);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     ok(x1 > x0 + 15, 'toque: arrastar o dedo move o jogador no jogo exportado (x ' + x0.toFixed(0) + ' → ' + x1.toFixed(0) + ')'); await ctxT.close();
+    // laço infinito num script: a página continua viva, o vigia avisa e "Reiniciar" recomeça
+    await p.evaluate(() => { editor.cena.estado.scripts = editor.cena.estado.scripts || {}; editor.cena.estado.scripts.travar = { fonte: 'function atualizar(e, dt, ctx) { if (ctx.engine.tempo > 0.5) { while (true) {} } }' }; editor.cena.create({ nome: 'bug', Transform: { x: 0, y: 0 }, Script: { nome: 'travar' } }); });
+    const htmlTrava = await p.evaluate(() => EditorExportar.gerar());
+    const p5 = await b.newPage(); await p5.setContent(htmlTrava); await p5.waitForTimeout(400); await p5.click('button'); await p5.waitForTimeout(5200);
+    const tr = await p5.evaluate(() => ({ vivo: true, aviso: /parou de responder/.test(document.body.innerText), modo: Core.Player.modo }));
+    ok(tr.vivo && tr.aviso && tr.modo === 'worker', 'worker: laço infinito no script não trava a página; aparece o aviso (' + JSON.stringify(tr) + ')');
+    await p5.evaluate(() => { const j = Core.Player.host.jogo, c = j.cenas[j.atual]; c.entidades = c.entidades.filter(e => e.nome !== 'bug'); });
+    await p5.click('text=Reiniciar o jogo'); await p5.waitForTimeout(1500);
+    ok(await p5.evaluate(() => Core.Player.engine.rodando && Core.Player.engine.vars.ler('vida') === 3), 'worker: "Reiniciar o jogo" recria o worker e o jogo volta a rodar');
+    await p5.close();
     await p2.close();
     await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/nao-existe/'); await p.waitForTimeout(600);
     ok(await p.evaluate(() => /Não abriu/.test(document.getElementById('pasta-msg').textContent)), '?projeto= inexistente mostra erro');
