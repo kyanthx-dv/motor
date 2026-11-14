@@ -21,3 +21,15 @@ jobs:
         run: npm ci
       - name: Run core tests
         run: npm test
+  navegador:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Testes no navegador (Playwright)
+        run: |
+          npm i --no-save playwright
+          npx playwright install --with-deps chromium
+          node tests/test-navegador.js
