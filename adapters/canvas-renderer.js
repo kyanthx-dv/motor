@@ -19,7 +19,7 @@
     constructor(canvas, op = {}) {
       this.canvas = canvas; this.g = canvas.getContext('2d'); this.assets = op.assets || null;
       this.largura = op.largura || 800; this.altura = op.altura || 450; this.fundo = op.fundo || '#2f7d4f';
-      this.debug = false; this.dpr = 1; this.esc = 1; this.ox = 0; this.oy = 0; this.cam = { cx: this.largura / 2, cy: this.altura / 2, z: 1 };
+      this.simples = !!op.simples; this.debug = false; this.dpr = 1; this.esc = 1; this.ox = 0; this.oy = 0; this.cam = { cx: this.largura / 2, cy: this.altura / 2, z: 1 };
       this.redimensionar();
       this._aoRedimensionar = () => this.redimensionar();
       if (typeof ResizeObserver !== 'undefined') { this._ro = new ResizeObserver(this._aoRedimensionar); this._ro.observe(canvas); }
@@ -27,7 +27,7 @@
     }
     destruir() { if (this._ro) this._ro.disconnect(); else window.removeEventListener('resize', this._aoRedimensionar); }
     redimensionar() {
-      const r = this.canvas.getBoundingClientRect(); this.dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const r = this.canvas.getBoundingClientRect(); this.dpr = this.simples ? 1 : Math.min(window.devicePixelRatio || 1, 3);
       this.canvas.width = Math.max(1, Math.round(r.width * this.dpr)); this.canvas.height = Math.max(1, Math.round(r.height * this.dpr));
       this.esc = Math.min(r.width / this.largura, r.height / this.altura) || 1;
       this.ox = (r.width - this.largura * this.esc) / 2; this.oy = (r.height - this.altura * this.esc) / 2;
@@ -73,13 +73,15 @@
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, this.canvas.width, this.canvas.height);
       if (V) { g.fillStyle = '#0e1319'; g.fillRect(0, 0, this.canvas.width, this.canvas.height); }
       g.setTransform(d * this.esc, 0, 0, d * this.esc, d * this.ox, d * this.oy);
-      g.fillStyle = scene.estado.fundo || this.fundo; g.fillRect(0, 0, L, A);
+      const X = !!this.mundoExterno && !V;            // mundo desenhado por outro adaptador (WebGL): aqui só HUD e depuração
+      if (!X) { g.fillStyle = scene.estado.fundo || this.fundo; g.fillRect(0, 0, L, A); }
       g.save(); if (!V) { g.beginPath(); g.rect(0, 0, L, A); g.clip(); }
       // câmera: interpola entre o passo anterior e o atual
       const cam = scene.estado.camera; let z = 1, cx = L / 2, cy = A / 2;
       if (cam) { z = cam.zoom || 1; cx = cam.px === undefined ? cam.x : cam.px + (cam.x - cam.px) * alpha; cy = cam.py === undefined ? cam.y : cam.py + (cam.y - cam.py) * alpha; }
       if (V) { z = 1; cx = L / 2; cy = A / 2; }
       this.cam = { cx, cy, z };
+      if (X) this.mundoExterno(scene, alpha, z, cx, cy);
       g.setTransform(d * this.esc * z, 0, 0, d * this.esc * z, d * (this.ox + this.esc * (L / 2 - cx * z)), d * (this.oy + this.esc * (A / 2 - cy * z)));
       const meioW = V ? W / V.z / 2 + Math.abs(this.ox / V.z) + L : L / z / 2, meioH = V ? 1e9 : A / z / 2;
       const ord = (a, b) => (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id;
@@ -106,7 +108,7 @@
         if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else if (pg) { pg.forEach((q, i) => i ? g.lineTo(x + q[0], y + q[1]) : g.moveTo(x + q[0], y + q[1])); g.closePath(); } else if (s.arredondar > 0 && g.roundRect) g.roundRect(x - w / 2, y - h / 2, w, h, Math.min(s.arredondar, w / 2, h / 2)); else g.rect(x - w / 2, y - h / 2, w, h);
         if (f === 'anel') { g.strokeStyle = s.cor || '#fff'; g.stroke(); }
         else { const B = e.Botao; g.fillStyle = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
-          if (s.sombra) { g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 8 * this.dpr; g.shadowOffsetY = 3 * this.dpr; }
+          if (s.sombra && !this.simples) { g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 8 * this.dpr; g.shadowOffsetY = 3 * this.dpr; }
           g.fill(); g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0; if (s.borda) { g.strokeStyle = s.borda; g.stroke(); } }
         if (s.rotulo) { g.fillStyle = s.corTexto || '#fff'; g.font = '600 ' + (s.tamanhoTexto || 14) + 'px ' + (s.fonte || 'system-ui,sans-serif'); g.textAlign = s.alinhar || 'center'; g.textBaseline = 'middle'; const tx = s.alinhar === 'left' ? x - w / 2 + 8 : s.alinhar === 'right' ? x + w / 2 - 8 : x; g.fillText(s.rotulo, tx, y); }
       };
@@ -115,9 +117,9 @@
         const c0 = Math.max(0, Math.floor((vx0 - t.x) / S)), c1 = Math.min(T.colunas - 1, Math.floor((vx1 - t.x) / S)), r0 = Math.max(0, Math.floor((vy0 - t.y) / S)), r1 = Math.min(T.linhas - 1, Math.floor((vy1 - t.y) / S));
         for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const k = T.dados[r * T.colunas + c]; if (!k) continue; const p = T.paleta[k - 1], img = p.imagem && this.assets && this.assets.get(p.imagem);
           if (img) { g.imageSmoothingEnabled = false; g.drawImage(img, t.x + c * S, t.y + r * S, S, S); } else { g.fillStyle = p.cor; g.fillRect(t.x + c * S, t.y + r * S, S + .5, S + .5); } } } };
-      mapas(false);
+      if (!X) { mapas(false);
       for (const e of todos) if (V || !e.Sprite.fixo) pintar(e, cx, cy, V ? 1e9 : L / z / 2, V ? 1e9 : A / z / 2);
-      mapas(true);
+      mapas(true); }
       if (this.selecionada != null) {
         const e = scene.get(this.selecionada);
         if (e && e.Transform) {
@@ -139,7 +141,7 @@
       if (V) return;
       // interface: sprites com fixo:true ficam na janela, sem câmera
       g.save(); g.setTransform(d * this.esc, 0, 0, d * this.esc, d * this.ox, d * this.oy); g.beginPath(); g.rect(0, 0, L, A); g.clip();
-      for (const e of todos) if (e.Sprite.fixo) pintar(e, L / 2, A / 2, L / 2, A / 2);
+      if (!X) for (const e of todos) if (e.Sprite.fixo) pintar(e, L / 2, A / 2, L / 2, A / 2);
       g.restore();
       // camada de tela (px CSS): joystick virtual e depuração
       g.setTransform(d, 0, 0, d, 0, 0);

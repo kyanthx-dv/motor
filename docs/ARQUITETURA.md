@@ -234,3 +234,6 @@ A cena aberta no editor continua sendo a "viva" do projeto. As outras ficam em `
 
 ## 37. Hitbox poligonal
 `Body {forma:'poligono', pontos:[[x,y],...]}` (3 a 16 pontos, convexo, relativos ao Transform, sem rotação). Colisão por eixos separadores (SAT) contra círculo, retângulo e outro polígono; serve também para sensores. `Sprite {forma:'poligono', pontos}` desenha a forma. Retângulo já era suportado. Botão "△ Triângulo" no painel ＋. Côncavo: combine vários polígonos convexos.
+
+## 38. Qualidade gráfica (Canvas 2D / WebGL)
+Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão), **Gráficos** (WebGL via PixiJS 8, `adapters/vendor/pixi.min.js`, carrega só quando escolhido) e **Simples** (Canvas 2D sem sombras e sem alta resolução, para aparelhos fracos). `Core.PixiRenderer.criar(canvas, opcoes)` herda de `CanvasRenderer` (câmera, entrada e HUD continuam na tela 2D) e desenha o mundo numa tela WebGL sobreposta; devolve `null` se WebGL falhar e o editor cai para Canvas 2D. Só vale no Play (o editor usa Canvas 2D por causa das guias). Limitações: sem sombra de botão e sem espelhar formas.
