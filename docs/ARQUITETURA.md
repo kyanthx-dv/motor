@@ -245,3 +245,6 @@ Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão)
 - **Salvamento automático:** com uma pasta aberta/escolhida (Chrome, Edge, Android), o editor regrava a pasta quando o projeto muda (a cada 1,5 s, nunca durante o Play).
 - **`?projeto=<caminho>`:** abre um projeto publicado (`projeto.json` + `cenas/` + `assets/`) por URL, ex.: `editor/?projeto=../projetos/pega-moedas/`. Serve para versionar projetos no repositório, abrir no GitHub Pages e permitir que IAs/pessoas editem os arquivos direto.
 - Exemplo no repositório: `projetos/pega-moedas/`.
+
+## 41. Pathfinding (A*)
+`core/systems/caminho.js` (opcional): `Core.Caminho.achar(scene, de, para, {mapa?, raio?})` → lista de pontos do mundo ou `null`. A* em 8 direções sobre o mapa `Tiles` (células com `solido` são parede; não corta quina), com alisamento por linha de visão (`raio` = folga do corpo) e limite de 20000 nós. Destino dentro de parede vai para a célula livre mais próxima (até 3 células). `Caminho.ir(scene, e, x, y, vel)` põe `Rota` na entidade e o sistema `caminho` a move até chegar, emitindo o evento `chegou` (`eventos.chegou` do script). Blocos "ir até um ponto" e "parar rota". `ctx.caminho` disponível nos scripts.
