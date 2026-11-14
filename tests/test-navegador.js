@@ -397,6 +397,19 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(px[0] > 200 && px[1] < 60, 'WebGL: pixel do centro é vermelho (' + px.join(',') + ')');
   await p.evaluate(() => editor.parar()); await p.waitForTimeout(200);
   ok(await p.evaluate(() => editor.engine.renderer.constructor.name === 'CanvasRenderer' && getComputedStyle(document.querySelector('.tela-gl')).display === 'none'), 'WebGL: Parar volta ao Canvas 2D');
+  // projeto em pasta/ZIP: ida e volta com imagem e som, depois abrir o ZIP pela interface
+  await p.goto(url('editor/index') + '?abas=todas'); await p.waitForTimeout(400);
+  const rt = await p.evaluate(async () => {
+    const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', wav = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+    editor.cena.estado.imagens = { foto: png }; editor.cena.estado.sons = { beep: wav };
+    const pac = EditorArquivos.exportar(), arq = PastaProjeto.empacotar(pac, 'teste'), chaves = Object.keys(arq).sort();
+    const z = await PastaProjeto.deszipar(await PastaProjeto.zipar(arq).arrayBuffer()), v = PastaProjeto.desempacotar(z);
+    let ruim = null; try { const x = Object.assign({}, z); x['cenas/principal.json'] = new TextEncoder().encode(JSON.stringify({ formato: 1, estado: { imagens: { a: 'assets/imagens/../../x.png' } }, entidades: [] })); PastaProjeto.desempacotar(x); } catch (e) { ruim = e.message; }
+    return { chaves, img: v.cena.estado.imagens.foto === png, som: v.cena.estado.sons.beep === wav, nome: v.nome, ruim, ents: v.cena.entidades.length === pac.cena.entidades.length };
+  });
+  ok(rt.chaves.includes('projeto.json') && rt.chaves.some(c => /^assets\/imagens\/foto\.png$/.test(c)) && rt.chaves.some(c => /^assets\/sons\/beep\.wav$/.test(c)), 'pasta: gera projeto.json, cenas/ e assets/ (' + rt.chaves.join(',') + ')');
+  ok(rt.img && rt.som && rt.ents && rt.nome === 'teste', 'pasta: ZIP ida e volta preserva cena, imagem e som');
+  ok(/inválido|ausente/.test(rt.ruim || ''), 'pasta: recusa caminho de asset malicioso');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
