@@ -1,0 +1,11 @@
+{
+  "formato": 2,
+  "nome": "Pega-moedas",
+  "cenaAtual": "principal",
+  "cenas": [
+    {
+      "nome": "principal",
+      "arquivo": "cenas/principal.json"
+    }
+  ]
+}

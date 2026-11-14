@@ -240,3 +240,8 @@ Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão)
 
 ## 39. Projeto em pasta (formato 2)
 `projeto.json` (`{formato:2, nome, cenaAtual, cenas:[{nome,arquivo}]}`) + `cenas/<nome>.json` + `assets/imagens/*` + `assets/sons/*`. As cenas guardam caminhos `assets/...` em `estado.imagens/sons`; ao abrir, os arquivos voltam a ser embutidos (modelo interno inalterado). `editor/pasta.js`: `PastaProjeto.empacotar/desempacotar` (puro), `zipar/deszipar` (ZIP próprio, sem biblioteca), `gravarPasta/lerPasta` (File System Access API). Botões na aba Projetos: Salvar na pasta / Abrir pasta (Chrome, Edge, Android) e Baixar ZIP / Abrir ZIP (qualquer navegador). Abrir valida os caminhos (só `assets/imagens|sons/nome.ext`). Próximo passo: o projeto aberto passa a ser a fonte única (salvar automático na pasta), em vez do localStorage.
+
+## 40. Projeto como fonte editável (passo 2)
+- **Salvamento automático:** com uma pasta aberta/escolhida (Chrome, Edge, Android), o editor regrava a pasta quando o projeto muda (a cada 1,5 s, nunca durante o Play).
+- **`?projeto=<caminho>`:** abre um projeto publicado (`projeto.json` + `cenas/` + `assets/`) por URL, ex.: `editor/?projeto=../projetos/pega-moedas/`. Serve para versionar projetos no repositório, abrir no GitHub Pages e permitir que IAs/pessoas editem os arquivos direto.
+- Exemplo no repositório: `projetos/pega-moedas/`.
