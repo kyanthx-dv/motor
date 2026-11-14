@@ -24,11 +24,12 @@
       this.perfil = false; this.tempos = {};   // perfil:true mede o tempo médio (ms) de cada sistema, em engine.tempos
       this.agendador = opts.agendador || agendadorPadrao(); this.maxDelta = opts.maxDelta ?? 0.25; this.maxPassos = opts.maxPassos ?? 5; this.tempoPerdido = 0;
       this.scripts = {}; this.systems = []; this.cenas = {}; this._proxima = null; this._emPasso = false;
-      this.ctx = { engine: this, scene: this.scene, caminho: C.Caminho, events: this.events, vars: this.vars, listas: this.listas, escrever: (v) => this.escrever(v), salvarPartida: (n) => this.salvarPartida(n), carregarPartida: (n) => this.carregarPartida(n), existePartida: (n) => this.existePartida(n), get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
+      this.ctx = { engine: this, scene: this.scene, caminho: C.Caminho, efeitos: C.Efeitos, events: this.events, vars: this.vars, listas: this.listas, escrever: (v) => this.escrever(v), salvarPartida: (n) => this.salvarPartida(n), carregarPartida: (n) => this.carregarPartida(n), existePartida: (n) => this.existePartida(n), get audio() { return this.engine.audio; }, sobre(e) { return C.sobre(e, this.input && this.input.pointer); }, input: SEM_INPUT(), dt: this.dt, tela: { largura: 800, altura: 450 } };
       if (opts.padrao !== false) {                       // ordem importa: entrada → scripts → física
         this.usar('controles', C.Systems.controles); this.usar('ui', C.Systems.ui); this.usar('scripts', C.Systems.scripts);
         if (C.Systems.tempo) { C.Tempo.instalar(this); this.usar('tempo', C.Systems.tempo); }   // esperar/tween (opcional)
         if (C.Systems.tiles) this.usar('tiles', C.Systems.tiles);
+        if (C.Systems.efeitos) this.usar('efeitos', C.Systems.efeitos);   // tremor, fade e partículas (opcional)
         if (C.Systems.caminho) this.usar('caminho', C.Systems.caminho);   // seguidor de rotas do pathfinding (opcional)   // colisores do mapa de tiles (opcional)
         if (C.Systems.hierarquia) this.usar('hierarquia', C.Systems.hierarquia);   // filhos seguem o pai (opcional: jogos sem hierarquia não precisam carregar o arquivo)
         this.usar('fisica', C.Systems.fisica); if (C.Systems.hierarquia) this.usar('hierarquia2', C.Systems.hierarquia);

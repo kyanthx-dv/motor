@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','systems/caminho','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','systems/caminho','systems/efeitos','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -419,4 +419,19 @@ const nova=()=>new C.Engine();
  ok(Math.abs(f.Transform.x-100)<1e-6&&Math.abs(f.Transform.y-130)<1e-6&&Math.abs(f.Transform.rot-(Math.PI/2+0.5))<1e-9,'hierarquia: Pai.girar gira o deslocamento e a rotação do filho');
  ok(g.Transform.x===130&&g.Transform.y===100&&g.Transform.rot===undefined,'hierarquia: sem girar continua só posição');
  let ruim=false;try{e.scene.create({Transform:{x:0,y:0},Pai:{id:pai.id,girar:'sim'}})}catch(x){ruim=true}ok(ruim,'Pai.girar inválido é recusado');}
+{const e=nova();e.scene.estado.gravidade={x:0,y:0};
+ const n=C.Efeitos.particulas(e.scene,100,100,{n:10,vida:0.3,vel:100});e.passo();
+ ok(n===10&&e.scene.query('Particula').length===10,'partículas: nascem (10)');
+ for(let i=0;i<30;i++)e.passo();ok(e.scene.query('Particula').length===0,'partículas: somem depois da vida');
+ C.Efeitos.particulas(e.scene,0,0,{n:200});C.Efeitos.particulas(e.scene,0,0,{n:200});C.Efeitos.particulas(e.scene,0,0,{n:200});
+ ok(e.scene.query('Particula').length===400,'partículas: limite de 400 ao mesmo tempo');
+ const f=nova();C.Efeitos.tremer(f.scene,10,0.2);f.passo();ok(Math.abs(f.scene.efeitos.tx)<=10&&f.scene.efeitos.tremor,'tremor: desloca a câmera');
+ for(let i=0;i<30;i++)f.passo();ok(f.scene.efeitos.tx===0&&!f.scene.efeitos.tremor,'tremor: termina e zera');
+ C.Efeitos.fade(f.scene,'#000',0,1,0.5);for(let i=0;i<20;i++)f.passo();const a1=f.scene.efeitos.fade.alpha;for(let i=0;i<40;i++)f.passo();ok(a1>0&&a1<1&&f.scene.efeitos.fade.alpha===1,'fade: escurece até 1 e fica');
+ C.Efeitos.fade(f.scene,'#000',1,0,0.2);for(let i=0;i<30;i++)f.passo();ok(f.scene.efeitos.fade===null,'fade: clarear remove o efeito');
+ f.scene.clear();ok(f.scene.efeitos===null,'efeitos: scene.clear zera');}
+{vm.runInThisContext(fs.readFileSync(__dirname+'/../editor/gerador.js','utf8'));const G=EditorBlocos;
+ const js=['tremer','fade','particulas','ir_ate','parar_rota','animar'].map(t=>{const r=G.gerar([{t:'evento_inicio',f:[G.novo(t)]}]);return typeof r==='string'?r:JSON.stringify(r)});
+ ok(js.every(x=>typeof x==='string'&&x.length>10)&&/efeitos\.tremer/.test(js[0])&&/efeitos\.fade/.test(js[1])&&/efeitos\.particulas/.test(js[2])&&/caminho\.ir/.test(js[3])&&/animar/.test(js[5]),'blocos novos (tremer, fade, partículas, ir_ate, animar) geram JS');
+ try{new Function('ctx',js.join('\n'));ok(true,'JS dos blocos novos é sintaticamente válido')}catch(x){ok(false,'JS inválido: '+x.message)}}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
