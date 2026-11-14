@@ -420,6 +420,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/mini-rpg/'); await p.waitForTimeout(1000);
     await p.evaluate(() => editor.play()); await p.waitForTimeout(1200);
     ok(await p.evaluate(() => editor.engine.rodando && editor.cena.entities.size > 8 && (editor.engine.errosScripts || []).length === 0), 'mini-rpg roda no editor sem erro de script');
+    ok(await p.evaluate(() => getComputedStyle(document.getElementById('tela')).touchAction === 'none'), 'toque: a tela do jogo tem touch-action:none (joystick funciona no celular)');
     if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT }); await p.evaluate(() => editor.parar());
     await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/nao-existe/'); await p.waitForTimeout(600);
     ok(await p.evaluate(() => /Não abriu/.test(document.getElementById('pasta-msg').textContent)), '?projeto= inexistente mostra erro');

@@ -146,9 +146,9 @@
       if (V) return;
       // interface: sprites com fixo:true ficam na janela, sem câmera
       g.save(); g.setTransform(d * this.esc, 0, 0, d * this.esc, d * this.ox, d * this.oy); g.beginPath(); g.rect(0, 0, L, A); g.clip();
+      if (!X && EF && EF.fade && EF.fade.alpha > 0.001) { g.save(); g.setTransform(d * this.esc, 0, 0, d * this.esc, d * this.ox, d * this.oy); g.globalAlpha = Math.min(1, EF.fade.alpha); g.fillStyle = EF.fade.cor; g.fillRect(0, 0, L, A); g.restore(); }   // fade de tela
       if (!X) for (const e of todos) if (e.Sprite.fixo) pintar(e, L / 2, A / 2, L / 2, A / 2);
       g.restore();
-      if (EF && EF.fade && EF.fade.alpha > 0.001) { g.save(); g.setTransform(d * this.esc, 0, 0, d * this.esc, d * this.ox, d * this.oy); g.globalAlpha = Math.min(1, EF.fade.alpha); g.fillStyle = EF.fade.cor; g.fillRect(0, 0, L, A); g.restore(); }   // fade de tela
       // camada de tela (px CSS): joystick virtual e depuração
       g.setTransform(d, 0, 0, d, 0, 0);
       const j = eng && eng.input && eng.input.joystick;

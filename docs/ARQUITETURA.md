@@ -254,3 +254,6 @@ Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão)
 
 ## 43. Efeitos: tremor, fade e partículas
 `core/systems/efeitos.js` (opcional). `ctx.efeitos.tremer(scene, forca, dur)` (a câmera balança e acalma), `fade(scene, cor, de, para, dur)` (cobre a tela com a cor; ao terminar em 1 fica escuro até outro fade para 0) e `particulas(scene, x, y, {n, cor, tamanho, vel, vida, gravidade, espalhar:'cima'|todos})` (entidades `_particula` com `Particula`, no máximo 400). Estado de execução em `scene.efeitos` (não é salvo; `clear` zera). Novo `Sprite.opacidade` (0–1) nos dois renderers. No modo WebGL a tela 2D fica por cima do WebGL (HUD e fade). Blocos: tremer a câmera, fade, soltar partículas.
+
+## 44. Toque no celular
+`Input` agora põe `touch-action:none` (e sem seleção/realce) na tela do jogo: sem isso o Chrome do celular assume o gesto como rolagem, cancela o ponteiro e o joystick virtual (arrastar em qualquer ponto) nunca anda. O fade de tela passa a ser desenhado **abaixo** da interface (`Sprite.fixo`), nos dois renderers, para o texto de vitória/derrota continuar legível. Mini-RPG: depois de perder/vencer, tocar na tela (ou Espaço/Enter) recomeça, pois no celular não existe F5.

@@ -144,7 +144,7 @@
     _aplicarPartida(d) { this._partidaPendente = null; this._limparTempo(); C.Serializer.deJSON(this.scene, d.dados); this.events.fila.length = 0; this.compilarScripts(); }
     // ctx.escrever(valor): mensagem para o painel Output do editor (e para quem ouvir o evento 'saida')
     escrever(v, nivel) { this.events.emit('saida', { texto: String(v).slice(0, 500), nivel: nivel || 'info', t: this.tempo }); }
-    _limparTempo() { if (C.Tempo) C.Tempo.limpar(this); }
+    _limparTempo() { if (C.Tempo) C.Tempo.limpar(this); this.scene.efeitos = null; }   // também zera tremor, fade e partículas pendentes (reiniciar, trocar de cena, carregar partida)
     iniciar() {
       if (this.rodando) return; this._limparTempo(); this.observados = {}; this.compilarScripts(); if (C.Serializer) this._inicial = JSON.stringify(C.Serializer.paraJSON(this.scene)); this.rodando = true; const ag = this.agendador; let ultimo = ag.agora();
       const quadro = agora => {
