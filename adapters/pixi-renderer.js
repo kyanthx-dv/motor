@@ -29,7 +29,7 @@
       this.raiz = new P.Container(); this.raiz.addChild(this.fundoG, this.mundo, this.ui, this.mascara); this.raiz.mask = this.mascara; st.addChild(this.raiz);
       this.redimensionar();
     }
-    ligar(sim) { this.gl.style.display = sim ? 'block' : 'none'; }
+    ligar(sim) { this.gl.style.display = sim ? 'block' : 'none'; this.gl.style.zIndex = '0'; this.canvas.style.position = sim ? 'relative' : ''; this.canvas.style.zIndex = sim ? '1' : ''; }   // a tela 2D (HUD, fade) fica POR CIMA do WebGL
     destruir() { super.destruir(); try { this.app.destroy(false, { children: true }); } catch (x) {} this.gl.remove(); }
     redimensionar() {
       super.redimensionar(); if (!this.app) return;
@@ -90,7 +90,7 @@
       const lista = sc.query('Transform', 'Sprite').sort((a, b) => (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id);
       lista.forEach((e, rank) => {
         const s = e.Sprite, t = e.Transform, b = e.Body || {}, id = 's' + e.id; vistos.add(id);
-        const it = this._item(id, s.fixo ? this.ui : this.mundo); it.c.zIndex = rank; it.c.visible = !s.invisivel; if (s.invisivel) return;
+        const it = this._item(id, s.fixo ? this.ui : this.mundo); it.c.zIndex = rank; it.c.visible = !s.invisivel; it.c.alpha = s.opacidade === undefined ? 1 : Math.max(0, Math.min(1, s.opacidade)); if (s.invisivel) return;
         it.c.position.set(t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha, t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha); it.c.rotation = t.rot || 0;
         const img = s.imagem && this.assets && this.assets.get(s.imagem);
         if (img) {

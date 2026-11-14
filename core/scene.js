@@ -73,7 +73,7 @@
     return circ ? dx * dx + dy * dy <= r * r : Math.abs(dx) <= w / 2 && Math.abs(dy) <= h / 2;
   };
   class Scene {
-    constructor() { this.entities = new Map(); this.nextId = 1; this.estado = {}; this._remover = new Set(); this.jogando = false; }
+    constructor() { this.entities = new Map(); this.nextId = 1; this.estado = {}; this.efeitos = null; this._remover = new Set(); this.jogando = false; }
     create(dados = {}) {
       if (dados === null || typeof dados !== 'object') throw new Error('create precisa de um objeto');
       if (dados.id != null && (!Number.isInteger(dados.id) || dados.id < 0)) throw new Error('id de entidade precisa ser um inteiro >= 0: ' + dados.id);
@@ -127,7 +127,7 @@
       }
       return r;
     }
-    clear() { this.entities.clear(); this._remover.clear(); this.nextId = 1; this.estado = {}; this.jogando = false; }
+    clear() { this.entities.clear(); this._remover.clear(); this.nextId = 1; this.estado = {}; this.efeitos = null; this.jogando = false; }
   }
   C.Scene = Scene;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -80,6 +80,7 @@
       const cam = scene.estado.camera; let z = 1, cx = L / 2, cy = A / 2;
       if (cam) { z = cam.zoom || 1; cx = cam.px === undefined ? cam.x : cam.px + (cam.x - cam.px) * alpha; cy = cam.py === undefined ? cam.y : cam.py + (cam.y - cam.py) * alpha; }
       if (V) { z = 1; cx = L / 2; cy = A / 2; }
+      const EF = scene.efeitos; if (EF && !V) { cx += EF.tx || 0; cy += EF.ty || 0; }   // tremor de câmera
       this.cam = { cx, cy, z };
       if (X) this.mundoExterno(scene, alpha, z, cx, cy);
       g.setTransform(d * this.esc * z, 0, 0, d * this.esc * z, d * (this.ox + this.esc * (L / 2 - cx * z)), d * (this.oy + this.esc * (A / 2 - cy * z)));
@@ -88,6 +89,10 @@
       const todos = scene.query('Transform', 'Sprite').sort(ord);
       const pintar = (e, cx, cy, meioW, meioH) => {
         const s = e.Sprite; if (s.invisivel) return;
+        if (s.opacidade !== undefined && s.opacidade < 1) { g.globalAlpha = Math.max(0, s.opacidade); pintar0(e, cx, cy, meioW, meioH); g.globalAlpha = 1; } else pintar0(e, cx, cy, meioW, meioH);
+      };
+      const pintar0 = (e, cx, cy, meioW, meioH) => {
+        const s = e.Sprite;
         const t = e.Transform, b = e.Body || {};
         const x = t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha, y = t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha;
         const img = s.imagem && this.assets && this.assets.get(s.imagem);
@@ -143,6 +148,7 @@
       g.save(); g.setTransform(d * this.esc, 0, 0, d * this.esc, d * this.ox, d * this.oy); g.beginPath(); g.rect(0, 0, L, A); g.clip();
       if (!X) for (const e of todos) if (e.Sprite.fixo) pintar(e, L / 2, A / 2, L / 2, A / 2);
       g.restore();
+      if (EF && EF.fade && EF.fade.alpha > 0.001) { g.save(); g.setTransform(d * this.esc, 0, 0, d * this.esc, d * this.ox, d * this.oy); g.globalAlpha = Math.min(1, EF.fade.alpha); g.fillStyle = EF.fade.cor; g.fillRect(0, 0, L, A); g.restore(); }   // fade de tela
       // camada de tela (px CSS): joystick virtual e depuração
       g.setTransform(d, 0, 0, d, 0, 0);
       const j = eng && eng.input && eng.input.joystick;

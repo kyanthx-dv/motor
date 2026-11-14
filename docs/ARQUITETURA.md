@@ -251,3 +251,6 @@ Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão)
 
 ## 42. Rotação na hierarquia
 `Pai {id, dx, dy, girar?, rot?}`: com `girar:true` o filho gira com o pai (deslocamento rotacionado por `Transform.rot` do pai; `Transform.rot` do filho = rot do pai + `Pai.rot`). Padrão continua só posição. Ordem de desenho já existia (`Sprite.camada`, `ordenarY`, `fixo` para interface). Escala herdada ainda não existe (não há escala de Transform).
+
+## 43. Efeitos: tremor, fade e partículas
+`core/systems/efeitos.js` (opcional). `ctx.efeitos.tremer(scene, forca, dur)` (a câmera balança e acalma), `fade(scene, cor, de, para, dur)` (cobre a tela com a cor; ao terminar em 1 fica escuro até outro fade para 0) e `particulas(scene, x, y, {n, cor, tamanho, vel, vida, gravidade, espalhar:'cima'|todos})` (entidades `_particula` com `Particula`, no máximo 400). Estado de execução em `scene.efeitos` (não é salvo; `clear` zera). Novo `Sprite.opacidade` (0–1) nos dois renderers. No modo WebGL a tela 2D fica por cima do WebGL (HUD e fade). Blocos: tremer a câmera, fade, soltar partículas.
