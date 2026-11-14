@@ -248,3 +248,6 @@ Seletor no editor (também `?render=`): **Compatibilidade** (Canvas 2D, padrão)
 
 ## 41. Pathfinding (A*)
 `core/systems/caminho.js` (opcional): `Core.Caminho.achar(scene, de, para, {mapa?, raio?})` → lista de pontos do mundo ou `null`. A* em 8 direções sobre o mapa `Tiles` (células com `solido` são parede; não corta quina), com alisamento por linha de visão (`raio` = folga do corpo) e limite de 20000 nós. Destino dentro de parede vai para a célula livre mais próxima (até 3 células). `Caminho.ir(scene, e, x, y, vel)` põe `Rota` na entidade e o sistema `caminho` a move até chegar, emitindo o evento `chegou` (`eventos.chegou` do script). Blocos "ir até um ponto" e "parar rota". `ctx.caminho` disponível nos scripts.
+
+## 42. Rotação na hierarquia
+`Pai {id, dx, dy, girar?, rot?}`: com `girar:true` o filho gira com o pai (deslocamento rotacionado por `Transform.rot` do pai; `Transform.rot` do filho = rot do pai + `Pai.rot`). Padrão continua só posição. Ordem de desenho já existia (`Sprite.camada`, `ordenarY`, `fixo` para interface). Escala herdada ainda não existe (não há escala de Transform).

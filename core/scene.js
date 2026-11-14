@@ -37,7 +37,8 @@
     if (e.Etiquetas !== undefined && !(Array.isArray(e.Etiquetas) && e.Etiquetas.length <= 20 && e.Etiquetas.every(t => typeof t === 'string' && t.length >= 1 && t.length <= 30))) throw new Error('entidade "' + n + '": Etiquetas precisa ser uma lista de até 20 textos (1 a 30 letras)');
     if (e.Pai !== undefined) {
       const P = e.Pai; if (P === null || typeof P !== 'object' || Array.isArray(P) || !Number.isInteger(P.id) || P.id < 0 || P.id === e.id) throw new Error('entidade "' + n + '": Pai precisa ser { id: inteiro de OUTRA entidade, dx, dy }');
-      for (const k of ['dx', 'dy']) if (P[k] !== undefined && !(typeof P[k] === 'number' && isFinite(P[k]))) throw new Error('entidade "' + n + '": Pai.' + k + ' precisa ser número');
+      if (P.girar !== undefined && typeof P.girar !== 'boolean') throw new Error('entidade "' + n + '": Pai.girar precisa ser verdadeiro/falso');
+      for (const k of ['dx', 'dy', 'rot']) if (P[k] !== undefined && !(typeof P[k] === 'number' && isFinite(P[k]))) throw new Error('entidade "' + n + '": Pai.' + k + ' precisa ser número');
     }
     if (e.Modelo !== undefined && (e.Modelo === null || typeof e.Modelo !== 'object')) throw new Error('entidade "' + n + '": Modelo precisa ser um objeto');
     if (e.Body) {

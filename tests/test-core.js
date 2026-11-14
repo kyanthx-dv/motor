@@ -413,4 +413,10 @@ const nova=()=>new C.Engine();
  for(let i=0;i<600&&n.Rota;i++)ee.passo();
  ok(!n.Rota&&Math.hypot(n.Transform.x-170,n.Transform.y-30)<6&&chegou===1,'ir: o seguidor chega ao destino e emite "chegou" (x '+n.Transform.x.toFixed(1)+', y '+n.Transform.y.toFixed(1)+')');
  const lg=mk();lg.passo();ok(C.Caminho.achar(lg.scene,{x:30,y:30},{x:30,y:120}).length===1,'A*: linha reta livre vira um único ponto');}
+{const e=nova();e.scene.estado.gravidade={x:0,y:0};
+ const pai=e.scene.create({nome:'pai',Transform:{x:100,y:100,rot:0}}),f=e.scene.create({nome:'f',Transform:{x:130,y:100},Pai:{id:pai.id,dx:30,dy:0,girar:true,rot:0.5}}),g=e.scene.create({nome:'g',Transform:{x:130,y:100},Pai:{id:pai.id,dx:30,dy:0}});
+ pai.Transform.rot=Math.PI/2;e.passo();
+ ok(Math.abs(f.Transform.x-100)<1e-6&&Math.abs(f.Transform.y-130)<1e-6&&Math.abs(f.Transform.rot-(Math.PI/2+0.5))<1e-9,'hierarquia: Pai.girar gira o deslocamento e a rotação do filho');
+ ok(g.Transform.x===130&&g.Transform.y===100&&g.Transform.rot===undefined,'hierarquia: sem girar continua só posição');
+ let ruim=false;try{e.scene.create({Transform:{x:0,y:0},Pai:{id:pai.id,girar:'sim'}})}catch(x){ruim=true}ok(ruim,'Pai.girar inválido é recusado');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
