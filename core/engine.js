@@ -9,7 +9,7 @@
     const raf = typeof requestAnimationFrame === 'function', agora = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
     return { agora, pedir: fn => (raf ? requestAnimationFrame(fn) : setTimeout(() => fn(agora()), 16)), cancelar: id => (raf ? cancelAnimationFrame(id) : clearTimeout(id)) };
   };
-  const SEM_INPUT = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false } });
+  const SEM_INPUT = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false }, joystick: { ativo: false, dx: 0, dy: 0, forca: 0, angulo: 0, modo: 'desligado' } });
   C.VERSAO = '1.0.0';   // versão do motor (aparece no editor e em ctx.engine.versao)
   class Engine {
     constructor(opts = {}) {
@@ -84,6 +84,7 @@
       this.scene.jogando = true;   // fronteira pública: testes e replays
       const ctx = this.ctx; ctx.dt = dt;
       ctx.tela = this.renderer ? { largura: this.renderer.largura, altura: this.renderer.altura } : { largura: 800, altura: 450 };
+      if (this.input && this.input.configurar) this.input.configurar(this.scene.estado.joystick);
       ctx.input = this.input ? this.input.poll() : SEM_INPUT();
       for (const e of this.scene.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; }
       this._emPasso = true;

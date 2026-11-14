@@ -152,9 +152,9 @@
       // camada de tela (px CSS): joystick virtual e depuração
       g.setTransform(d, 0, 0, d, 0, 0);
       const j = eng && eng.input && eng.input.joystick;
-      if (j && j.ativo) {
-        g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.arc(j.x0, j.y0, j.raio, 0, Math.PI * 2); g.stroke();
-        g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.arc(j.x0 + j.dx * j.raio, j.y0 + j.dy * j.raio, 22, 0, Math.PI * 2); g.fill();
+      if (j && j.visivel !== false && j.modo !== 'desligado' && (j.ativo || j.fixo)) {
+        g.lineWidth = 2; g.strokeStyle = j.ativo ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.28)'; g.beginPath(); g.arc(j.x0, j.y0, j.raio, 0, Math.PI * 2); g.stroke();
+        g.fillStyle = j.ativo ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.22)'; g.beginPath(); g.arc(j.x0 + j.dx * j.raio, j.y0 + j.dy * j.raio, 22, 0, Math.PI * 2); g.fill();
       }
       if (this.debug && eng) {
         g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(8, 8, 190, 22); g.fillStyle = '#fff'; g.font = '12px ui-monospace,monospace'; g.textAlign = 'left'; g.textBaseline = 'middle';
