@@ -385,6 +385,18 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(await p.evaluate(() => editor.cena.find('arma').Transform.x === 230), 'editor: mover o pai leva o filho');
   ok(await p.evaluate(() => /↳ arma/.test(document.getElementById('lista').textContent)), 'lista de objetos mostra o filho recuado');
   await p.evaluate(() => { editor.cena.destroy(editor.cena.find('dono').id); editor.cena.flush(); }); ok(await p.evaluate(() => !editor.cena.find('dono') && !editor.cena.find('arma')), 'remover o pai remove o filho');
+  // WebGL (PixiJS): escolher "Gráficos", jogar e ver o mundo desenhado pelo adaptador
+  await p.goto(url('editor/index') + '?abas=todas&render=graficos'); await p.waitForTimeout(400);
+  await p.evaluate(() => { editor.cena.create({ nome: 'quadro', Transform: { x: 400, y: 225 }, Sprite: { w: 4000, h: 4000, camada: 99, cor: '#ff0000' } }); editor.redesenhar(); });
+  await p.click('#e-play'); await p.waitForTimeout(1500);
+  const gl = await p.evaluate(() => { const r = editor.engine.renderer; return { pixi: r.constructor.name === 'PixiRenderer', vis: getComputedStyle(document.querySelector('.tela-gl') || document.body).display, n: r.itens ? r.itens.size : -1 }; });
+  ok(gl.pixi && gl.vis === 'block' && gl.n > 0, 'WebGL: Play usa PixiRenderer e desenha os objetos (' + JSON.stringify(gl) + ')');
+  const bb = await p.evaluate(() => { const r = document.querySelector('.tela-gl').getBoundingClientRect(); return { x: r.left + r.width / 2 - 2, y: r.top + r.height / 2 - 2, width: 4, height: 4 }; });
+  const pngB = (await p.screenshot({ clip: bb })).toString('base64');
+  const px = await p.evaluate(src => new Promise(ok => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 4; const g = c.getContext('2d'); g.drawImage(i, 0, 0); ok([...g.getImageData(1, 1, 1, 1).data]); }; i.src = "data:image/png;base64," + src; }), pngB);
+  ok(px[0] > 200 && px[1] < 60, 'WebGL: pixel do centro é vermelho (' + px.join(',') + ')');
+  await p.evaluate(() => editor.parar()); await p.waitForTimeout(200);
+  ok(await p.evaluate(() => editor.engine.renderer.constructor.name === 'CanvasRenderer' && getComputedStyle(document.querySelector('.tela-gl')).display === 'none'), 'WebGL: Parar volta ao Canvas 2D');
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
