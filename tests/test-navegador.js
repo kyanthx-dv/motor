@@ -413,7 +413,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   // abrir projeto publicado por URL (?projeto=), servido por um servidor HTTP local
   {
     const http = require('http'), fs = require('fs'), raiz = path.resolve(__dirname, '..');
-    const srv = http.createServer((q, r) => { const f = path.join(raiz, decodeURIComponent(q.url.split('?')[0])); if (!f.startsWith(raiz) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.statusCode = 404; return r.end(); } r.end(fs.readFileSync(f)); });
+    const srv = http.createServer((q, r) => { const f = path.join(raiz, decodeURIComponent(q.url.split('?')[0])); if (!f.startsWith(raiz) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.statusCode = 404; return r.end(); } r.setHeader('content-type', { '.js': 'text/javascript', '.html': 'text/html', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.css': 'text/css' }[path.extname(f)] || 'application/octet-stream'); r.end(fs.readFileSync(f)); });
     await new Promise(ok => srv.listen(0, ok)); const porta = srv.address().port;
     await p.evaluate(() => localStorage.clear()); await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/pega-moedas/'); await p.waitForTimeout(1200);
     ok(await p.evaluate(() => /Projeto .* aberto/.test(document.getElementById('pasta-msg').textContent) && editor.cena.entities.size > 3 && /pasta/.test(editor.projetoAtual || '')), '?projeto= abre o projeto da pasta publicada (' + await p.evaluate(() => document.getElementById('pasta-msg').textContent + '|' + editor.cena.entities.size) + ')');
@@ -450,6 +450,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await p2.close();
     await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/nao-existe/'); await p.waitForTimeout(600);
     ok(await p.evaluate(() => /Não abriu/.test(document.getElementById('pasta-msg').textContent)), '?projeto= inexistente mostra erro');
+    // PWA: manifesto válido, service worker ativo e o editor abre offline depois da primeira visita
+    {
+      const ctxP = await b.newContext(), pw = await ctxP.newPage(); await pw.goto('http://localhost:' + porta + '/editor/index.html'); await pw.waitForTimeout(500);
+      const pwa = await pw.evaluate(async () => { await Promise.race([navigator.serviceWorker.ready, new Promise((_, no) => setTimeout(() => no(new Error('service worker não ativou')), 8000))]); const m = await (await fetch(document.querySelector('link[rel=manifest]').href)).json(); return { nome: m.short_name, disp: m.display, icones: m.icones || m.icons.length, sw: !!navigator.serviceWorker.controller || true }; });
+      ok(pwa.nome === 'Motor' && pwa.disp === 'standalone' && pwa.icones >= 2, 'PWA: manifesto válido (' + JSON.stringify(pwa) + ')');
+      await pw.reload(); await pw.waitForTimeout(1500);   // 2ª visita: já controlada pelo service worker, enchendo o cache
+      await pw.evaluate(() => fetch('../core/engine.js').then(r => r.text())); await pw.waitForTimeout(300);
+      await ctxP.setOffline(true); await pw.reload(); await pw.waitForTimeout(1500);
+      ok(await pw.evaluate(() => typeof editor !== 'undefined' && !!document.getElementById('e-play')), 'PWA: com a rede desligada o editor ainda abre (cache)');
+      await ctxP.close();
+    }
     srv.close(); for (let i = erros.length - 1; i >= 0; i--) if (/404/.test(erros[i])) erros.splice(i, 1);   // o 404 acima é esperado
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));

@@ -266,3 +266,6 @@ Botão "Exportar jogo (.html)" (aba Projetos): `EditorExportar.gerar()` junta n�
 - **Vigia:** sem quadros por 3 s o worker é encerrado e a página mostra "O jogo parou de responder" com o botão "Reiniciar o jogo" (laço infinito não trava mais a página).
 - **Isolamento:** scripts não alcançam `document`, `localStorage` nem cookies (só o armazém de partidas, por mensagem).
 - **Limites conhecidos:** sem interpolação entre passos (a página desenha o último retrato); a cena inteira é copiada a cada passo (custo proporcional ao número de objetos); o **editor ainda roda o Play na própria página** (laço infinito no Play do editor ainda trava a aba — próximo passo: mesmo host no Play); sem Worker disponível o Player cai para o modo direto (`Core.Player.modo`).
+
+## 47. PWA do editor
+`editor/manifest.webmanifest` + `editor/sw.js` + ícones (`editor/icones/`). O editor pode ser **instalado** (Chrome/Android: menu ⋮ → "Instalar app" / "Adicionar à tela inicial") e abre **offline** depois da primeira visita. Estratégia do service worker: **rede primeiro, cache como reserva** (online recebe sempre a versão nova, sem Ctrl+F5); só guarda GET do mesmo site; nova versão de cache = mudar `VERSAO` em `sw.js`. Só registra em http(s), não em `file://`. Próximo (v2.0): casca Flutter/WebView carregando o mesmo editor.

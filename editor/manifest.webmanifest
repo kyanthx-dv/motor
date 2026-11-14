@@ -1,0 +1,16 @@
+{
+  "name": "Motor — editor de jogos 2D",
+  "short_name": "Motor",
+  "description": "Editor de jogos 2D por blocos e JavaScript.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#10161f",
+  "theme_color": "#10161f",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

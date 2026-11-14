@@ -19,7 +19,8 @@
 **v1.2 — Distribuição sem limites**
 - Exportar como **pasta/ZIP com assets em arquivos** (sem limite de tamanho de data URL; carregamento sob demanda). O .html único continua para jogos pequenos.
 - WebGL (Pixi) no jogo exportado, opcional (arquivo ao lado).
-- PWA: manifest + service worker (instalar e jogar offline).
+- ~~PWA do editor~~ **feito** (puxado para frente para chegar ao app mais cedo). Falta: PWA também para o jogo exportado.
+- Exportar minificado (dificulta cópia do código; não impede — o código chega ao jogador de qualquer jeito).
 
 **v1.3 — Conteúdo**
 - Editor de animação (clipes por spritesheet), escala no Transform, camadas de tiles múltiplas e autotile.
