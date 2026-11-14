@@ -410,6 +410,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   ok(rt.chaves.includes('projeto.json') && rt.chaves.some(c => /^assets\/imagens\/foto\.png$/.test(c)) && rt.chaves.some(c => /^assets\/sons\/beep\.wav$/.test(c)), 'pasta: gera projeto.json, cenas/ e assets/ (' + rt.chaves.join(',') + ')');
   ok(rt.img && rt.som && rt.ents && rt.nome === 'teste', 'pasta: ZIP ida e volta preserva cena, imagem e som');
   ok(/inválido|ausente/.test(rt.ruim || ''), 'pasta: recusa caminho de asset malicioso');
+  // abrir projeto publicado por URL (?projeto=), servido por um servidor HTTP local
+  {
+    const http = require('http'), fs = require('fs'), raiz = path.resolve(__dirname, '..');
+    const srv = http.createServer((q, r) => { const f = path.join(raiz, decodeURIComponent(q.url.split('?')[0])); if (!f.startsWith(raiz) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.statusCode = 404; return r.end(); } r.end(fs.readFileSync(f)); });
+    await new Promise(ok => srv.listen(0, ok)); const porta = srv.address().port;
+    await p.evaluate(() => localStorage.clear()); await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/pega-moedas/'); await p.waitForTimeout(1200);
+    ok(await p.evaluate(() => /Projeto .* aberto/.test(document.getElementById('pasta-msg').textContent) && editor.cena.entities.size > 3 && /pasta/.test(editor.projetoAtual || '')), '?projeto= abre o projeto da pasta publicada (' + await p.evaluate(() => document.getElementById('pasta-msg').textContent + '|' + editor.cena.entities.size) + ')');
+    await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/nao-existe/'); await p.waitForTimeout(600);
+    ok(await p.evaluate(() => /Não abriu/.test(document.getElementById('pasta-msg').textContent)), '?projeto= inexistente mostra erro');
+    srv.close(); for (let i = erros.length - 1; i >= 0; i--) if (/404/.test(erros[i])) erros.splice(i, 1);   // o 404 acima é esperado
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

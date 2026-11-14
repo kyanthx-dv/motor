@@ -78,12 +78,21 @@
     for await (const [nome, h] of dir.entries()) { if (h.kind === 'directory') { if (!/^(cenas|assets|imagens|sons)$/.test(nome)) continue; await lerPasta(h, pref + nome + '/', arq); } else if (/^(projeto\.json|.*\.(json|png|jpg|jpeg|webp|gif|mp3|ogg|wav|webm|m4a|aac))$/i.test(nome)) arq[pref + nome] = new Uint8Array(await (await h.getFile()).arrayBuffer()); }
     return arq;
   }
-  root.PastaProjeto = { empacotar, desempacotar, zipar, deszipar, gravarPasta, lerPasta };
+  // Abre um projeto publicado por URL (pasta com projeto.json). Busca cenas e só os assets que elas citam.
+  async function lerUrl(base) {
+    base = base.replace(/\/?$/, '/'); const get = async c => { const r = await fetch(base + c); if (!r.ok) throw new Error('não achei ' + c + ' (' + r.status + ')'); return new Uint8Array(await r.arrayBuffer()); };
+    const arq = { 'projeto.json': await get('projeto.json') }, proj = JSON.parse(dec.decode(arq['projeto.json']));
+    for (const c of proj.cenas || []) { if (!/^cenas\/[A-Za-z0-9_-]+\.json$/.test(c.arquivo)) throw new Error('caminho de cena inválido'); arq[c.arquivo] = await get(c.arquivo); const st = (JSON.parse(dec.decode(arq[c.arquivo])).estado) || {}; for (const campo of ['imagens', 'sons']) for (const cam of Object.values(st[campo] || {})) if (typeof cam === 'string' && !cam.startsWith('data:') && !arq[cam] && /^assets\/(imagens|sons)\/[A-Za-z0-9_.-]+$/.test(cam)) arq[cam] = await get(cam); }
+    return arq;
+  }
+  root.PastaProjeto = { lerUrl, empacotar, desempacotar, zipar, deszipar, gravarPasta, lerPasta };
 
   // ---- interface (só quando o editor existe) ----
   const ed = root.editor, $ = id => document.getElementById(id); if (!ed || !$('pasta-salvar')) return;
   let handle = null; const msg = (t, tipo) => { const m = $('pasta-msg'); m.textContent = t; m.className = 'msg ' + (tipo || ''); };
   const nomeProj = () => ed.projetoAtual || 'projeto';
+  const qs = new URLSearchParams(location.search).get('projeto');
+  if (qs && /^[A-Za-z0-9_./-]+$/.test(qs) && !qs.includes('..' + '/..')) lerUrl(qs).then(a => abrirPacote(desempacotar(a))).then(() => msg('Projeto "' + qs + '" aberto.', 'ok')).catch(x => msg('Não abriu ' + qs + ': ' + x.message, 'erro'));
   const abrirPacote = p => { ed.importarProjeto(p.nome + ' (pasta)', JSON.parse(JSON.stringify(p.cena)), JSON.parse(JSON.stringify(p.cenas))); };
   $('pasta-salvar').addEventListener('click', async () => {
     try {
@@ -93,10 +102,17 @@
       await gravarPasta(handle, arq); msg('Salvo na pasta "' + handle.name + '" (' + Object.keys(arq).length + ' arquivos).', 'ok');
     } catch (x) { if (x.name !== 'AbortError') msg('Não salvou: ' + x.message, 'erro'); }
   });
+  // salvamento automático: com uma pasta aberta, grava quando o projeto muda (checa a cada 1,5 s, nunca durante o Play)
+  let ultimo = null, gravando = false;
+  setInterval(async () => {
+    if (!handle || gravando || ed.engine.rodando) return;
+    try { const pac = root.EditorArquivos.exportar(), txt = JSON.stringify(pac); if (txt === ultimo) return; gravando = true; await gravarPasta(handle, empacotar(pac, nomeProj())); ultimo = txt; msg('Salvo automaticamente na pasta "' + handle.name + '".', 'ok'); }
+    catch (x) { handle = null; msg('Parei o salvamento automático: ' + x.message, 'erro'); } finally { gravando = false; }
+  }, 1500);
   $('pasta-abrir').addEventListener('click', async () => {
     try {
       if (!root.showDirectoryPicker) { msg('Este navegador não abre pasta direto: use "Abrir ZIP".', 'erro'); return; }
-      const d = await root.showDirectoryPicker({ mode: 'readwrite' }); const p = desempacotar(await lerPasta(d)); handle = d; abrirPacote(p); msg('Aberto da pasta "' + d.name + '".', 'ok');
+      const d = await root.showDirectoryPicker({ mode: 'readwrite' }); const p = desempacotar(await lerPasta(d)); handle = d; ultimo = null; abrirPacote(p); msg('Aberto da pasta "' + d.name + '".', 'ok');
     } catch (x) { if (x.name !== 'AbortError') msg('Não abriu: ' + x.message, 'erro'); }
   });
   $('zip-baixar').addEventListener('click', () => { try { const blob = zipar(empacotar(root.EditorArquivos.exportar(), nomeProj())), a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nomeProj() + '.zip'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 0); msg('ZIP gerado.', 'ok'); } catch (x) { msg('Não gerou o ZIP: ' + x.message, 'erro'); } });
