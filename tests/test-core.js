@@ -445,4 +445,15 @@ const nova=()=>new C.Engine();
  ok(b.vars.ler('moedas')===3&&b.vars.ler('fim')==='venceu'&&b.scene.query('Particula').length>0&&b.errs.length===0,'mini-rpg: coletar 3 moedas vence o jogo (com partículas)');
  const c=novoRpg(),an=c.scene.find('anciao'),jj=c.scene.find('jogador');jj.Transform.x=an.Transform.x;jj.Transform.y=an.Transform.y;for(let i=0;i<4;i++)c.passo();
  ok(c.scene.find('aviso').Sprite.invisivel===false&&/Ancião/.test(c.scene.find('aviso').Sprite.rotulo),'mini-rpg: o ancião mostra a fala ao encostar');}
+{Object.defineProperty(globalThis,'navigator',{configurable:true,writable:true,value:{userAgent:'Mozilla/5.0 (Linux; Android 14; Pixel 8) Mobile',platform:'Linux armv8l',maxTouchPoints:5,language:'pt-BR',onLine:true,vibrate:ms=>{globalThis.__vib=ms;return true}}});
+ globalThis.window=globalThis;globalThis.innerWidth=400;globalThis.innerHeight=800;globalThis.screen={width:400,height:800};globalThis.matchMedia=q=>({matches:/dark/.test(q)});
+ vm.runInThisContext(fs.readFileSync(__dirname+'/../adapters/dispositivo.js','utf8'));const D=C.Dispositivo;
+ ok(D.ler('plataforma')==='android'&&D.ler('tipo')==='celular'&&D.ler('toque')===true&&D.ler('orientacao')==='retrato'&&D.ler('idioma')==='pt-BR'&&D.ler('escuro')===true,'dispositivo: reconhece celular Android em retrato, toque, idioma e modo escuro');
+ const h=D.ler('hora');ok(h>=0&&h<=23&&D.ler('mes')>=1&&D.ler('mes')<=12&&D.ler('ano')>=2026&&D.ler('diaSemana')>=0,'dispositivo: relógio e data');
+ ok(D.vibrar(5000)===true&&globalThis.__vib===2000&&D.vibrar(-1)===false&&D.ler('inexistente')===null&&Object.keys(D.info()).length===D.campos.length,'dispositivo: vibrar limita a 2 s, recusa valor inválido; campo desconhecido é null');
+ const e=nova();e.dispositivo=D;ok(e.ctx.dispositivo===D,'ctx.dispositivo vem do host');
+ vm.runInThisContext(fs.readFileSync(__dirname+'/../editor/gerador.js','utf8'));const G=EditorBlocos;
+ const b=G.novo('var_definir');const js=G.gerar([{t:'evento_inicio',f:[G.novo('vibrar'),G.novo('tela_cheia'),Object.assign(b,{var:'x',v:{k:'hora'}})]}]);
+ ok(/dispositivo.vibrar/.test(js)&&/telaCheia/.test(js)&&/ler\("hora"\)/.test(js),'blocos do aparelho geram JS');
+ delete globalThis.navigator;delete globalThis.window;delete globalThis.innerWidth;delete globalThis.innerHeight;delete globalThis.screen;delete globalThis.matchMedia;}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
