@@ -31,6 +31,9 @@
 - Plugin de física Matter.js (corpos rotativos, juntas), carregado por projeto.
 - Rede/multiplayer só depois, e só se houver um jogo que precise.
 
+## Linguagens de script (decisão)
+Blocos + JavaScript continuam sendo a única opção até a v2.0. **Linguagem própria: não** (custo enorme, sem ganho sobre JS). **Lua** pode entrar depois, como linguagem opcional de script via **Fengari** (VM Lua em JS, ~200 KB), rodando no mesmo Worker; **pré-requisitos:** API de scripts (`ctx`) congelada e documentada, Play do editor no Worker (v1.1) e mapeamento de erros com linha. **Luau** (Roblox) não tem porta madura para JS (só WASM pesado): fora.
+
 ## Fora do escopo (decisão)
 3D / Babylon.js; reescrever o núcleo em C++ (o gargalo é o desenho, não a lógica); IA dentro do jogo.
 

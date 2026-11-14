@@ -466,6 +466,18 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       ok(x1 > x0 + 15 && dados.ativo && dados.forca > 0.5 && Math.abs(dados.angulo) < 20 && dados.modo === 'fixo', 'joystick fixo: arrastar a partir da base move; dados (força/ângulo) corretos (' + JSON.stringify(dados) + ')');
       await ctxJ.close();
     }
+    {
+      await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas'); await p.waitForTimeout(600);
+      await p.evaluate(() => { editor.cena.create({ nome: 'grad', Transform: { x: 400, y: 225 }, Sprite: { w: 3000, h: 3000, camada: 99, cor: '#ff0000', cor2: '#0000ff', gradiente: 'vertical' } }); editor.redesenhar(); }); await p.waitForTimeout(300);
+      const gr = await p.evaluate(() => { const c = document.getElementById('tela'), g = c.getContext('2d'), d = window.devicePixelRatio || 1, px = (x, y) => [...g.getImageData(Math.round(x * d), Math.round(y * d), 1, 1).data]; const r = c.getBoundingClientRect(); return { cima: px(r.width / 2, 6), baixo: px(r.width / 2, r.height - 6) }; });
+      ok(gr.cima[0] > gr.cima[2] && gr.baixo[2] > gr.baixo[0], 'botão/sprite: gradiente vertical cor → cor2 (' + JSON.stringify(gr) + ')');
+      const ins = await p.evaluate(() => { const e = editor.cena.find('grad'); editor.selecionar(e.id); const rot = [...document.querySelectorAll('#props label')].map(l => l.textContent); return { rot: rot.includes('rot'), cor2: rot.includes('cor2'), opac: rot.includes('opacidade'), neg: rot.includes('negrito') }; });
+      ok(ins.rot && ins.cor2 && ins.opac && ins.neg, 'inspetor mostra também as propriedades que o objeto ainda não tem (' + JSON.stringify(ins) + ')');
+      await p.evaluate(() => { const i = [...document.querySelectorAll('#props .campo')].find(c => c.querySelector('label').textContent === 'opacidade').querySelector('input'); i.value = '0.5'; i.dispatchEvent(new Event('change')); });
+      ok(await p.evaluate(() => editor.cena.find('grad').Sprite.opacidade === 0.5), 'inspetor: preencher uma propriedade ausente a cria');
+      await p.evaluate(() => { const i = [...document.querySelectorAll('#props .campo')].find(c => c.querySelector('label').textContent === 'opacidade').querySelector('input'); i.value = ''; i.dispatchEvent(new Event('change')); });
+      ok(await p.evaluate(() => !('opacidade' in editor.cena.find('grad').Sprite)), 'inspetor: esvaziar uma propriedade a remove (volta ao padrão)');
+    }
     // PWA: manifesto válido, service worker ativo e o editor abre offline depois da primeira visita
     {
       const ctxP = await b.newContext(), pw = await ctxP.newPage(); await pw.goto('http://localhost:' + porta + '/editor/index.html'); await pw.waitForTimeout(500);

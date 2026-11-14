@@ -464,4 +464,9 @@ const nova=()=>new C.Engine();
 {const e=nova(), v=j=>{const d=JSON.parse(JSON.stringify(C.Serializer.paraJSON(e.scene)));d.estado=d.estado||{};d.estado.joystick=j;try{C.Serializer.deJSON(new C.Scene(),d);return true}catch(x){return false}};
  ok(v({modo:'fixo',x:0.2,y:0.7,raio:60,visivel:false,zona:'esquerda',zonaMorta:0.2})&&v({modo:'desligado'}),'joystick: configurações válidas são aceitas');
  ok(!v({modo:'girando'})&&!v({modo:'fixo',x:2})&&!v({raio:1})&&!v({visivel:'sim'})&&!v('fixo'),'joystick: configuração inválida é recusada');}
+{const e=nova();let cl=0;e.events.on('clicou',()=>cl++);
+ const mk=des=>e.scene.create({nome:'b'+des,Transform:{x:100,y:100},Sprite:{w:100,h:40,fixo:false},Botao:{acao:{evento:'clicou'},desativado:des}});
+ const b1=mk(true);e.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:100,y:100,tx:100,ty:100,down:true,pressed:true,ativo:true}})};
+ e.passo();ok(cl===0&&b1.Botao.sobre===false&&b1.Botao.apertado===false,'botão desativado não reage a toque nem clique');
+ b1.Botao.desativado=false;e.passo();ok(cl===1&&b1.Botao.sobre===true,'botão ativado volta a reagir');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

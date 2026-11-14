@@ -89,7 +89,8 @@
       const todos = scene.query('Transform', 'Sprite').sort(ord);
       const pintar = (e, cx, cy, meioW, meioH) => {
         const s = e.Sprite; if (s.invisivel) return;
-        if (s.opacidade !== undefined && s.opacidade < 1) { g.globalAlpha = Math.max(0, s.opacidade); pintar0(e, cx, cy, meioW, meioH); g.globalAlpha = 1; } else pintar0(e, cx, cy, meioW, meioH);
+        const op = (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1);
+        if (op < 1) { g.globalAlpha = Math.max(0, op); pintar0(e, cx, cy, meioW, meioH); g.globalAlpha = 1; } else pintar0(e, cx, cy, meioW, meioH);
       };
       const pintar0 = (e, cx, cy, meioW, meioH) => {
         const s = e.Sprite;
@@ -112,10 +113,12 @@
         g.lineWidth = s.larguraBorda || 2; g.beginPath();
         if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else if (pg) { pg.forEach((q, i) => i ? g.lineTo(x + q[0], y + q[1]) : g.moveTo(x + q[0], y + q[1])); g.closePath(); } else if (s.arredondar > 0 && g.roundRect) g.roundRect(x - w / 2, y - h / 2, w, h, Math.min(s.arredondar, w / 2, h / 2)); else g.rect(x - w / 2, y - h / 2, w, h);
         if (f === 'anel') { g.strokeStyle = s.cor || '#fff'; g.stroke(); }
-        else { const B = e.Botao; g.fillStyle = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
-          if (s.sombra && !this.simples) { g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 8 * this.dpr; g.shadowOffsetY = 3 * this.dpr; }
+        else { const B = e.Botao; let pin = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
+          if (s.cor2 && !pg) { const hz = s.gradiente === 'horizontal', gr = hz ? g.createLinearGradient(x - hx, 0, x + hx, 0) : g.createLinearGradient(0, y - hy, 0, y + hy); gr.addColorStop(0, pin); gr.addColorStop(1, s.cor2); pin = gr; }   // gradiente cor → cor2
+          g.fillStyle = pin;
+          if (s.sombra && !this.simples) { g.shadowColor = s.sombraCor || 'rgba(0,0,0,.45)'; g.shadowBlur = (Number.isFinite(s.sombraBlur) ? s.sombraBlur : 8) * this.dpr; g.shadowOffsetY = (Number.isFinite(s.sombraY) ? s.sombraY : 3) * this.dpr; }
           g.fill(); g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0; if (s.borda) { g.strokeStyle = s.borda; g.stroke(); } }
-        if (s.rotulo) { g.fillStyle = s.corTexto || '#fff'; g.font = '600 ' + (s.tamanhoTexto || 14) + 'px ' + (s.fonte || 'system-ui,sans-serif'); g.textAlign = s.alinhar || 'center'; g.textBaseline = 'middle'; const tx = s.alinhar === 'left' ? x - w / 2 + 8 : s.alinhar === 'right' ? x + w / 2 - 8 : x; g.fillText(s.rotulo, tx, y); }
+        if (s.rotulo) { g.fillStyle = (e.Botao && e.Botao.sobre && s.corTextoSobre) || s.corTexto || '#fff'; g.font = (s.italico ? 'italic ' : '') + (s.negrito === false ? '400 ' : '600 ') + (s.tamanhoTexto || 14) + 'px ' + (s.fonte || 'system-ui,sans-serif'); g.textAlign = s.alinhar || 'center'; g.textBaseline = 'middle'; const tx = s.alinhar === 'left' ? x - w / 2 + 8 : s.alinhar === 'right' ? x + w / 2 - 8 : x; g.fillText(s.rotulo, tx, y); }
       };
       const vx0 = V ? -this.ox / V.z : cx - L / z / 2, vx1 = V ? (W - this.ox) / V.z : cx + L / z / 2, vy0 = V ? -this.oy / V.z : cy - A / z / 2, vy1 = V ? (H - this.oy) / V.z : cy + A / z / 2;
       const mapas = acima => { for (const e of scene.query('Transform', 'Tiles')) { if (!!e.Tiles.acima !== acima) continue; const T = e.Tiles, S = T.tamanho, t = e.Transform;
