@@ -461,4 +461,7 @@ const nova=()=>new C.Engine();
  e.tap=true;e.passo();ok(e.vars.ler('fim')==='perdeu','mini-rpg: toque logo após perder não reinicia (evita reinício sem querer)');
  e.tap=false;for(let i=0;i<70;i++)e.passo();e.tap=true;e.passo();e.tap=false;e.passo();
  ok(e.vars.ler('fim')==='jogando'&&e.vars.ler('vida')===3&&e.vars.ler('moedas')===0&&!(e.scene.efeitos&&e.scene.efeitos.fade),'mini-rpg: tocar na tela depois de perder recomeça o jogo (sem F5)');}
+{const e=nova(), v=j=>{const d=JSON.parse(JSON.stringify(C.Serializer.paraJSON(e.scene)));d.estado=d.estado||{};d.estado.joystick=j;try{C.Serializer.deJSON(new C.Scene(),d);return true}catch(x){return false}};
+ ok(v({modo:'fixo',x:0.2,y:0.7,raio:60,visivel:false,zona:'esquerda',zonaMorta:0.2})&&v({modo:'desligado'}),'joystick: configurações válidas são aceitas');
+ ok(!v({modo:'girando'})&&!v({modo:'fixo',x:2})&&!v({raio:1})&&!v({visivel:'sim'})&&!v('fixo'),'joystick: configuração inválida é recusada');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

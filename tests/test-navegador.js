@@ -450,6 +450,22 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await p2.close();
     await p.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/nao-existe/'); await p.waitForTimeout(600);
     ok(await p.evaluate(() => /Não abriu/.test(document.getElementById('pasta-msg').textContent)), '?projeto= inexistente mostra erro');
+    // joystick configurável: desligado não anda; fixo só começa perto da base; ctx.input.joystick tem os dados
+    {
+      const ctxJ = await b.newContext({ hasTouch: true, isMobile: true, viewport: { width: 844, height: 390 } }), pj = await ctxJ.newPage(), cdpJ = await ctxJ.newCDPSession(pj);
+      const arrastar = async (de, ate) => { await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [de] }); for (let i = 1; i <= 8; i++) { await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: de.x + (ate.x - de.x) * i / 8, y: de.y + (ate.y - de.y) * i / 8 }] }); await pj.waitForTimeout(70); } await pj.waitForTimeout(200); };
+      const jogar = async cfg => { await pj.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/mini-rpg/'); await pj.waitForTimeout(900); await pj.evaluate(c => { if (c) editor.cena.estado.joystick = c; else delete editor.cena.estado.joystick; }, cfg); await pj.evaluate(() => editor.jogar()); await pj.waitForTimeout(1100); return pj.evaluate(() => editor.cena.find('jogador').Transform.x); };
+      let x0 = await jogar({ modo: 'desligado' }); await arrastar({ x: 300, y: 200 }, { x: 420, y: 200 }); let x1 = await pj.evaluate(() => editor.cena.find('jogador').Transform.x);
+      ok(Math.abs(x1 - x0) < 2, 'joystick desligado: o toque não move o jogador (x ' + x0.toFixed(0) + ' → ' + x1.toFixed(0) + ')');
+      await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      x0 = await jogar({ modo: 'fixo', x: 0.2, y: 0.7, raio: 60 }); const base = { x: 844 * 0.2, y: 390 * 0.7 };
+      await arrastar({ x: 700, y: 100 }, { x: 760, y: 100 }); x1 = await pj.evaluate(() => editor.cena.find('jogador').Transform.x); await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      ok(Math.abs(x1 - x0) < 2, 'joystick fixo: tocar longe da base não ativa (x ' + x0.toFixed(0) + ' → ' + x1.toFixed(0) + ')');
+      await arrastar(base, { x: base.x + 50, y: base.y }); x1 = await pj.evaluate(() => editor.cena.find('jogador').Transform.x);
+      const dados = await pj.evaluate(() => { const s = editor.engine.input.dadosJoystick(); return s; }); await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      ok(x1 > x0 + 15 && dados.ativo && dados.forca > 0.5 && Math.abs(dados.angulo) < 20 && dados.modo === 'fixo', 'joystick fixo: arrastar a partir da base move; dados (força/ângulo) corretos (' + JSON.stringify(dados) + ')');
+      await ctxJ.close();
+    }
     // PWA: manifesto válido, service worker ativo e o editor abre offline depois da primeira visita
     {
       const ctxP = await b.newContext(), pw = await ctxP.newPage(); await pw.goto('http://localhost:' + porta + '/editor/index.html'); await pw.waitForTimeout(500);
