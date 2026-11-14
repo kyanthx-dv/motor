@@ -1,6 +1,6 @@
 // Rode com: node tests/test-core.js
 const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','systems/caminho','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -395,4 +395,22 @@ const nova=()=>new C.Engine();
  e4.scene.create({nome:'zona',Transform:{x:0,y:0},Body:{forma:'poligono',pontos:tri,massa:0,sensor:true}});
  e4.scene.create({nome:'longe',Transform:{x:200,y:0},Velocity:{vx:0,vy:0},Body:{forma:'circulo',raio:5,massa:1}});
  e4.passo();ok(g4===0,'sem contato, sem gatilho');}
+{const mk=()=>{const e=nova();e.scene.estado.gravidade={x:0,y:0};
+ // mapa 10x7 (tamanho 20): parede vertical na coluna 5, com abertura só na linha 6
+ const dados=Array(70).fill(0);for(let r=0;r<6;r++)dados[r*10+5]=1;
+ e.scene.create({nome:'mapa',Transform:{x:0,y:0},Tiles:{tamanho:20,colunas:10,linhas:7,paleta:[{cor:'#444',solido:true}],dados}});return e};
+ const e=mk();e.passo();const mapa=e.scene.find('mapa');
+ const r=C.Caminho.achar(e.scene,{x:30,y:30},{x:170,y:30});
+ ok(r&&r.length>=2&&r[r.length-1].x===170,'A*: acha caminho contornando a parede ('+(r?r.length+' pontos':'nenhum')+')');
+ ok(r&&r.some(p=>p.y>=120),'A*: o caminho passa pela abertura (embaixo)');
+ const bloq=mk();bloq.passo();const m2=bloq.scene.find('mapa');for(let r2=0;r2<7;r2++)m2.Tiles.dados[r2*10+5]=1;
+ ok(C.Caminho.achar(bloq.scene,{x:30,y:30},{x:170,y:30})===null,'A*: sem passagem devolve null');
+ ok(C.Caminho.achar(e.scene,{x:110,y:30},{x:170,y:30})===null,'A*: origem dentro da parede devolve null');
+ const rp=C.Caminho.achar(e.scene,{x:30,y:30},{x:110,y:30});ok(rp&&rp.length>=1&&(Math.abs(rp[rp.length-1].x-90)<1||Math.abs(rp[rp.length-1].x-130)<1),'A*: destino na parede vai para a célula livre mais próxima');
+ const ee=mk();let chegou=0;ee.events.on('chegou',()=>chegou++);ee.passo();
+ const n=ee.scene.create({nome:'npc',Transform:{x:30,y:30}});
+ ok(C.Caminho.ir(ee.scene,n,170,30,200)===true,'ir: calcula a rota');
+ for(let i=0;i<600&&n.Rota;i++)ee.passo();
+ ok(!n.Rota&&Math.hypot(n.Transform.x-170,n.Transform.y-30)<6&&chegou===1,'ir: o seguidor chega ao destino e emite "chegou" (x '+n.Transform.x.toFixed(1)+', y '+n.Transform.y.toFixed(1)+')');
+ const lg=mk();lg.passo();ok(C.Caminho.achar(lg.scene,{x:30,y:30},{x:30,y:120}).length===1,'A*: linha reta livre vira um único ponto');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
