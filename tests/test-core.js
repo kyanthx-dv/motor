@@ -434,4 +434,15 @@ const nova=()=>new C.Engine();
  const js=['tremer','fade','particulas','ir_ate','parar_rota','animar'].map(t=>{const r=G.gerar([{t:'evento_inicio',f:[G.novo(t)]}]);return typeof r==='string'?r:JSON.stringify(r)});
  ok(js.every(x=>typeof x==='string'&&x.length>10)&&/efeitos\.tremer/.test(js[0])&&/efeitos\.fade/.test(js[1])&&/efeitos\.particulas/.test(js[2])&&/caminho\.ir/.test(js[3])&&/animar/.test(js[5]),'blocos novos (tremer, fade, partículas, ir_ate, animar) geram JS');
  try{new Function('ctx',js.join('\n'));ok(true,'JS dos blocos novos é sintaticamente válido')}catch(x){ok(false,'JS inválido: '+x.message)}}
+{const cena=JSON.parse(fs.readFileSync(__dirname+'/../projetos/mini-rpg/cenas/principal.json','utf8'));
+ const novoRpg=()=>{const e=new C.Engine({agendador:{agora:()=>0,pedir:()=>1,cancelar:()=>{}}});e.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:0,y:0,tx:0,ty:0,down:false,pressed:false}})};
+  C.Serializer.deJSON(e.scene,JSON.parse(JSON.stringify(cena)));e.compilarScripts();e.iniciar();e.errs=[];e.events.on('erro-script',d=>e.errs.push(d));return e};
+ const a=novoRpg();ok(a.errosScripts.length===0,'mini-rpg: scripts compilam sem erro');
+ for(let i=0;i<300;i++)a.passo();const sl=a.scene.find('slime');
+ ok(Math.hypot(sl.Transform.x-100,sl.Transform.y-420)<Math.hypot(680-100,100-420)-150,'mini-rpg: o slime persegue o jogador desviando da parede');
+ for(let i=0;i<900;i++)a.passo();ok(a.vars.ler('fim')==='perdeu'&&a.vars.ler('vida')===0&&a.errs.length===0,'mini-rpg: parado, o slime vence o jogador (sem erro de script)');
+ const b=novoRpg();for(const n of ['moeda1','moeda2','moeda3']){const m=b.scene.find(n),j=b.scene.find('jogador');j.Transform.x=m.Transform.x;j.Transform.y=m.Transform.y;for(let i=0;i<4;i++)b.passo();}
+ ok(b.vars.ler('moedas')===3&&b.vars.ler('fim')==='venceu'&&b.scene.query('Particula').length>0&&b.errs.length===0,'mini-rpg: coletar 3 moedas vence o jogo (com partículas)');
+ const c=novoRpg(),an=c.scene.find('anciao'),jj=c.scene.find('jogador');jj.Transform.x=an.Transform.x;jj.Transform.y=an.Transform.y;for(let i=0;i<4;i++)c.passo();
+ ok(c.scene.find('aviso').Sprite.invisivel===false&&/Ancião/.test(c.scene.find('aviso').Sprite.rotulo),'mini-rpg: o ancião mostra a fala ao encostar');}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
