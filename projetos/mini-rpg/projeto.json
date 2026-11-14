@@ -1,0 +1,11 @@
+{
+  "formato": 2,
+  "nome": "Mini-RPG",
+  "cenaAtual": "principal",
+  "cenas": [
+    {
+      "nome": "principal",
+      "arquivo": "cenas/principal.json"
+    }
+  ]
+}

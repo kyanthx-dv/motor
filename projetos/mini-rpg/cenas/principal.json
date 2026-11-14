@@ -1,0 +1,473 @@
+{
+  "formato": 1,
+  "estado": {
+    "tamanho": {
+      "largura": 800,
+      "altura": 480
+    },
+    "vars": {
+      "vida": 3,
+      "moedas": 0,
+      "fim": "jogando"
+    },
+    "scripts": {
+      "hud": {
+        "fonte": "// Mini-RPG (gerado a mão; os scripts são JS comum).\nfunction atualizar(e, dt, ctx) {\n  e.Sprite.rotulo = '♥ ' + ctx.vars.ler('vida') + '   moedas ' + ctx.vars.ler('moedas') + '/3';\n}\n"
+      },
+      "moeda": {
+        "fonte": "// Mini-RPG (gerado a mão; os scripts são JS comum).\nconst eventos = {\n  gatilho(e, d, ctx) {\n    const o = ctx.scene.get(d.outro); if (!o || o.nome !== 'jogador') return;\n    ctx.vars.somar('moedas', 1); ctx.efeitos.particulas(ctx.scene, e.Transform.x, e.Transform.y, { n: 12, cor: '#ffd400' });\n    if (ctx.audio) ctx.audio.efeito('moeda'); ctx.scene.destroy(e.id);\n    if (ctx.vars.ler('moedas') >= 3) { ctx.vars.definir('fim', 'venceu'); ctx.efeitos.fade(ctx.scene, '#000000', 0, 0.75, 1); const a = ctx.scene.find('aviso'); if (a) { a.Sprite.rotulo = 'Você venceu! (F5 reinicia)'; a.Sprite.invisivel = false; } }\n  }\n};\n"
+      },
+      "anciao": {
+        "fonte": "// Mini-RPG (gerado a mão; os scripts são JS comum).\nconst eventos = {\n  gatilho(e, d, ctx) {\n    const o = ctx.scene.get(d.outro); if (!o || o.nome !== 'jogador') return;\n    const a = ctx.scene.find('aviso'); if (!a || ctx.vars.ler('fim') !== 'jogando') return;\n    a.Sprite.rotulo = 'Ancião: pegue as 3 moedas e fuja do slime!'; a.Sprite.invisivel = false;\n    ctx.depois(3, () => { if (ctx.vars.ler('fim') === 'jogando') a.Sprite.invisivel = true; });\n  }\n};\n"
+      },
+      "slime": {
+        "fonte": "// Mini-RPG (gerado a mão; os scripts são JS comum).\nfunction atualizar(e, dt, ctx) {\n  const j = ctx.scene.find('jogador'); if (!j || ctx.vars.ler('fim') !== 'jogando') { ctx.caminho.parar(e); return; }\n  const st = e.Script.estado; st.t = (st.t || 0) + dt;\n  if (st.t >= 0.4) { st.t = 0; ctx.caminho.ir(ctx.scene, e, j.Transform.x, j.Transform.y, 90, { raio: 14 }); }\n}\nconst eventos = {\n  gatilho(e, d, ctx) {\n    const o = ctx.scene.get(d.outro); if (!o || o.nome !== 'jogador' || ctx.vars.ler('fim') !== 'jogando') return;\n    const st = e.Script.estado; if (st.cd > ctx.engine.tempo) return; st.cd = ctx.engine.tempo + 1;\n    ctx.vars.somar('vida', -1); ctx.efeitos.tremer(ctx.scene, 10, 0.3); ctx.efeitos.particulas(ctx.scene, o.Transform.x, o.Transform.y, { n: 10, cor: '#ff4444' });\n    if (ctx.vars.ler('vida') <= 0) { ctx.vars.definir('fim', 'perdeu'); ctx.efeitos.fade(ctx.scene, '#400000', 0, 0.8, 1); const a = ctx.scene.find('aviso'); if (a) { a.Sprite.rotulo = 'Você perdeu! (F5 reinicia)'; a.Sprite.invisivel = false; } }\n  }\n};\n"
+      }
+    }
+  },
+  "entidades": [
+    {
+      "nome": "mapa",
+      "Transform": {
+        "x": 0,
+        "y": 0
+      },
+      "Tiles": {
+        "tamanho": 40,
+        "colunas": 20,
+        "linhas": 12,
+        "paleta": [
+          {
+            "cor": "#4a5d75",
+            "solido": true
+          }
+        ],
+        "dados": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "id": 1
+    },
+    {
+      "nome": "jogador",
+      "Transform": {
+        "x": 100,
+        "y": 420
+      },
+      "Velocity": {
+        "vx": 0,
+        "vy": 0
+      },
+      "Body": {
+        "forma": "circulo",
+        "raio": 14,
+        "massa": 1,
+        "elasticidade": 0.1,
+        "amortecimento": 6
+      },
+      "Sprite": {
+        "forma": "circulo",
+        "raio": 14,
+        "cor": "#4aa3ff"
+      },
+      "Controller": {
+        "aceleracao": 2000,
+        "velMax": 200
+      },
+      "id": 2
+    },
+    {
+      "nome": "anciao",
+      "Transform": {
+        "x": 140,
+        "y": 100
+      },
+      "Body": {
+        "forma": "circulo",
+        "raio": 40,
+        "massa": 0,
+        "sensor": true
+      },
+      "Sprite": {
+        "forma": "circulo",
+        "raio": 14,
+        "cor": "#c9a0ff"
+      },
+      "Script": {
+        "nome": "anciao"
+      },
+      "id": 3
+    },
+    {
+      "nome": "slime",
+      "Transform": {
+        "x": 680,
+        "y": 100
+      },
+      "Velocity": {
+        "vx": 0,
+        "vy": 0
+      },
+      "Body": {
+        "forma": "circulo",
+        "raio": 14,
+        "massa": 1,
+        "sensor": true
+      },
+      "Sprite": {
+        "forma": "circulo",
+        "raio": 14,
+        "cor": "#4ade80"
+      },
+      "Script": {
+        "nome": "slime"
+      },
+      "id": 4
+    },
+    {
+      "nome": "moeda1",
+      "Transform": {
+        "x": 300,
+        "y": 100
+      },
+      "Body": {
+        "forma": "circulo",
+        "raio": 10,
+        "massa": 0,
+        "sensor": true
+      },
+      "Sprite": {
+        "forma": "circulo",
+        "raio": 8,
+        "cor": "#ffd400"
+      },
+      "Script": {
+        "nome": "moeda"
+      },
+      "id": 5
+    },
+    {
+      "nome": "moeda2",
+      "Transform": {
+        "x": 500,
+        "y": 420
+      },
+      "Body": {
+        "forma": "circulo",
+        "raio": 10,
+        "massa": 0,
+        "sensor": true
+      },
+      "Sprite": {
+        "forma": "circulo",
+        "raio": 8,
+        "cor": "#ffd400"
+      },
+      "Script": {
+        "nome": "moeda"
+      },
+      "id": 6
+    },
+    {
+      "nome": "moeda3",
+      "Transform": {
+        "x": 720,
+        "y": 300
+      },
+      "Body": {
+        "forma": "circulo",
+        "raio": 10,
+        "massa": 0,
+        "sensor": true
+      },
+      "Sprite": {
+        "forma": "circulo",
+        "raio": 8,
+        "cor": "#ffd400"
+      },
+      "Script": {
+        "nome": "moeda"
+      },
+      "id": 7
+    },
+    {
+      "nome": "hud",
+      "Transform": {
+        "x": 110,
+        "y": 30
+      },
+      "Sprite": {
+        "w": 200,
+        "h": 32,
+        "cor": "rgba(0,0,0,.5)",
+        "rotulo": "",
+        "corTexto": "#ffffff",
+        "tamanhoTexto": 18,
+        "fixo": true,
+        "camada": 90
+      },
+      "Script": {
+        "nome": "hud"
+      },
+      "id": 8
+    },
+    {
+      "nome": "aviso",
+      "Transform": {
+        "x": 400,
+        "y": 420
+      },
+      "Sprite": {
+        "w": 620,
+        "h": 44,
+        "cor": "rgba(0,0,0,.65)",
+        "rotulo": "",
+        "corTexto": "#ffffff",
+        "tamanhoTexto": 18,
+        "fixo": true,
+        "invisivel": true,
+        "camada": 95
+      },
+      "id": 9
+    }
+  ]
+}
