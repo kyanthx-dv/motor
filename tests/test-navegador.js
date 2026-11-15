@@ -551,6 +551,18 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const r = await pt.evaluate(() => { const a = editor.cena.create({ nome: 't1', Transform: { x: 5, y: 5 }, Sprite: { rotulo: 'Oi' } }), c = editor.cena.create({ nome: 't2', Transform: { x: 5, y: 5 }, Sprite: { rotulo: 'Oi', cor: '#f00' } }); return { puro: Core.soTexto(a), comCor: Core.soTexto(c) }; });
     ok(r.puro === true && r.comCor === false, 'texto puro (só rótulo) fica sem fundo; com cor mantém o fundo (' + JSON.stringify(r) + ')'); await pt.close();
   }
+  { // alças: redimensionar pelo canto e girar pela bolinha
+    const ph = await b.newPage({ viewport: { width: 1300, height: 800 } }); await ph.goto(url('editor/index') + '?abas=todas'); await ph.waitForTimeout(500);
+    await ph.evaluate(() => { const e = editor.cena.create({ nome: 'caixa', Transform: { x: 300, y: 200 }, Sprite: { w: 40, h: 40, cor: '#0f0' } }); editor.cena.flush(); editor.selecionar(e.id); });
+    await ph.waitForTimeout(200);
+    const ponto = async k => ph.evaluate(k => { const e = editor.cena.find('caixa'), r = document.getElementById('tela').getBoundingClientRect(), px = Math.abs(editor.renderer.telaParaMundo(1, 0).x - editor.renderer.telaParaMundo(0, 0).x), h = Core.CanvasRenderer.alcas(e, px).find(a => a.k === k), z = 1 / px; const o = editor.renderer.telaParaMundo(0, 0); return { x: r.left + (h.x - o.x) * z, y: r.top + (h.y - o.y) * z, z, ox: o.x, oy: o.y, r: { l: r.left, t: r.top } }; }, k);
+    const se = await ponto('se'); await ph.mouse.move(se.x, se.y); await ph.mouse.down(); await ph.mouse.move(se.x + 30 * se.z, se.y + 30 * se.z, { steps: 4 }); await ph.mouse.up();
+    const tam = await ph.evaluate(() => { const e = editor.cena.find('caixa'); return { w: e.Sprite.w, h: e.Sprite.h }; });
+    ok(tam.w === 100 && tam.h === 100, 'alça do canto redimensiona w/h arrastando (' + JSON.stringify(tam) + ')');
+    const ro = await ponto('rot'); const cx = await ph.evaluate(() => { const e = editor.cena.find('caixa'), o = editor.renderer.telaParaMundo(0, 0), px = Math.abs(editor.renderer.telaParaMundo(1, 0).x - o.x), r = document.getElementById('tela').getBoundingClientRect(); return { x: r.left + (e.Transform.x - o.x) / px, y: r.top + (e.Transform.y - o.y) / px }; });
+    await ph.mouse.move(ro.x, ro.y); await ph.mouse.down(); await ph.mouse.move(cx.x + 80, cx.y, { steps: 4 }); await ph.mouse.up();
+    const rot = await ph.evaluate(() => editor.cena.find('caixa').Transform.rot); ok(Math.abs(rot - Math.PI / 2) < 0.05, 'bolinha gira o objeto (rot=' + rot + ')'); await ph.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

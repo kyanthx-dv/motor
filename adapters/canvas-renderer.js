@@ -10,6 +10,12 @@
     static limitesDe(e) {
       const L = CanvasRenderer.limitesBase(e), k = e.Transform && Number.isFinite(e.Transform.escala) && e.Transform.escala > 0 ? e.Transform.escala : 1; return k === 1 ? L : { hw: L.hw * k, hh: L.hh * k, ox: L.ox * k, oy: L.oy * k };
     }
+    // Alças da caixa de seleção (coordenadas do mundo): 4 cantos (redimensionar) e uma bolinha acima (girar). px = unidades de mundo por pixel de tela.
+    static alcas(e, px) {
+      const l = CanvasRenderer.limitesDe(e), cx = e.Transform.x + l.ox, cy = e.Transform.y + l.oy, a = [];
+      for (const [k, sx, sy] of [['nw', -1, -1], ['ne', 1, -1], ['sw', -1, 1], ['se', 1, 1]]) a.push({ k, x: cx + sx * l.hw, y: cy + sy * l.hh });
+      a.push({ k: 'rot', x: cx, y: cy - l.hh - 26 * px }); return a;
+    }
     static limitesBase(e) {
       if (C.soTexto(e)) { const t = e.Sprite.tamanhoTexto || 14, w = Math.max(t, String(e.Sprite.rotulo).length * t * 0.3); return { hw: w, hh: t * 0.65, ox: 0, oy: 0 }; }   // texto puro: área aproximada do texto
       const b = e.Body, s = e.Sprite || {}; if (e.Joystick && !e.Sprite && !b) { const r = Number.isFinite(e.Joystick.raio) ? e.Joystick.raio : 56; return { hw: r, hh: r, ox: 0, oy: 0 }; }
@@ -95,9 +101,10 @@
         const s = e.Sprite; if (s.invisivel) return;
         const op = (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1);
         const k = e.Transform.escala, esc = Number.isFinite(k) && k > 0 && k !== 1;   // Transform.escala: só visual (a física não muda)
-        if (esc) { g.save(); g.translate(e.Transform.x, e.Transform.y); g.scale(k, k); g.translate(-e.Transform.x, -e.Transform.y); }
+        const rot = e.Transform.rot && !(s.imagem && this.assets && this.assets.get(s.imagem)) && !(e.Body && e.Body.forma === 'poligono');   // formas/texto também giram (imagem gira no próprio desenho)
+        if (esc || rot) { g.save(); g.translate(e.Transform.x, e.Transform.y); if (rot) g.rotate(e.Transform.rot); if (esc) g.scale(k, k); g.translate(-e.Transform.x, -e.Transform.y); }
         if (op < 1) { g.globalAlpha = Math.max(0, op); pintar0(e, cx, cy, meioW, meioH); g.globalAlpha = 1; } else pintar0(e, cx, cy, meioW, meioH);
-        if (esc) g.restore();
+        if (esc || rot) g.restore();
       };
       const pintar0 = (e, cx, cy, meioW, meioH) => {
         const s = e.Sprite;
@@ -144,6 +151,8 @@
         if (e && e.Transform) {
           const l = CanvasRenderer.limitesDe(e); g.strokeStyle = '#ffd400'; g.lineWidth = 2.5 / z; g.setLineDash([6 / z, 4 / z]);
           g.strokeRect(e.Transform.x + l.ox - l.hw, e.Transform.y + l.oy - l.hh, l.hw * 2, l.hh * 2); g.setLineDash([]);
+          if (!e.Joystick || e.Sprite) { const px = 1 / z, A = CanvasRenderer.alcas(e, px), r = A[4]; g.strokeStyle = '#ffd400'; g.lineWidth = 1.5 * px; g.beginPath(); g.moveTo(r.x, r.y + 6 * px); g.lineTo(r.x, e.Transform.y + l.oy - l.hh); g.stroke();
+            g.fillStyle = '#fff'; g.strokeStyle = '#ffd400'; for (const h of A) { g.beginPath(); if (h.k === 'rot') g.arc(h.x, h.y, 6 * px, 0, 6.2832); else g.rect(h.x - 4.5 * px, h.y - 4.5 * px, 9 * px, 9 * px); g.fill(); g.stroke(); } }
         }
       }
       if (this.debug) {

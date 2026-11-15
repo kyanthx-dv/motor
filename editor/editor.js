@@ -256,8 +256,21 @@
     return melhor;
   }
   tela.addEventListener('click', ev => { if (arrastando || engine.rodando) return; /* durante o Play o editor é só leitura */ const w = mundo(ev), h = escolher(w.x, w.y); selecionar(h ? h.id : null); });
-  tela.addEventListener('pointerdown', ev => { if (engine.rodando) return; const w = mundo(ev), h = escolher(w.x, w.y); if (!h) return; selecionar(h.id); arrastando = { id: h.id, dx: w.x - h.Transform.x, dy: w.y - h.Transform.y, mudou: false }; tela.setPointerCapture(ev.pointerId); ev.preventDefault(); });
-  tela.addEventListener('pointermove', ev => { const w = mundo(ev), h = arrastando && cena.get(arrastando.id); if (h) { h.Transform.x = w.x - arrastando.dx; h.Transform.y = w.y - arrastando.dy; ajustarDeslocamento(h); arrastando.mudou = true; props(); json(false); redesenhar(); } const sob = escolher(w.x, w.y); $('status').textContent = 'x ' + Math.round(w.x) + ' · y ' + Math.round(w.y) + (sob ? ' · ' + (sob.nome || 'sem nome') + ' #' + sob.id : ''); });
+  // Alças: cantos redimensionam (w/h, raio, escala da imagem ou tamanho do texto), bolinha gira (Transform.rot; Shift = passos de 15°).
+  const pxMundo = () => { const a = renderer.telaParaMundo(0, 0), c = renderer.telaParaMundo(1, 0); return Math.abs(c.x - a.x) || 1; };
+  function alcaSob(w) { const e = sel != null && cena.get(sel); if (!e || !e.Transform || (e.Joystick && !e.Sprite)) return null; const px = pxMundo(); for (const h of Core.CanvasRenderer.alcas(e, px)) if (Math.abs(w.x - h.x) <= 8 * px && Math.abs(w.y - h.y) <= 8 * px) return h.k; return null; }
+  function usarAlca(e, k, w, shift) {
+    const T = e.Transform, S = e.Sprite, B = e.Body;
+    if (k === 'rot') { let r = Math.atan2(w.x - T.x, -(w.y - T.y)); if (shift) r = Math.round(r / (Math.PI / 12)) * Math.PI / 12; T.rot = Math.round(r * 1000) / 1000; return; }
+    const l0 = Core.CanvasRenderer.limitesDe(e), dx = Math.abs(w.x - (T.x + l0.ox)), dy = Math.abs(w.y - (T.y + l0.oy));
+    if (S && S.imagem) { const esc = T.escala > 0 ? T.escala : 1, bx = l0.hw / esc, by = l0.hh / esc; T.escala = Math.max(0.05, Math.min(100, Math.round(Math.max(dx / bx, dy / by) * 100) / 100)); return; }
+    if (Core.soTexto(e)) { S.tamanhoTexto = Math.max(6, Math.min(400, Math.round(dy / 0.65))); return; }
+    const forma = (S && S.forma) || (B && B.forma) || ((S && S.raio) || (B && B.raio) ? 'circulo' : 'retangulo');
+    if (forma === 'circulo') { const r = Math.max(2, Math.round(Math.max(dx, dy))); if (S) S.raio = r; if (B) B.raio = r; return; }
+    const W = Math.max(2, Math.round(dx * 2)), H = Math.max(2, Math.round(dy * 2)); for (const c of [S, B]) if (c) { c.w = W; c.h = H; }
+  }
+  tela.addEventListener('pointerdown', ev => { if (engine.rodando) return; const w0 = mundo(ev), k0 = alcaSob(w0); if (k0) { arrastando = { id: sel, alca: k0, mudou: false }; tela.setPointerCapture(ev.pointerId); ev.preventDefault(); return; } const w = w0, h = escolher(w.x, w.y); if (!h) return; selecionar(h.id); arrastando = { id: h.id, dx: w.x - h.Transform.x, dy: w.y - h.Transform.y, mudou: false }; tela.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+  tela.addEventListener('pointermove', ev => { const w = mundo(ev), h = arrastando && cena.get(arrastando.id); if (h && arrastando.alca) { usarAlca(h, arrastando.alca, w, ev.shiftKey); arrastando.mudou = true; props(); json(false); redesenhar(); } else if (h) { h.Transform.x = w.x - arrastando.dx; h.Transform.y = w.y - arrastando.dy; ajustarDeslocamento(h); arrastando.mudou = true; props(); json(false); redesenhar(); } const sob = escolher(w.x, w.y); $('status').textContent = 'x ' + Math.round(w.x) + ' · y ' + Math.round(w.y) + (sob ? ' · ' + (sob.nome || 'sem nome') + ' #' + sob.id : ''); });
   tela.addEventListener('pointerup', () => { if (arrastando && arrastando.mudou) registrarSnapshot(); arrastando = null; });
   $('c-col').addEventListener('change', redesenhar);
 
