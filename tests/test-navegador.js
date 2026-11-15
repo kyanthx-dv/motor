@@ -424,7 +424,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT }); await p.evaluate(() => editor.parar());
     // exportar jogo: um .html que roda sozinho (nova página, sem o editor)
     const html = await p.evaluate(() => EditorExportar.gerar());
-    ok(/Core\.Player\.iniciar/.test(html) && !/pixi/i.test(html) && html.length < 400000, 'exportar: gera um .html único e leve (' + Math.round(html.length / 1024) + ' KB, sem PixiJS)');
+    ok(/Core\.Player\.iniciar/.test(html) && !/class PixiRenderer|new P\.Application/.test(html) && html.length < 400000, 'exportar: gera um .html único e leve (' + Math.round(html.length / 1024) + ' KB, sem PixiJS)');
     const p2 = await b.newPage(); const err2 = []; p2.on('pageerror', e => err2.push(e.message)); const reqs = []; p2.on('request', r => { if (!/^(data|about|blob):/.test(r.url())) reqs.push(r.url()); });
     await p2.setContent(html); await p2.waitForTimeout(500); await p2.click('button'); await p2.waitForTimeout(1500);
     const jg = await p2.evaluate(() => ({ rodando: Core.Player.engine.rodando, ents: Core.Player.engine.scene.entities.size, canvas: !!document.getElementById('tela'), editor: typeof editor })), vc = await p2.evaluate(() => Core.Player.engine.vars.ler('vida'));
@@ -506,13 +506,13 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const http = require('http'), fs = require('fs'), path = require('path'); const T = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
     const srv = http.createServer((q, r) => { let f = path.join(__dirname, '..', decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.statusCode = 404; return r.end(); } r.setHeader('content-type', T[path.extname(f)] || 'application/octet-stream'); r.end(d); }); });
     await new Promise(r => srv.listen(0, r)); const pe = await b.newPage(); await pe.goto('http://localhost:' + srv.address().port + '/editor/'); await pe.waitForTimeout(600);
-    const lista = await pe.evaluate(async () => { const a = await EditorExportar.gerarPasta(), o = {}; for (const k in a) o[k] = Array.from(a[k]); return o; });
+    const lista = await pe.evaluate(async () => { document.getElementById('e-render').value = 'graficos'; const a = await EditorExportar.gerarPasta(), o = {}; for (const k in a) o[k] = Array.from(a[k]); return o; });
     const nomes = Object.keys(lista); ok(['index.html', 'motor.js', 'projeto.json', 'manifest.webmanifest', 'sw.js', 'icones/icone-192.png'].every(n => nomes.includes(n)) && nomes.some(n => n.startsWith('cenas/')), 'export em pasta tem index, motor, projeto, cenas, manifest, sw e ícones (' + nomes.length + ' arquivos)');
     const dir = require('os').tmpdir() + '/motor-pasta-' + Date.now(); for (const n of nomes) { const f = path.join(dir, n); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, Buffer.from(lista[n])); }
     const srv2 = http.createServer((q, r) => { let f = path.join(dir, decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.statusCode = 404; return r.end(); } r.setHeader('content-type', T[path.extname(f)] || 'application/octet-stream'); r.end(d); }); }); await new Promise(r => srv2.listen(0, r));
     const pj2 = await b.newPage(); await pj2.goto('http://localhost:' + srv2.address().port + '/'); await pj2.waitForSelector('button', { timeout: 8000 }); await pj2.click('button'); await pj2.waitForTimeout(1200);
-    const st = await pj2.evaluate(() => ({ modo: Core.Player.modo, passos: Core.Player.engine.scene.entities.size, rod: Core.Player.engine.rodando, txt: document.body.innerText.slice(0, 80) }));
-    ok(st.rod && st.passos > 0, 'jogo exportado em pasta inicia e roda (' + JSON.stringify(st) + ')');
+    const st = await pj2.evaluate(() => ({ modo: Core.Player.modo, render: Core.Player.render, passos: Core.Player.engine.scene.entities.size, rod: Core.Player.engine.rodando, txt: document.body.innerText.slice(0, 80) }));
+    ok(st.rod && st.passos > 0, 'jogo exportado em pasta inicia e roda (' + JSON.stringify(st) + ')'); ok(st.render === 'webgl' && nomes.includes('pixi.min.js'), 'exportado em pasta usa WebGL quando escolhido nos gráficos (' + st.render + ')');
     await pj2.close(); await pe.close(); srv.close(); srv2.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));

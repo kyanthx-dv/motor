@@ -18,7 +18,7 @@
 
 **v1.2 — Distribuição sem limites**
 - Exportar como **pasta/ZIP com assets em arquivos** ✅ **feito** (botão "Exportar jogo (pasta web .zip)": index.html + motor.js + projeto/cenas/assets + manifest + sw; carregamento sob demanda ainda não). O .html único continua para jogos pequenos.
-- WebGL (Pixi) no jogo exportado, opcional (arquivo ao lado).
+- WebGL (Pixi) no jogo exportado ✅ (na pasta web, quando o seletor de render do editor está em "gráficos"; cai para Canvas 2D se falhar).
 - ~~PWA do editor~~ **feito** (puxado para frente para chegar ao app mais cedo). PWA do jogo exportado ✅ (na pasta web).
 - Exportar minificado (dificulta cópia do código; não impede — o código chega ao jogador de qualquer jeito).
 
