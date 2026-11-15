@@ -18,7 +18,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.goto(url('index')); await p.waitForTimeout(300);
   const ponteiros = await p.evaluate(() => {
     const c = document.getElementById('tela'), ev = (tipo, id, pointerType) => c.dispatchEvent(new PointerEvent(tipo, { pointerId: id, pointerType, clientX: 300, clientY: 200, bubbles: true, isPrimary: true }));
-    ev('pointerdown', 11, 'mouse'); const mouse = { down: jogo.input.pointer.down, joystick: jogo.input.joystick.ativo }; ev('pointerup', 11, 'mouse');
+    ev('pointerdown', 11, 'mouse'); const mouse = { down: jogo.input.pointer.down, joystick: jogo.input.joystick.ativo }; ev('pointerup', 11, 'mouse'); jogo.input.configurar({ modo: 'flutuante' });
     ev('pointerdown', 12, 'touch'); const touch = { down: jogo.input.pointer.down, joystick: jogo.input.joystick.ativo }; ev('pointerup', 12, 'touch');
     return { mouse, touch };
   });
@@ -454,7 +454,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     {
       const ctxJ = await b.newContext({ hasTouch: true, isMobile: true, viewport: { width: 844, height: 390 } }), pj = await ctxJ.newPage(), cdpJ = await ctxJ.newCDPSession(pj);
       const arrastar = async (de, ate) => { await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [de] }); for (let i = 1; i <= 8; i++) { await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: de.x + (ate.x - de.x) * i / 8, y: de.y + (ate.y - de.y) * i / 8 }] }); await pj.waitForTimeout(70); } await pj.waitForTimeout(200); };
-      const jogar = async cfg => { await pj.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/mini-rpg/'); await pj.waitForTimeout(900); await pj.evaluate(c => { if (c) editor.cena.estado.joystick = c; else delete editor.cena.estado.joystick; }, cfg); await pj.evaluate(() => editor.jogar()); await pj.waitForTimeout(1100); return pj.evaluate(() => editor.cena.find('jogador').Transform.x); };
+      const jogar = async cfg => { await pj.goto('http://localhost:' + porta + '/editor/index.html?abas=todas&projeto=../projetos/mini-rpg/'); await pj.waitForTimeout(900); await pj.evaluate(c => { const j = editor.cena.find('joystick'); if (c) { j.Joystick = Object.assign({}, c); if (c.x !== undefined) { j.Transform.x = c.x * 800; j.Transform.y = (c.y === undefined ? 0.78 : c.y) * 480; delete j.Joystick.x; delete j.Joystick.y; } } else editor.cena.destroy(j.id); }, cfg); await pj.evaluate(() => editor.jogar()); await pj.waitForTimeout(1100); return pj.evaluate(() => editor.cena.find('jogador').Transform.x); };
       let x0 = await jogar({ modo: 'desligado' }); await arrastar({ x: 300, y: 200 }, { x: 420, y: 200 }); let x1 = await pj.evaluate(() => editor.cena.find('jogador').Transform.x);
       ok(Math.abs(x1 - x0) < 2, 'joystick desligado: o toque não move o jogador (x ' + x0.toFixed(0) + ' → ' + x1.toFixed(0) + ')');
       await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -587,6 +587,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       const c = document.getElementById('tela'), g = c.getContext('2d'), o = editor.renderer.telaParaMundo(0, 0), k = Math.abs(editor.renderer.telaParaMundo(1, 0).x - o.x), d = window.devicePixelRatio || 1, rd = (wx, wy) => [...g.getImageData(Math.round((wx - o.x) / k * d), Math.round((wy - o.y) / k * d), 1, 1).data];
       return { meio: rd(164, 132), borda: rd(101, 132), topo: rd(120, 101) }; });
     ok(px.meio[1] === 255 && px.borda[1] < 255 && px.topo[1] < 255, 'autotile: borda escurecida só onde não há vizinho (' + JSON.stringify(px) + ')'); await pt.close();
+  }
+  { // joystick só existe se houver objeto Joystick; toque que termina limpa o "sobre" dos botões
+    const pq = await b.newPage(); await pq.goto(url('editor/index') + '?abas=todas'); await pq.waitForTimeout(500);
+    const r = await pq.evaluate(() => { const c = document.getElementById('tela'), I = new Core.Input(c, editor.renderer), ev = (t, id, pt) => c.dispatchEvent(new PointerEvent(t, { pointerId: id, pointerType: pt, clientX: 200, clientY: 200, bubbles: true, isPrimary: true }));
+      I.configurar(undefined); ev('pointerdown', 31, 'touch'); const sem = I.joystick.ativo; ev('pointerup', 31, 'touch');
+      I.configurar({ modo: 'flutuante' }); ev('pointerdown', 32, 'mouse'); const mouse = I.joystick.ativo; ev('pointerup', 32, 'mouse'); I.poll();
+      ev('pointerdown', 33, 'touch'); ev('pointerup', 33, 'touch'); const s1 = I.poll().pointer.ativo, s2 = I.poll().pointer.ativo; I.destruir(); return { sem, mouse, s1, s2 }; });
+    ok(r.sem === false && r.mouse === true, 'joystick: sem objeto Joystick não aparece; com objeto funciona também com mouse (' + JSON.stringify(r) + ')');
+    ok(r.s1 === true && r.s2 === false, 'toque: o ponteiro deixa de "pairar" depois que o dedo sobe (botão não fica branco) (' + JSON.stringify(r) + ')'); await pq.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);

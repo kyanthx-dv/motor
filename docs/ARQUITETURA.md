@@ -283,3 +283,5 @@ O joystick virtual é o componente `Joystick` de uma entidade (botão **+ Joysti
 ## 51. Editor de código
 
 `editor/codigo.js` melhora o `<textarea id="sc-fonte">` sem biblioteca: números de linha, cores (comentário, texto, número, palavra-chave, `ctx`/`e`/`dt`, chamadas), Tab/Shift+Tab, auto-indent entre `{ }`, fechamento de `( [ { " '`, Ctrl+/ comenta, autocompletar (`ctx.`, `ctx.vars.`, `e.Transform.`…) e marcação da linha do erro (vinda das mensagens "linha N"). O textarea segue sendo a fonte da verdade; a lista da API fica em `API` no arquivo (atualizar quando a API do `ctx` mudar). Um editor completo (CodeMirror/Monaco) pode vir no app, quando houver rede para empacotá-lo.
+
+Sem objeto `Joystick` na cena (e sem `estado.joystick`), **não há joystick**: o toque/clique não vira direção. Com o objeto, o joystick funciona com dedo e mouse, aparece parado na posição do objeto (flutuante ou fixo, se `visivel`) e a bolinha nunca sai do anel (raio). Ao levantar o dedo o ponteiro deixa de "pairar", então botões não ficam no estado `sobre`.
