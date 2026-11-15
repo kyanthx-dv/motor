@@ -279,3 +279,7 @@ Botão "Exportar jogo (.html)" (aba Projetos): `EditorExportar.gerar()` junta n�
 ## 50. Joystick como objeto de cena
 
 O joystick virtual é o componente `Joystick` de uma entidade (botão **+ Joystick** do editor; um por cena): `modo` (flutuante/fixo/desligado), `visivel`, `x`/`y` (posição do fixo, 0–1), `raio`, `zonaMorta`, `zona`. A posição é a do objeto na cena (arraste o marcador azul; vale para o modo fixo); o resto fica no inspetor. `Core.joystickDe(scene)` escolhe a configuração: o componente, ou o antigo `estado.joystick` (projetos antigos continuam funcionando). Os scripts leem `ctx.input.joystick` como antes. Durante o Play a caixa de seleção do editor não é desenhada.
+
+## 51. Editor de código
+
+`editor/codigo.js` melhora o `<textarea id="sc-fonte">` sem biblioteca: números de linha, cores (comentário, texto, número, palavra-chave, `ctx`/`e`/`dt`, chamadas), Tab/Shift+Tab, auto-indent entre `{ }`, fechamento de `( [ { " '`, Ctrl+/ comenta, autocompletar (`ctx.`, `ctx.vars.`, `e.Transform.`…) e marcação da linha do erro (vinda das mensagens "linha N"). O textarea segue sendo a fonte da verdade; a lista da API fica em `API` no arquivo (atualizar quando a API do `ctx` mudar). Um editor completo (CodeMirror/Monaco) pode vir no app, quando houver rede para empacotá-lo.
