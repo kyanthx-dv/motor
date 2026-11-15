@@ -19,7 +19,7 @@
   const sincronizar = () => { for (const e of cena.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; } };
   const redesenhar = () => { sujo = true; };
   function obsTexto() { const n = $('obs'); if (!n) return; const t = engine.rodando ? Object.entries(engine.observados || {}).map(([k, v]) => k + ' = ' + v).join('  ·  ') : ''; if (n.textContent !== t) n.textContent = t; n.hidden = !t; }
-  function loop() { obsTexto(); if (sujo) { sujo = false; if (!engine.rodando && C.Systems.hierarquia) C.Systems.hierarquia(cena); sincronizar(); renderer.selecionada = sel; renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
+  function loop() { obsTexto(); if (sujo && !engine.emWorker) { sujo = false; if (!engine.rodando && C.Systems.hierarquia) C.Systems.hierarquia(cena); sincronizar(); renderer.selecionada = sel; renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
   new ResizeObserver(redesenhar).observe(tela);   // registrado depois do observer do renderer: ele redimensiona primeiro
 
   const msg = (t, tipo) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (tipo || ''); };
@@ -97,9 +97,23 @@
     }
     engine.renderer = ativo; renderer.redimensionar();
   }
-  async function play() { if (engine.rodando) return; await escolherRender(); playAgora(); }
-  function playAgora() { if (window.EditorVista) EditorVista.suspender(true); historicoSuspenso = true; salvoPlay = JSON.stringify(C.Serializer.paraJSON(cena)); input = new Core.Input(tela, ativo); engine.input = input; engine.audio = Core.Audio ? new Core.Audio() : null; engine.dispositivo = Core.Dispositivo || null; if (engine.audio && cena.estado.sons) engine.audio.carregar(cena.estado.sons).catch(() => {}); if (window.EditorCenas) EditorCenas.registrar(engine); engine.iniciar(); atualizarAcoes(); msg('Motor em execução.', 'ok'); }
-  function parar() { engine.parar(); if (gl) gl.ligar(false); ativo = renderer; engine.renderer = renderer; renderer.simples = false; renderer.redimensionar(); if (engine.audio && engine.audio.pararTudo) engine.audio.pararTudo(); engine.audio = null; if (input) { input.destruir(); input = null; engine.input = null; } if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(false); redesenhar(); } if (window.EditorVista) EditorVista.suspender(false); historicoSuspenso = false; if (modoJogo) { modoJogo = false; document.body.classList.remove('modo-jogo'); $('e-jogar').textContent = 'Tela cheia'; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
+  let codigoMotor = null;
+  async function obterCodigo() {   // fonte do motor (núcleo + adaptadores) para o Worker; null = rodar direto na página
+    if (codigoMotor) return codigoMotor; if (typeof Worker !== 'function' || typeof Blob !== 'function' || !C.WorkerHost || window.__semWorker || location.protocol === 'file:') return null;
+    try { const urls = [...document.scripts].map(x => x.getAttribute('src') || '').filter(x => /^\.\.\/(core|adapters)\//.test(x) && !/pixi|debug|vendor|worker-host|player/.test(x)); urls.push('../adapters/worker-host.js'); const t = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) return null; t.push(await r.text()); } codigoMotor = t.join('\n;\n'); return codigoMotor; } catch (x) { return null; }
+  }
+  let host = null;
+  function jogoAtual() { const pac = window.EditorArquivos.exportar(), cenas = Object.assign({}, pac.cenas.cenas); cenas[pac.cenas.atual] = pac.cena; return { nome: projetoAtual || 'jogo', atual: pac.cenas.atual, cenas, versao: C.VERSAO }; }
+  async function play() { if (engine.rodando) return; await escolherRender(); let cod = null; try { cod = await obterCodigo(); } catch (x) {} playAgora(cod); }
+  function playAgora(cod) { if (cod && window.EditorArquivos) return playWorker(cod); if (window.EditorVista) EditorVista.suspender(true); historicoSuspenso = true; salvoPlay = JSON.stringify(C.Serializer.paraJSON(cena)); input = new Core.Input(tela, ativo); engine.input = input; engine.audio = Core.Audio ? new Core.Audio() : null; engine.dispositivo = Core.Dispositivo || null; if (engine.audio && cena.estado.sons) engine.audio.carregar(cena.estado.sons).catch(() => {}); if (window.EditorCenas) EditorCenas.registrar(engine); engine.iniciar(); atualizarAcoes(); msg('Motor em execução.', 'ok'); }
+  function playWorker(cod) {
+    if (window.EditorVista) EditorVista.suspender(true); historicoSuspenso = true; input = new Core.Input(tela, ativo); engine.input = input; engine.audio = Core.Audio ? new Core.Audio() : null; if (engine.audio && cena.estado.sons) engine.audio.carregar(cena.estado.sons).catch(() => {});
+    host = new C.WorkerHost({ codigo: cod, jogo: jogoAtual(), tela, renderer: ativo, input, audio: engine.audio, armazem: engine.armazem, prefixo: 'motor.partida.v1.' });
+    host.aoSaida = d => { engine.events.emit('saida', d); engine.events.flush(); }; host.aoErro = t => { const m = document.getElementById('msg'); if (m) { m.textContent = 'Erro no Play: ' + t; m.className = 'msg erro'; } };
+    host.aoTravar = () => { parar(); msg('Um script parou de responder (laço infinito?). O Play foi encerrado.', 'erro'); };
+    engine.rodando = true; engine.emWorker = true; host.iniciar(); atualizarAcoes(); msg('Motor em execução (isolado em Worker).', 'ok');
+  }
+  function parar() { if (host) { host.parar(); host = null; engine.emWorker = false; sujo = true; } engine.parar(); if (gl) gl.ligar(false); ativo = renderer; engine.renderer = renderer; renderer.simples = false; renderer.redimensionar(); if (engine.audio && engine.audio.pararTudo) engine.audio.pararTudo(); engine.audio = null; if (input) { input.destruir(); input = null; engine.input = null; } if (salvoPlay) { try { C.Serializer.deJSON(cena, JSON.parse(salvoPlay)); } catch (x) { msg('Não restaurou a cena: ' + x.message, 'erro'); } salvoPlay = null; selecionar(sel); variaveis(); json(false); redesenhar(); } if (window.EditorVista) EditorVista.suspender(false); historicoSuspenso = false; if (modoJogo) { modoJogo = false; document.body.classList.remove('modo-jogo'); $('e-jogar').textContent = 'Tela cheia'; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } atualizarAcoes(); msg('Motor parado.', 'ok'); }
   function jogar() { if (modoJogo) return parar(); persistirAtual(); modoJogo = true; document.body.classList.add('modo-jogo'); $('e-jogar').textContent = 'Sair'; play(); if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); }
 
   // ---- propriedades (só mostra o que a entidade já tem)
@@ -247,6 +261,6 @@
 
   exemplo(); listar(); props(); variaveis(); json();
   function importarProjeto(nome, viva, todas) { if (engine.rodando) parar(); projetos[nome] = viva; if (window.EditorCenas && EditorCenas.importar) EditorCenas.importar(nome, todas); guardarProjetos(); abrirProjeto(nome); }
-  window.editor = { play, parar, jogar, carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, importarProjeto, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get projetoAtual() { return projetoAtual; } };
+  window.editor = { play, parar, jogar, carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, importarProjeto, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get cenaViva() { return host ? host.scene : cena; }, get projetoAtual() { return projetoAtual; } };
   inicializarProjetos(); historicoLimpar(); loop();
 })();

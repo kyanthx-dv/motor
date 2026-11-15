@@ -2,7 +2,7 @@
    navegador, inclusive no celular. Só Canvas 2D (o WebGL/PixiJS não vai junto, para o arquivo ficar pequeno). */
 (function (root) {
   const ed = root.editor, $ = id => document.getElementById(id);
-  const EXCLUIR = /pixi|debug|vendor/;
+  const EXCLUIR = /pixi|debug|vendor|worker-host|player/;
   const seguro = t => t.replace(/<\/script/gi, '<\\/script');
   async function gerar() {
     const urls = [...document.scripts].map(s => s.getAttribute('src') || '').filter(s => /^\.\.\/(core|adapters)\//.test(s) && !EXCLUIR.test(s)); urls.push('../adapters/worker-host.js', '../adapters/player.js');
