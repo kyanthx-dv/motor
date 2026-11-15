@@ -80,7 +80,7 @@
       this._criar();
       const quadro = () => {
         this._raf = requestAnimationFrame(quadro); if (this.travado) return;
-        if (this.worker) { if (this.input.configurar) this.input.configurar(this.scene.estado.joystick); const s = this.input.poll(); this.worker.postMessage({ t: 'input', s: { keys: [...s.keys], keysPressed: [...s.keysPressed], down: [...s.down], pressed: [...s.pressed], released: [...s.released], axes: s.axes, joystick: s.joystick, pointer: s.pointer } }); }
+        if (this.worker) { if (this.input.configurar) this.input.configurar(C.joystickDe(this.scene)); const s = this.input.poll(); this.worker.postMessage({ t: 'input', s: { keys: [...s.keys], keysPressed: [...s.keysPressed], down: [...s.down], pressed: [...s.pressed], released: [...s.released], axes: s.axes, joystick: s.joystick, pointer: s.pointer } }); }
         if (this.pronto) this.renderer.desenhar(this.scene, 1, this.fake);
       };
       this._raf = requestAnimationFrame(quadro);
