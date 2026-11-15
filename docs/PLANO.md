@@ -17,9 +17,9 @@
 - Limpeza do repositório: arquivos legados na raiz (`artifact-*.html`, `TAREFAS*.md`, `games/`) vão para `legado/`.
 
 **v1.2 — Distribuição sem limites**
-- Exportar como **pasta/ZIP com assets em arquivos** (sem limite de tamanho de data URL; carregamento sob demanda). O .html único continua para jogos pequenos.
+- Exportar como **pasta/ZIP com assets em arquivos** ✅ **feito** (botão "Exportar jogo (pasta web .zip)": index.html + motor.js + projeto/cenas/assets + manifest + sw; carregamento sob demanda ainda não). O .html único continua para jogos pequenos.
 - WebGL (Pixi) no jogo exportado, opcional (arquivo ao lado).
-- ~~PWA do editor~~ **feito** (puxado para frente para chegar ao app mais cedo). Falta: PWA também para o jogo exportado.
+- ~~PWA do editor~~ **feito** (puxado para frente para chegar ao app mais cedo). PWA do jogo exportado ✅ (na pasta web).
 - Exportar minificado (dificulta cópia do código; não impede — o código chega ao jogador de qualquer jeito).
 
 **v1.3 — Conteúdo**
