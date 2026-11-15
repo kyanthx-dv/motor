@@ -16,7 +16,7 @@
   };
   function falhou(ctx, e, nome, fase, x) {
     const en = ctx.engine; en.errosScript = (en.errosScript || 0) + 1;
-    ctx.events.emit('erro-script', { entidade: e.id, script: nome, fase, mensagem: String(x && x.message || x) });
+    ctx.events.emit('erro-script', { entidade: e.id, script: nome, fase, mensagem: String(x && x.message || x), linha: C.linhaScript ? C.linhaScript(x, nome) : null });
     en._avisosScript = en._avisosScript || new Set(); const k = nome + ':' + fase;
     if (!en._avisosScript.has(k)) { en._avisosScript.add(k); if (typeof console !== 'undefined') console.warn('[Core] erro no script "' + nome + '" (' + fase + ') na entidade ' + e.id + ': ' + (x && x.message || x)); }
   }

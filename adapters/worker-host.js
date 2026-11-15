@@ -41,7 +41,7 @@
           engine = new C.Engine({ renderer: stub, agendador }); engine.armazem = armazem; engine.audio = audio; engine.dispositivo = dispositivo; engine.input = input;
           C.Serializer.deJSON(engine.scene, JSON.parse(JSON.stringify(m.jogo.cenas[m.jogo.atual])));
           engine.cenas = {}; for (const n in m.jogo.cenas) engine.registrarCenaJSON(n, JSON.parse(JSON.stringify(m.jogo.cenas[n])));
-          engine.events.on('saida', d => post('saida', { d })); engine.events.on('erro-script', d => post('erro', { texto: JSON.stringify(d).slice(0, 400) }));
+          engine.events.on('saida', d => post('saida', { d })); engine.events.on('erro-script', d => post('erro', { texto: 'script "' + d.script + '"' + (d.linha ? ' linha ' + d.linha : '') + ' (' + d.fase + '): ' + d.mensagem }));
           engine.iniciar(); post('pronto', { erros: engine.errosScripts || [] });
         } catch (x) { post('erro', { texto: 'falha ao iniciar: ' + (x && x.message), fatal: true }); }
       } else if (m.t === 'input') {

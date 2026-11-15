@@ -58,6 +58,6 @@
   $('sc-desanexar').addEventListener('click', () => { const e = cena.get(ed.sel); if (e) delete e.Script; atualizar(); ed.json(); });
   $('sc-remover').addEventListener('click', () => { if (!atual) return; for (const e of usos(atual)) delete e.Script; delete fontes()[atual]; atual = null; $('sc-fonte').value = ''; atualizar(); ed.json(); });
   // Depois do Play (o editor já chamou engine.iniciar -> compilarScripts): mostra erros de compilação.
-  $('e-play').addEventListener('click', () => { const er = ed.engine.errosScripts || []; if (er.length) msg('Ao iniciar: ' + er.map(x => x.script + ': ' + x.mensagem).join(' | '), 'erro'); });
+  $('e-play').addEventListener('click', () => { const er = ed.engine.errosScripts || []; if (er.length) msg('Ao iniciar: ' + er.map(x => x.script + (x.linha ? ' (linha ' + x.linha + ')' : '') + ': ' + x.mensagem).join(' | '), 'erro'); });
   ed.aoSelecionar = atualizar; atualizar();
 })();
