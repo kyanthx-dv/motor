@@ -531,6 +531,16 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     ok(antes2 != null && durante == null && depois != null, 'caixa de seleção some durante o Play e volta ao parar (' + [antes2, durante, depois].join(',') + ')');
     await pq.close();
   }
+  { // editor de animação: criar componente, clipes, pré-visualização
+    const pa = await b.newPage(); await pa.goto(url('editor/index') + '?abas=todas'); await pa.waitForTimeout(500);
+    await pa.evaluate(async () => { const c = document.createElement('canvas'); c.width = 64; c.height = 32; const g = c.getContext('2d'); g.fillStyle = '#f00'; g.fillRect(0, 0, 64, 32); const i = new Image(); await new Promise(r => { i.onload = r; i.src = c.toDataURL(); }); editor.renderer.assets.registrar('folha', i); const e = editor.cena.create({ nome: 'heroi', Transform: { x: 100, y: 100 }, Sprite: { imagem: 'folha', quadroW: 16, quadroH: 16 } }); editor.cena.flush(); editor.selecionar(e.id); });
+    await pa.waitForTimeout(150); await pa.click('#an-criar'); await pa.waitForTimeout(100);
+    await pa.fill('#an-nome', 'andar'); await pa.click('#an-add'); await pa.waitForTimeout(100);
+    const an = await pa.evaluate(() => { const e = editor.cena.find('heroi'); return { atual: e.Animacao.atual, clipes: Object.keys(e.Animacao.animacoes), andar: e.Animacao.animacoes.andar, previa: !!document.querySelector('.anim-previa') }; });
+    ok(an.clipes.join() === 'parado,andar' && an.andar.quadros === 4 && an.previa, 'editor de animação: cria componente, adiciona clipe e mostra prévia (' + JSON.stringify(an) + ')');
+    await pa.selectOption('#an-atual', 'andar'); await pa.waitForTimeout(100); ok(await pa.evaluate(() => editor.cena.find('heroi').Animacao.atual === 'andar'), 'editor de animação: troca o clipe inicial');
+    await pa.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
