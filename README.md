@@ -9,6 +9,7 @@ Use Ctrl+F5 depois de cada atualização. Veja `docs/VERSAO-1.md` (o que a v1.0 
 - Testes do núcleo: `npm test` (ou `node tests/test-core.js`).
 - Testes de navegador: `npm run test:navegador` (requer as dependências instaladas e os navegadores do Playwright; use `npx playwright install chromium` quando necessário).
 - Arquitetura e marcos: `docs/ARQUITETURA.md`.
+- Cola do `ctx` (scripts em código): `docs/CTX.md`. Como contribuir: `CONTRIBUTING.md`.
 - Núcleo em `core/` (sem navegador), adaptadores em `adapters/`, jogo exemplo em `games/futebol/`.
 - Para integrar em um app: crie `new Core.Engine({renderer, input})`, registre scripts, monte a cena com `engine.scene.create({...})` e chame `engine.iniciar()`.
 
