@@ -581,6 +581,13 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await pb.click('#sc-vercod'); const visivel = await pb.evaluate(() => ({ cod: document.querySelector('.cod').hidden, conv: document.getElementById('sc-conv').hidden }));
     ok(oculto.cod && oculto.conv && !visivel.cod && !visivel.conv, 'blocos: código gerado escondido; "ver código gerado" mostra (' + JSON.stringify([oculto, visivel]) + ')'); await pb.close();
   }
+  { // autotile desenha borda onde o terreno acaba
+    const pt = await b.newPage(); await pt.goto(url('editor/index') + '?abas=todas'); await pt.waitForTimeout(500);
+    const px = await pt.evaluate(async () => { editor.cena.create({ nome: 'mapa', Transform: { x: 100, y: 100 }, Tiles: { tamanho: 64, colunas: 2, linhas: 1, paleta: [{ cor: '#00ff00', auto: true }], dados: [1, 1] } }); editor.cena.flush(); editor.redesenhar(); await new Promise(r => setTimeout(r, 200));
+      const c = document.getElementById('tela'), g = c.getContext('2d'), o = editor.renderer.telaParaMundo(0, 0), k = Math.abs(editor.renderer.telaParaMundo(1, 0).x - o.x), d = window.devicePixelRatio || 1, rd = (wx, wy) => [...g.getImageData(Math.round((wx - o.x) / k * d), Math.round((wy - o.y) / k * d), 1, 1).data];
+      return { meio: rd(164, 132), borda: rd(101, 132), topo: rd(120, 101) }; });
+    ok(px.meio[1] === 255 && px.borda[1] < 255 && px.topo[1] < 255, 'autotile: borda escurecida só onde não há vizinho (' + JSON.stringify(px) + ')'); await pt.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

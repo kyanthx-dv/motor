@@ -138,7 +138,9 @@
       const mapas = acima => { for (const e of scene.query('Transform', 'Tiles')) { if (!!e.Tiles.acima !== acima) continue; const T = e.Tiles, S = T.tamanho, t = e.Transform;
         const c0 = Math.max(0, Math.floor((vx0 - t.x) / S)), c1 = Math.min(T.colunas - 1, Math.floor((vx1 - t.x) / S)), r0 = Math.max(0, Math.floor((vy0 - t.y) / S)), r1 = Math.min(T.linhas - 1, Math.floor((vy1 - t.y) / S));
         for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const k = T.dados[r * T.colunas + c]; if (!k) continue; const p = T.paleta[k - 1], img = p.imagem && this.assets && this.assets.get(p.imagem);
-          if (img) { g.imageSmoothingEnabled = false; g.drawImage(img, t.x + c * S, t.y + r * S, S, S); } else { g.fillStyle = p.cor; g.fillRect(t.x + c * S, t.y + r * S, S + .5, S + .5); } } } };
+          const m = p.auto ? C.Tiles.mascara(T, c, r) : 15;
+            if (img) { g.imageSmoothingEnabled = false; if (p.auto) { const fw = img.width / 4, fh = img.height / 4; g.drawImage(img, (m % 4) * fw, Math.floor(m / 4) * fh, fw, fh, t.x + c * S, t.y + r * S, S + .5, S + .5); } else g.drawImage(img, t.x + c * S, t.y + r * S, S, S); }
+            else { g.fillStyle = p.cor; g.fillRect(t.x + c * S, t.y + r * S, S + .5, S + .5); if (p.auto && m !== 15) { const b = Math.max(1, S / 8); g.fillStyle = 'rgba(0,0,0,.28)'; const x0 = t.x + c * S, y0 = t.y + r * S; if (!(m & 1)) g.fillRect(x0, y0, S, b); if (!(m & 4)) g.fillRect(x0, y0 + S - b, S, b); if (!(m & 8)) g.fillRect(x0, y0, b, S); if (!(m & 2)) g.fillRect(x0 + S - b, y0, b, S); } } } } };
       if (!X) { mapas(false);
       for (const e of todos) if (V || !e.Sprite.fixo) pintar(e, cx, cy, V ? 1e9 : L / z / 2, V ? 1e9 : A / z / 2);
       mapas(true); }

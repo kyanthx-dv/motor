@@ -480,4 +480,10 @@ const nova=()=>new C.Engine();
   const sc = new Core.Scene(); let erro = false; try { sc.create({ nome: 'a', Transform: { x: 0, y: 0, escala: 0 } }); } catch (x) { erro = true; }
   ok(erro, 'Transform.escala <= 0 é rejeitada'); const e = sc.create({ nome: 'b', Transform: { x: 0, y: 0, escala: 2 }, Sprite: { w: 10, h: 10 } }); ok(e.Transform.escala === 2, 'Transform.escala válida é aceita');
 }
+{ // autotile: máscara de vizinhos
+  const T = { tamanho: 16, colunas: 3, linhas: 3, paleta: [{ cor: '#0a0', auto: true }], dados: [1, 1, 0, 1, 1, 1, 0, 1, 0] };
+  ok(Core.Tiles.mascara(T, 1, 1) === (1 | 2 | 4 | 8), 'autotile: célula com 4 vizinhos = 15'); ok(Core.Tiles.mascara(T, 0, 0) === (2 | 4), 'autotile: canto superior esquerdo = leste+sul (6)');
+  ok(Core.Tiles.mascara(T, 1, 2) === 1, 'autotile: ponta de baixo só tem vizinho ao norte (1)');
+  const sc = new Core.Scene(); let erro = false; try { sc.create({ nome: 'm', Transform: { x: 0, y: 0 }, Tiles: { tamanho: 16, colunas: 1, linhas: 1, paleta: [{ cor: '#000', auto: 'sim' }], dados: [1] } }); } catch (e) { erro = true; } ok(erro, 'autotile: auto precisa ser verdadeiro/falso');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
