@@ -563,6 +563,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await ph.mouse.move(ro.x, ro.y); await ph.mouse.down(); await ph.mouse.move(cx.x + 80, cx.y, { steps: 4 }); await ph.mouse.up();
     const rot = await ph.evaluate(() => editor.cena.find('caixa').Transform.rot); ok(Math.abs(rot - Math.PI / 2) < 0.05, 'bolinha gira o objeto (rot=' + rot + ')'); await ph.close();
   }
+  { // editor de código: cores, linhas, autocompletar, auto-indent e fechamento
+    const pc = await b.newPage({ viewport: { width: 1300, height: 800 } }); await pc.goto(url('editor/index') + '?abas=todas'); await pc.waitForTimeout(500);
+    await pc.click('[data-centro="scripts"]'); await pc.fill('#sc-nome', 'cod'); await pc.click('#sc-novo'); await pc.waitForTimeout(200);
+    await pc.click('#sc-fonte'); await pc.keyboard.press('Control+End'); await pc.keyboard.type('\nif (x) {\nfoo(\"a'); await pc.waitForTimeout(150);
+    const v = await pc.evaluate(() => document.getElementById('sc-fonte').value.split('\n').slice(-4).join('|'));
+    ok(v.includes('if (x) {|  foo("a")|}'), 'auto-indent e fechamento de ( e " (' + v + ')');
+    await pc.keyboard.press('Control+End'); await pc.keyboard.type('\nctx.vars.'); await pc.waitForTimeout(250);
+    const info = await pc.evaluate(() => ({ pop: !document.querySelector('.cod-pop').hidden && [...document.querySelectorAll('.cod-it')].map(x => x.textContent).join(), cores: document.querySelectorAll('.cod-hl i.k').length > 0 && document.querySelectorAll('.cod-hl i.c').length > 0, linhas: document.querySelector('.cod-n').textContent.trim().split('\n').length > 5 }));
+    ok(info.pop === 'ler,definir,somar' && info.cores && info.linhas, 'editor de código: autocompletar ctx.vars., cores e números de linha (' + JSON.stringify(info) + ')');
+    await pc.keyboard.press('Enter'); const ap = await pc.evaluate(() => document.getElementById('sc-fonte').value.slice(-12)); ok(ap.endsWith('ctx.vars.ler'), 'Enter aceita a sugestão (' + ap + ')'); await pc.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
