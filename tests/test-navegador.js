@@ -459,9 +459,9 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       ok(Math.abs(x1 - x0) < 2, 'joystick desligado: o toque não move o jogador (x ' + x0.toFixed(0) + ' → ' + x1.toFixed(0) + ')');
       await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       x0 = await jogar({ modo: 'fixo', x: 0.2, y: 0.7, raio: 60 }); const base = { x: 844 * 0.2, y: 390 * 0.7 };
-      await arrastar({ x: 700, y: 100 }, { x: 760, y: 100 }); x1 = await pj.evaluate(() => editor.cena.find('jogador').Transform.x); await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await arrastar({ x: 700, y: 100 }, { x: 760, y: 100 }); x1 = await pj.evaluate(() => editor.cenaViva.find('jogador').Transform.x); await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       ok(Math.abs(x1 - x0) < 2, 'joystick fixo: tocar longe da base não ativa (x ' + x0.toFixed(0) + ' → ' + x1.toFixed(0) + ')');
-      await arrastar(base, { x: base.x + 50, y: base.y }); x1 = await pj.evaluate(() => editor.cena.find('jogador').Transform.x);
+      await arrastar(base, { x: base.x + 50, y: base.y }); x1 = await pj.evaluate(() => editor.cenaViva.find('jogador').Transform.x);
       const dados = await pj.evaluate(() => { const s = editor.engine.input.dadosJoystick(); return s; }); await cdpJ.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       ok(x1 > x0 + 15 && dados.ativo && dados.forca > 0.5 && Math.abs(dados.angulo) < 20 && dados.modo === 'fixo', 'joystick fixo: arrastar a partir da base move; dados (força/ângulo) corretos (' + JSON.stringify(dados) + ')');
       await ctxJ.close();
@@ -490,6 +490,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       await ctxP.close();
     }
     srv.close(); for (let i = erros.length - 1; i >= 0; i--) if (/404/.test(erros[i])) erros.splice(i, 1);   // o 404 acima é esperado
+  }
+  { // Play do editor roda no Worker: laço infinito não trava a página
+    const http = require('http'), fs = require('fs'), path = require('path'); const T = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
+    const srv = http.createServer((q, r) => { let f = path.join(__dirname, '..', decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.statusCode = 404; return r.end(); } r.setHeader('content-type', T[path.extname(f)] || 'application/octet-stream'); r.end(d); }); });
+    await new Promise(r => srv.listen(0, r)); const pw = await b.newPage(); await pw.goto('http://localhost:' + srv.address().port + '/editor/'); await pw.waitForTimeout(600);
+    await pw.evaluate(() => { editor.cena.estado.scripts = editor.cena.estado.scripts || {}; editor.cena.estado.scripts.trava = { fonte: 'function atualizar(e, dt, ctx) { if (ctx.engine.tempo > 0.3) { while (true) {} } }' }; editor.cena.create({ nome: 'bug', Transform: { x: 0, y: 0 }, Script: { nome: 'trava' } }); });
+    await pw.evaluate(() => editor.play()); await pw.waitForTimeout(400);
+    const w = await pw.evaluate(() => ({ emWorker: !!editor.engine.emWorker, rodando: editor.engine.rodando }));
+    await pw.waitForTimeout(4500); const fim = await pw.evaluate(() => ({ vivo: true, rodando: editor.engine.rodando, msg: document.getElementById('msg').textContent }));
+    ok(w.emWorker && w.rodando, 'Play do editor roda em Worker'); ok(fim.vivo && !fim.rodando && /parou de responder/.test(fim.msg), 'Play em Worker: laço infinito é encerrado pelo vigia sem travar o editor (' + fim.msg + ')');
+    await pw.close(); srv.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
