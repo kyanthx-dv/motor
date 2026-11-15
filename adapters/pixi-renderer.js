@@ -74,9 +74,9 @@
         if (ch === it.chave) continue; it.chave = ch; it.c.removeChildren().forEach(x => x.destroy());
         const g = new P.Graphics(), S = T.tamanho; it.c.addChild(g);
         for (let i = 0; i < T.dados.length; i++) {
-          const k = T.dados[i]; if (!k) continue; const pal = T.paleta[k - 1], c = i % T.colunas, r = Math.floor(i / T.colunas), tex = pal.imagem && this._tex(pal.imagem, 0, 0, 1e6, 1e6);
+          const k = T.dados[i]; if (!k) continue; const pal = T.paleta[k - 1], c = i % T.colunas, r = Math.floor(i / T.colunas), m = pal.auto ? C.Tiles.mascara(T, c, r) : 15, im = pal.auto && pal.imagem && this.assets && this.assets.get(pal.imagem), tex = pal.imagem && (im ? this._tex(pal.imagem, m % 4, Math.floor(m / 4), im.width / 4, im.height / 4) : this._tex(pal.imagem, 0, 0, 1e6, 1e6));
           if (tex) { const sp = new P.Sprite(tex); sp.x = c * S; sp.y = r * S; sp.width = S; sp.height = S; it.c.addChild(sp); }
-          else g.rect(c * S, r * S, S + .5, S + .5).fill(cor(P, pal.cor, '#888'));
+          else { g.rect(c * S, r * S, S + .5, S + .5).fill(cor(P, pal.cor, '#888')); if (pal.auto && m !== 15) { const b = Math.max(1, S / 8), f = { color: 0x000000, alpha: 0.28 }; if (!(m & 1)) g.rect(c * S, r * S, S, b).fill(f); if (!(m & 4)) g.rect(c * S, r * S + S - b, S, b).fill(f); if (!(m & 8)) g.rect(c * S, r * S, b, S).fill(f); if (!(m & 2)) g.rect(c * S + S - b, r * S, b, S).fill(f); } }
         }
       }
     }

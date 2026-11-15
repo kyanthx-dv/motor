@@ -32,9 +32,9 @@
       const b = el('button', null, k === 0 ? '⌫ borracha' : String(k)); b.type = 'button'; b.style.minWidth = k === 0 ? '90px' : '32px'; b.setAttribute('aria-pressed', String(pincel === k)); if (pincel === k) b.style.outline = '2px solid var(--acento)'; b.addEventListener('click', () => { pincel = k; ed.selecionar(ed.sel); });
       linha.append(b); if (k > 0) {
         const cor = el('input'); cor.type = 'color'; cor.style.width = '38px'; cor.style.padding = '0'; cor.value = /^#[0-9a-f]{6}$/i.test(p.cor) ? p.cor : '#888888'; cor.disabled = travado; cor.addEventListener('change', () => { p.cor = cor.value; ed.json(); ed.redesenhar(); });
-        const sol = el('label', 'chk', ''); const sc = el('input'); sc.type = 'checkbox'; sc.checked = !!p.solido; sc.disabled = travado; sc.addEventListener('change', () => { p.solido = sc.checked; delete T.gerado; ed.json(); }); sol.append(sc, ' sólido');
+        const sol = el('label', 'chk', ''); const sc = el('input'); sc.type = 'checkbox'; sc.checked = !!p.solido; sc.disabled = travado; sc.addEventListener('change', () => { p.solido = sc.checked; delete T.gerado; ed.json(); }); sol.append(sc, ' sólido'); const au = el('label', 'chk', ''); const ac = el('input'); ac.type = 'checkbox'; ac.checked = !!p.auto; ac.disabled = travado; ac.title = 'Autotile: o desenho muda conforme os vizinhos iguais (bordas só onde acaba o terreno). Com imagem: folha 4×4, quadro = máscara N=1 L=2 S=4 O=8.'; ac.addEventListener('change', () => { p.auto = ac.checked; ed.json(); ed.redesenhar(); }); au.append(ac, ' auto');
         const im = el('input'); im.placeholder = 'imagem'; im.value = p.imagem || ''; im.style.width = '80px'; im.title = 'Nome de uma imagem importada (opcional)'; im.disabled = travado; im.addEventListener('change', () => { if (im.value.trim()) p.imagem = im.value.trim().slice(0, 40); else delete p.imagem; ed.json(); ed.redesenhar(); });
-        linha.append(cor, sol, im);
+        linha.append(cor, sol, au, im);
       } pal.append(linha);
     });
     g.append(pal);

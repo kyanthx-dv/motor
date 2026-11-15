@@ -27,6 +27,8 @@
       if (!Number.isInteger(k) || k < 0 || k > e.Tiles.paleta.length) throw new RangeError('tile ' + k + ' fora da paleta');
       e.Tiles.dados[i] = k; if (e.Tiles.gerado) colisores(scene, e); return true;
     },
+    // Autotile: máscara de vizinhos iguais (N=1, L=2, S=4, O=8) → 0..15. A imagem do tile (se houver) é uma folha 4×4 com o quadro = máscara.
+    mascara(T, c, r) { const k = T.dados[r * T.colunas + c], v = (cc, rr) => cc >= 0 && rr >= 0 && cc < T.colunas && rr < T.linhas && T.dados[rr * T.colunas + cc] === k; return (v(c, r - 1) ? 1 : 0) | (v(c + 1, r) ? 2 : 0) | (v(c, r + 1) ? 4 : 0) | (v(c - 1, r) ? 8 : 0); },
     colisores
   };
   C.Systems.tiles = function (scene) { for (const e of scene.query('Transform', 'Tiles')) if (!e.Tiles.gerado) colisores(scene, e); };
