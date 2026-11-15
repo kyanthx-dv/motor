@@ -8,7 +8,7 @@
   // Falha cedo, na criação, com mensagem clara (em vez de NaN dentro do loop do jogo).
   function validar(e) {
     const n = e.nome || e.id;
-    if (e.Transform) { num(e.Transform.x, n, 'Transform.x'); num(e.Transform.y, n, 'Transform.y'); }
+    if (e.Transform) { num(e.Transform.x, n, 'Transform.x'); num(e.Transform.y, n, 'Transform.y'); if (e.Transform.escala !== undefined && !(typeof e.Transform.escala === 'number' && isFinite(e.Transform.escala) && e.Transform.escala > 0 && e.Transform.escala <= 100)) throw new Error('entidade "' + n + '": Transform.escala precisa ser número maior que 0 (até 100)'); }
     if (e.Velocity) { num(e.Velocity.vx, n, 'Velocity.vx'); num(e.Velocity.vy, n, 'Velocity.vy'); }
     if (e.Controller) for (const k of ['aceleracao', 'velMax']) if (e.Controller[k] !== undefined) { num(e.Controller[k], n, 'Controller.' + k); if (e.Controller[k] <= 0) throw new Error('entidade "' + n + '": Controller.' + k + ' precisa ser maior que 0'); }
     if (e.Animacao && e.Animacao.animacoes) for (const nome in e.Animacao.animacoes) {

@@ -92,7 +92,7 @@
       lista.forEach((e, rank) => {
         const s = e.Sprite, t = e.Transform, b = e.Body || {}, id = 's' + e.id; vistos.add(id);
         const it = this._item(id, s.fixo ? this.ui : this.mundo); it.c.zIndex = rank; it.c.visible = !s.invisivel; it.c.alpha = Math.max(0, Math.min(1, (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1))); if (s.invisivel) return;
-        it.c.position.set(t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha, t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha); it.c.rotation = t.rot || 0;
+        it.c.position.set(t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha, t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha); it.c.rotation = t.rot || 0; it.c.scale.set(Number.isFinite(t.escala) && t.escala > 0 ? t.escala : 1);
         const img = s.imagem && this.assets && this.assets.get(s.imagem);
         if (img) {
           const fw = s.quadroW || img.width, fh = s.quadroH || img.height, k = s.escala || 1, a = e.Animacao || {}, tex = this._tex(s.imagem, a.quadro || 0, a.linha || 0, fw, fh);

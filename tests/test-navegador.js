@@ -541,6 +541,11 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await pa.selectOption('#an-atual', 'andar'); await pa.waitForTimeout(100); ok(await pa.evaluate(() => editor.cena.find('heroi').Animacao.atual === 'andar'), 'editor de animação: troca o clipe inicial');
     await pa.close();
   }
+  { // Transform.escala: desenho e área de clique crescem
+    const pe2 = await b.newPage(); await pe2.goto(url('editor/index') + '?abas=todas'); await pe2.waitForTimeout(500);
+    const r = await pe2.evaluate(() => { const e = editor.cena.create({ nome: 'grande', Transform: { x: 300, y: 200 }, Sprite: { w: 20, h: 20, cor: '#0f0' } }); editor.cena.flush(); const A = Core.CanvasRenderer.limitesDe(e); e.Transform.escala = 3; const B = Core.CanvasRenderer.limitesDe(e); return { a: A.hw, b: B.hw }; });
+    ok(r.a === 10 && r.b === 30, 'Transform.escala multiplica a área do objeto (' + r.a + ' → ' + r.b + ')'); await pe2.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

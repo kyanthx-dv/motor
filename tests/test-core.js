@@ -476,4 +476,8 @@ const nova=()=>new C.Engine();
   const er = E.compilarScripts(); ok(er.length === 1 && er[0].script === 'topo' && er[0].linha === 2, 'erro ao compilar traz a linha (' + JSON.stringify(er) + ')');
   E.passo(); E.events.flush(); ok(ev && ev.linha === 3, 'erro em atualizar traz a linha (' + JSON.stringify(ev) + ')');
 }
+{ // Transform.escala validada
+  const sc = new Core.Scene(); let erro = false; try { sc.create({ nome: 'a', Transform: { x: 0, y: 0, escala: 0 } }); } catch (x) { erro = true; }
+  ok(erro, 'Transform.escala <= 0 é rejeitada'); const e = sc.create({ nome: 'b', Transform: { x: 0, y: 0, escala: 2 }, Sprite: { w: 10, h: 10 } }); ok(e.Transform.escala === 2, 'Transform.escala válida é aceita');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
