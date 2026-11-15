@@ -14,7 +14,11 @@
   // Linha (1 = primeira do script) de um erro lançado dentro de um script, lida da pilha (sourceURL motor-script-NOME.js); null se não der.
   C.linhaScript = (x, nome) => { const m = x && typeof x.stack === 'string' && x.stack.match(new RegExp('motor-script-' + nome + '\\.js:(\\d+):(\\d+)')); return m ? Math.max(1, +m[1] - 2) : null; };
   // Configuração do joystick: vem do componente Joystick de uma entidade (objeto de cena, editável no inspetor); senão do antigo estado.joystick.
-  C.joystickDe = scene => { for (const e of scene.entities.values()) if (e.Joystick && typeof e.Joystick === 'object') return e.Joystick; return scene.estado.joystick; };
+  C.joystickDe = scene => { for (const e of scene.entities.values()) if (e.Joystick && typeof e.Joystick === 'object') {
+      const t = e.Transform, tm = scene.estado.tamanho || {}, W = tm.largura > 0 ? tm.largura : 800, H = tm.altura > 0 ? tm.altura : 450;
+      return t && (t.x || t.y) ? Object.assign({}, e.Joystick, { x: Math.max(0, Math.min(1, t.x / W)), y: Math.max(0, Math.min(1, t.y / H)) }) : e.Joystick;   // posição = onde o objeto está na cena
+    }
+    return scene.estado.joystick; };
   class Engine {
     constructor(opts = {}) {
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');

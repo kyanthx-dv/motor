@@ -520,8 +520,9 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     await pq.click('#e-joystick'); await pq.waitForTimeout(100);
     const j = await pq.evaluate(() => { const e = [...editor.cena.entities.values()].find(x => x.Joystick); return { tem: !!e, modo: e && e.Joystick.modo, sel: editor.sel === (e && e.id), cfg: Core.joystickDe(editor.cena).modo }; });
     ok(j.tem && j.modo === 'flutuante' && j.sel && j.cfg === 'flutuante', 'joystick: botão cria objeto de cena com componente Joystick (' + JSON.stringify(j) + ')');
-    await pq.evaluate(() => { const e = [...editor.cena.entities.values()].find(x => x.Joystick); editor.aplicar('Joystick', 'modo', 'fixo'); editor.aplicar('Joystick', 'x', 0.3); });
-    const cfg = await pq.evaluate(() => Core.joystickDe(editor.cena)); ok(cfg.modo === 'fixo' && cfg.x === 0.3, 'joystick: propriedades vêm do inspetor (' + JSON.stringify(cfg) + ')');
+    await pq.evaluate(() => { const e = [...editor.cena.entities.values()].find(x => x.Joystick); editor.aplicar('Joystick', 'modo', 'fixo'); editor.aplicar('Transform', 'x', 240); editor.aplicar('Transform', 'y', 225); });
+    const cfg = await pq.evaluate(() => Core.joystickDe(editor.cena)); ok(cfg.modo === 'fixo' && Math.abs(cfg.x - 0.3) < 0.001 && Math.abs(cfg.y - 0.5) < 0.001, 'joystick: propriedades vêm do inspetor (' + JSON.stringify(cfg) + ')');
+    ok(await pq.evaluate(() => { const e = [...editor.cena.entities.values()].find(x => x.Joystick), h = editor.escolher(e.Transform.x + 5, e.Transform.y - 5); return !!h && h.id === e.id; }), 'joystick: dá para clicar/arrastar na cena (marcador selecionável)');
     await pq.click('#e-joystick'); ok(await pq.evaluate(() => [...editor.cena.entities.values()].filter(x => x.Joystick).length === 1), 'joystick: só um por cena');
     const antes = await pq.evaluate(() => { editor.selecionar([...editor.cena.entities.values()].find(x => x.Sprite).id); return editor.renderer.selecionada; });
     await pq.waitForTimeout(150); const antes2 = await pq.evaluate(() => editor.renderer.selecionada);
