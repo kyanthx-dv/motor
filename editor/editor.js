@@ -104,9 +104,10 @@
 
   // ---- propriedades (só mostra o que a entidade já tem)
   const CAMPOS = {
-    Transform: [['x', 'num'], ['y', 'num']],
-    Body: [['forma', 'sel', ['circulo', 'retangulo']], ['raio', 'num'], ['w', 'num'], ['h', 'num'], ['massa', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['sensor', 'bool']],
-    Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['corSobre', 'cor'], ['corApertado', 'cor'], ['borda', 'cor'], ['larguraBorda', 'num'], ['arredondar', 'num'], ['sombra', 'bool'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['alinhar', 'sel', ['left', 'center', 'right']], ['fonte', 'txt'], ['fixo', 'bool'], ['imagem', 'txt'], ['quadroW', 'num'], ['quadroH', 'num'], ['escala', 'num'], ['espelhar', 'bool']],
+    Transform: [['x', 'num'], ['y', 'num'], ['rot', 'num']],
+    Body: [['forma', 'sel', ['circulo', 'retangulo', 'poligono']], ['raio', 'num'], ['w', 'num'], ['h', 'num'], ['massa', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['sensor', 'bool']],
+    Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['corSobre', 'cor'], ['corApertado', 'cor'], ['borda', 'cor'], ['larguraBorda', 'num'], ['arredondar', 'num'], ['cor2', 'cor'], ['gradiente', 'sel', ['vertical', 'horizontal']], ['opacidade', 'num'], ['sombra', 'bool'], ['sombraCor', 'cor'], ['sombraBlur', 'num'], ['sombraY', 'num'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['corTextoSobre', 'cor'], ['negrito', 'bool'], ['italico', 'bool'], ['alinhar', 'sel', ['left', 'center', 'right']], ['fonte', 'txt'], ['fixo', 'bool'], ['imagem', 'txt'], ['quadroW', 'num'], ['quadroH', 'num'], ['escala', 'num'], ['espelhar', 'bool']],
+    Botao: [['desativado', 'bool']],
     Controller: [['aceleracao', 'num'], ['velMax', 'num']]
   };
   function campo(rotulo, entrada) { const d = el('div', 'campo'), l = el('label', null, rotulo); entrada.id = 'f-' + rotulo + Math.random().toString(36).slice(2, 6); l.htmlFor = entrada.id; d.append(l, entrada); return d; }
@@ -119,14 +120,14 @@
       if (comp !== 'Transform') { const rm = el('button', 'mini', '✕'); rm.type = 'button'; rm.title = 'Remover ' + comp; rm.setAttribute('aria-label', 'Remover o componente ' + comp); rm.addEventListener('click', () => definir(comp, undefined)); cab.append(rm); }
       g.append(cab);
       for (const [k, tipo, op] of CAMPOS[comp]) {
-        if (!(k in e[comp])) continue; const v = e[comp][k]; let i;
-        if (tipo === 'sel') { i = el('select'); for (const o of op) { const x = el('option', null, o); x.value = o; i.append(x); } i.value = v; }
+        const v = e[comp][k], ausente = !(k in e[comp]); let i;   // propriedades que o objeto ainda não tem aparecem apagadas; preencher cria, esvaziar remove (volta ao padrão)
+        if (tipo === 'sel') { i = el('select'); const z = el('option', null, '(padrão)'); z.value = ''; i.append(z); for (const o of op) { const x = el('option', null, o); x.value = o; i.append(x); } i.value = ausente ? '' : v; }
         else if (tipo === 'bool') { i = el('input'); i.type = 'checkbox'; i.checked = !!v; i.style.width = 'auto'; }
-        else if (tipo === 'txt') { i = el('input'); i.value = v; }
-        else if (tipo === 'cor') { i = el('input'); if (/^#[0-9a-f]{6}$/i.test(v)) i.type = 'color'; i.value = v; }
-        else { i = el('input'); i.type = 'number'; i.step = 'any'; i.value = v; }
-        i.addEventListener('change', () => aplicar(comp, k, tipo === 'num' ? (i.value === '' ? NaN : +i.value) : tipo === 'bool' ? i.checked : i.value));
-        g.append(campo(k, i));
+        else if (tipo === 'txt') { i = el('input'); i.value = ausente ? '' : v; i.placeholder = '(padrão)'; }
+        else if (tipo === 'cor') { i = el('input'); if (!ausente && /^#[0-9a-f]{6}$/i.test(v)) i.type = 'color'; i.value = ausente ? '' : v; i.placeholder = '(padrão) ex.: #ff0000'; }
+        else { i = el('input'); i.type = 'number'; i.step = 'any'; i.value = ausente ? '' : v; i.placeholder = '(padrão)'; }
+        i.addEventListener('change', () => { const vazio = tipo === 'sel' || tipo === 'txt' || tipo === 'cor' ? i.value === '' : tipo === 'num' ? i.value === '' : false; if (vazio && ausente) return; aplicar(comp, k, vazio ? undefined : tipo === 'num' ? +i.value : tipo === 'bool' ? i.checked : i.value); });
+        const cp = campo(k, i); if (ausente) cp.classList.add('ausente'); g.append(cp);
       }
       box.append(g);
     }
@@ -183,9 +184,9 @@
   function ajustarDeslocamento(h) { const p = h.Pai && cena.get(h.Pai.id); if (p && p.Transform) { h.Pai.dx = h.Transform.x - p.Transform.x; h.Pai.dy = h.Transform.y - p.Transform.y; } }
   function aplicar(comp, k, valor) {
     const e = cena.get(sel); if (!e) return; const copia = JSON.parse(JSON.stringify(e));
-    if (comp) copia[comp][k] = valor; else copia[k] = valor;
+    if (valor === undefined && comp) delete copia[comp][k]; else if (comp) copia[comp][k] = valor; else copia[k] = valor;
     try { new C.Scene().create(copia); } catch (x) { msg(x.message, 'erro'); props(); return; }
-    if (comp) e[comp][k] = valor; else e[k] = valor;
+    if (valor === undefined && comp) delete e[comp][k]; else if (comp) e[comp][k] = valor; else e[k] = valor;
     if (comp === 'Transform') ajustarDeslocamento(e);
     msg('', ''); listar(); props(); redesenhar(); json();
   }

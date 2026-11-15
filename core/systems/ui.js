@@ -12,6 +12,7 @@
     }
     for (const e of scene.query('Botao', 'Transform', 'Sprite')) {
       const B = e.Botao, S = e.Sprite, px = S.fixo ? p.tx : p.x, py = S.fixo ? p.ty : p.y;
+      if (B.desativado) { B.sobre = false; B.apertado = false; continue; }   // botão desativado: sem hover nem clique
       const w = S.w ?? 100, h = S.h ?? 40;
       B.sobre = p.ativo !== false && px !== undefined && Math.abs(px - e.Transform.x) <= w / 2 && Math.abs(py - e.Transform.y) <= h / 2;
       B.apertado = !!(B.sobre && p.down);   // segurando o botão do mouse/dedo em cima: desenho usa corApertado

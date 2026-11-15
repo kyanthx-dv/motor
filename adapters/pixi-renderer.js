@@ -48,19 +48,19 @@
       const P = this.P, f = s.forma || b.forma || (s.raio || b.raio ? 'circulo' : 'retangulo'), raio = s.raio ?? b.raio ?? 10, w = s.w ?? b.w ?? 20, h = s.h ?? b.h ?? 20, B = e.Botao;
       const fill = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
       const pg = f === 'poligono' ? (s.pontos || b.pontos || []) : null;
-      const ch = [f, raio, w, h, fill, s.borda, s.larguraBorda, s.arredondar, pg && pg.join()].join('|');
+      const ch = [f, raio, w, h, fill, s.borda, s.larguraBorda, s.arredondar, pg && pg.join(), s.cor2, s.gradiente].join('|');
       if (ch === it.chave) return; it.chave = ch;
       if (!it.g) { it.g = new P.Graphics(); it.c.addChildAt(it.g, 0); } const g = it.g; g.clear();
       if (f === 'circulo' || f === 'anel') g.circle(0, 0, raio); else if (pg) g.poly(pg.flat()); else if (s.arredondar > 0) g.roundRect(-w / 2, -h / 2, w, h, Math.min(s.arredondar, w / 2, h / 2)); else g.rect(-w / 2, -h / 2, w, h);
       const lw = s.larguraBorda || 2;
       if (f === 'anel') g.stroke({ width: lw, ...cor(P, s.cor, '#fff') });
-      else { g.fill(cor(P, fill, '#ccc')); if (s.borda) g.stroke({ width: lw, ...cor(P, s.borda, '#fff') }); }
+      else { if (s.cor2 && !pg) { const gr = new P.FillGradient(s.gradiente === 'horizontal' ? { x: -w / 2, y: 0 } : { x: 0, y: -h / 2 }, s.gradiente === 'horizontal' ? { x: w / 2, y: 0 } : { x: 0, y: h / 2 }); gr.addColorStop(0, cor(P, fill, '#ccc').color); gr.addColorStop(1, cor(P, s.cor2, '#ccc').color); g.fill(gr); } else g.fill(cor(P, fill, '#ccc')); if (s.borda) g.stroke({ width: lw, ...cor(P, s.borda, '#fff') }); }
     }
-    _texto(it, s, w) {
+    _texto(it, s, w, sobre) {
       const P = this.P; if (!s.rotulo) { if (it.tx) it.tx.visible = false; return; }
-      const ch = [s.rotulo, s.corTexto, s.tamanhoTexto, s.fonte, s.alinhar].join('|');
+      const ch = [s.rotulo, s.corTexto, s.tamanhoTexto, s.fonte, s.alinhar, s.negrito, s.italico, s.corTextoSobre, sobre].join('|');
       if (!it.tx) { it.tx = new P.Text({ text: '' }); it.tx.anchor.set(0.5); it.c.addChild(it.tx); it.txChave = ''; }
-      if (ch !== it.txChave) { it.txChave = ch; it.tx.text = String(s.rotulo); it.tx.style = { fill: s.corTexto || '#fff', fontSize: s.tamanhoTexto || 14, fontWeight: '600', fontFamily: s.fonte || 'system-ui, sans-serif' }; }
+      if (ch !== it.txChave) { it.txChave = ch; it.tx.text = String(s.rotulo); it.tx.style = { fill: (sobre && s.corTextoSobre) || s.corTexto || '#fff', fontSize: s.tamanhoTexto || 14, fontWeight: s.negrito === false ? '400' : '600', fontStyle: s.italico ? 'italic' : 'normal', fontFamily: s.fonte || 'system-ui, sans-serif' }; }
       it.tx.visible = true; const al = s.alinhar; it.tx.anchor.x = al === 'left' ? 0 : al === 'right' ? 1 : 0.5; it.tx.x = al === 'left' ? -w / 2 + 8 : al === 'right' ? w / 2 - 8 : 0;
     }
     _tiles(sc, vistos) {
@@ -91,7 +91,7 @@
       const lista = sc.query('Transform', 'Sprite').sort((a, b) => (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id);
       lista.forEach((e, rank) => {
         const s = e.Sprite, t = e.Transform, b = e.Body || {}, id = 's' + e.id; vistos.add(id);
-        const it = this._item(id, s.fixo ? this.ui : this.mundo); it.c.zIndex = rank; it.c.visible = !s.invisivel; it.c.alpha = s.opacidade === undefined ? 1 : Math.max(0, Math.min(1, s.opacidade)); if (s.invisivel) return;
+        const it = this._item(id, s.fixo ? this.ui : this.mundo); it.c.zIndex = rank; it.c.visible = !s.invisivel; it.c.alpha = Math.max(0, Math.min(1, (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1))); if (s.invisivel) return;
         it.c.position.set(t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha, t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha); it.c.rotation = t.rot || 0;
         const img = s.imagem && this.assets && this.assets.get(s.imagem);
         if (img) {
@@ -99,10 +99,10 @@
           if (it.g) it.g.visible = false; if (!tex) return;
           tex.source.scaleMode = s.suavizar ? 'linear' : 'nearest';
           if (!it.sp) { it.sp = new P.Sprite(tex); it.sp.anchor.set(0.5); it.c.addChildAt(it.sp, 0); } it.sp.visible = true; it.sp.texture = tex;
-          it.sp.scale.set((s.espelhar ? -1 : 1) * k, k); it.sp.position.set(s.offX || 0, s.offY || 0); this._texto(it, s, fw * k); return;
+          it.sp.scale.set((s.espelhar ? -1 : 1) * k, k); it.sp.position.set(s.offX || 0, s.offY || 0); this._texto(it, s, fw * k, e.Botao && e.Botao.sobre); return;
         }
         if (it.sp) it.sp.visible = false; if (it.g) it.g.visible = true;
-        this._forma(it, s, b, e); this._texto(it, s, s.w ?? b.w ?? 20);
+        this._forma(it, s, b, e); this._texto(it, s, s.w ?? b.w ?? 20, e.Botao && e.Botao.sobre);
       });
       for (const [id, it] of this.itens) if (!vistos.has(id) && !lista.some(e => 's' + e.id === id)) { it.c.destroy({ children: true }); this.itens.delete(id); }
       for (const [id, it] of this.camadaTiles) if (!vistos.has(id)) { it.c.destroy({ children: true }); this.camadaTiles.delete(id); }
