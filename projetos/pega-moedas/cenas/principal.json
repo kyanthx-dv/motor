@@ -307,6 +307,21 @@
       "Script": {
         "nome": "gerador"
       }
+    },
+    {
+      "nome": "joystick",
+      "Transform": {
+        "x": 112,
+        "y": 351
+      },
+      "Joystick": {
+        "modo": "flutuante",
+        "visivel": true,
+        "raio": 56,
+        "zonaMorta": 0.12,
+        "zona": "tela"
+      },
+      "id": 8
     }
   ]
 }

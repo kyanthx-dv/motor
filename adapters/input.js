@@ -31,7 +31,7 @@
       ouvir(canvas, 'pointerdown', e => {
         if (this.ptId !== null) { e.preventDefault(); return; }       // 2º dedo no canvas é ignorado: não corrompe o estado do 1º
         this.ptId = e.pointerId; const p = this.local(e); this.atualizarPonteiro(p, true); this.pEdge = true;
-        if (e.pointerType === 'touch' && !this.joystick.ativo && this.podeJoystick(p)) { const j = this.joystick; j.ativo = true; j.id = e.pointerId; if (!j.fixo) { j.x0 = p.x; j.y0 = p.y; } j.x = p.x; j.y = p.y; j.dx = j.dy = 0; if (j.fixo) this._mover(p); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }
+        if (!this.joystick.ativo && this.podeJoystick(p)) { const j = this.joystick; j.ativo = true; j.id = e.pointerId; if (!j.fixo) { j.x0 = p.x; j.y0 = p.y; } j.x = p.x; j.y = p.y; j.dx = j.dy = 0; if (j.fixo) this._mover(p); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }
         e.preventDefault();
       });
       ouvir(canvas, 'pointermove', e => {
@@ -40,15 +40,15 @@
         const j = this.joystick; if (!j.ativo || e.pointerId !== j.id) return;
         this._mover(p);
       });
-      const fim = e => { if (e.pointerId !== this.ptId) return; const j = this.joystick; j.ativo = false; j.dx = j.dy = 0; j.id = null; this.ptId = null; this.pointer.down = false; };
+      const fim = e => { if (e.pointerId !== this.ptId) return; const j = this.joystick; j.ativo = false; j.dx = j.dy = 0; j.id = null; this.ptId = null; this.pointer.down = false; if (e.pointerType !== 'mouse') this._deixar = true; };   // dedo levantou: o 'sobre' dos botões some depois do quadro que viu o toque
       ouvir(canvas, 'pointerup', fim); ouvir(canvas, 'pointercancel', fim);
     }
     // Configuração do joystick virtual (vem da cena: estado.joystick). modo: 'flutuante' (nasce onde o dedo toca), 'fixo' (sempre na mesma posição) ou 'desligado'.
     configurar(c) {
-      const j = this.joystick; c = c || {}; const modo = ['flutuante', 'fixo', 'desligado'].includes(c.modo) ? c.modo : 'flutuante', n = (v, pad, a, b) => (Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : pad);
+      const j = this.joystick; const semConfig = !c; c = c || {}; const modo = semConfig ? 'desligado' : ['flutuante', 'fixo', 'desligado'].includes(c.modo) ? c.modo : 'flutuante', n = (v, pad, a, b) => (Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : pad);
       j.modo = modo; j.visivel = c.visivel !== false; j.raio = n(c.raio, 56, 20, 200); j.zonaMorta = n(c.zonaMorta, 0.12, 0, 0.9); j.zona = ['tela', 'esquerda', 'direita'].includes(c.zona) ? c.zona : 'tela'; j.fx = n(c.x, 0.14, 0, 1); j.fy = n(c.y, 0.78, 0, 1);
       j.fixo = modo === 'fixo'; if (modo === 'desligado' && j.ativo) { j.ativo = false; j.dx = j.dy = 0; j.id = null; }
-      if (j.fixo) { const r = this.canvas.getBoundingClientRect(); j.x0 = r.width * j.fx; j.y0 = r.height * j.fy; if (!j.ativo) { j.x = j.x0; j.y = j.y0; } }
+      if (modo !== 'desligado' && !j.ativo) { const r = this.canvas.getBoundingClientRect(); j.x0 = r.width * j.fx; j.y0 = r.height * j.fy; j.x = j.x0; j.y = j.y0; }   // parado: base na posição configurada (também no flutuante)
     }
     podeJoystick(p) {
       const j = this.joystick; if (j.modo === 'desligado') return false; const r = this.canvas.getBoundingClientRect();
@@ -81,7 +81,7 @@
     }
     poll() {
       const s = { keys: new Set(this.keys), keysPressed: new Set(this.keysEdge), down: new Set(this.down), pressed: new Set(this.edge), released: new Set(this.soltou), axes: this.eixos(), joystick: this.dadosJoystick(), pointer: { ...this.pointer, pressed: this.pEdge } };
-      this.pEdge = false; this.edge.clear(); this.soltou.clear(); this.keysEdge.clear(); return s;
+      this.pEdge = false; if (this._deixar) { this.pointer.ativo = false; this._deixar = false; } this.edge.clear(); this.soltou.clear(); this.keysEdge.clear(); return s;
     }
     destruir() {
       for (const { alvo, tipo, fn } of this.listeners) alvo.removeEventListener(tipo, fn);

@@ -29,6 +29,7 @@
 **v1.4 — Aparência e primeiros passos do editor**
 - Tema Scratch dos blocos (referência: cores sólidas, encaixe, valores em pílula, blocos em C para se/repetir). Exige mexer na estrutura dos blocos, não só no CSS.
 - Temas do editor: seletor com temas prontos + arquivo JSON importável. Um tema só muda variáveis de CSS de uma lista permitida (cores, fontes), nunca CSS livre nem JavaScript. Loja de temas: só com contas e servidor, junto com a rede social do app (depois do v2.0).
+- Scripts de cena: script que roda sem precisar de um objeto (ideia do dono; hoje precisa de um objeto com Script).
 - Tutorial interativo de 5 minutos dentro do editor; galeria de mini-jogos.
 - Testar tudo no celular real.
 
