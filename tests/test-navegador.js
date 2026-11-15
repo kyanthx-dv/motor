@@ -131,7 +131,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.evaluate(() => editor.parar());
   await p.locator('#bl .bloco:not(.hat)', { hasText: 'mudar x em' }).locator('button[aria-label="Remover bloco"]').click(); await p.waitForTimeout(100);
   ok(await p.evaluate(() => !/Transform\.x \+=/.test(document.getElementById('sc-fonte').value)), 'remover bloco atualiza o código');
-  await p.click('#sc-conv'); ok(await p.evaluate(() => !document.getElementById('sc-fonte').readOnly && !editor.cena.estado.scripts.contar.blocos), 'converter em código libera a edição do texto');
+  await p.click('#sc-vercod'); await p.click('#sc-conv'); ok(await p.evaluate(() => !document.getElementById('sc-fonte').readOnly && !editor.cena.estado.scripts.contar.blocos), 'converter em código libera a edição do texto');
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'editor com blocos sem rolagem horizontal');
   await p.goto(url('index')); await p.waitForTimeout(100); await p.evaluate(() => { window.AudioContext = undefined; window.webkitAudioContext = undefined; }); await p.addScriptTag({ path: path.resolve(__dirname, '..', 'adapters/audio.js') });
   const audioIndisponivel = await p.evaluate(() => !new Core.Audio().disponivel);
@@ -573,6 +573,13 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const info = await pc.evaluate(() => ({ pop: !document.querySelector('.cod-pop').hidden && [...document.querySelectorAll('.cod-it')].map(x => x.textContent).join(), cores: document.querySelectorAll('.cod-hl i.k').length > 0 && document.querySelectorAll('.cod-hl i.c').length > 0, linhas: document.querySelector('.cod-n').textContent.trim().split('\n').length > 5 }));
     ok(info.pop === 'ler,definir,somar' && info.cores && info.linhas, 'editor de código: autocompletar ctx.vars., cores e números de linha (' + JSON.stringify(info) + ')');
     await pc.keyboard.press('Enter'); const ap = await pc.evaluate(() => document.getElementById('sc-fonte').value.slice(-12)); ok(ap.endsWith('ctx.vars.ler'), 'Enter aceita a sugestão (' + ap + ')'); await pc.close();
+  }
+  { // blocos: código gerado escondido por padrão, com botão para ver
+    const pb = await b.newPage({ viewport: { width: 1300, height: 800 } }); await pb.goto(url('editor/index') + '?abas=todas'); await pb.waitForTimeout(500);
+    await pb.click('[data-centro="scripts"]'); await pb.fill('#sc-nome', 'bb'); await pb.click('#sc-novo-b'); await pb.waitForTimeout(300);
+    const oculto = await pb.evaluate(() => ({ cod: document.querySelector('.cod').hidden, conv: document.getElementById('sc-conv').hidden }));
+    await pb.click('#sc-vercod'); const visivel = await pb.evaluate(() => ({ cod: document.querySelector('.cod').hidden, conv: document.getElementById('sc-conv').hidden }));
+    ok(oculto.cod && oculto.conv && !visivel.cod && !visivel.conv, 'blocos: código gerado escondido; "ver código gerado" mostra (' + JSON.stringify([oculto, visivel]) + ')'); await pb.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
