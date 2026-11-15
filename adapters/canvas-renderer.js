@@ -8,7 +8,7 @@
   class CanvasRenderer {
     // Caixa aproximada de uma entidade (usada pelo depurador para clicar e destacar). Prefere a imagem do Sprite, depois o Body.
     static limitesDe(e) {
-      const b = e.Body, s = e.Sprite || {};
+      const b = e.Body, s = e.Sprite || {}; if (e.Joystick && !e.Sprite && !b) { const r = Number.isFinite(e.Joystick.raio) ? e.Joystick.raio : 56; return { hw: r, hh: r, ox: 0, oy: 0 }; }
       if (e.Tiles && !e.Sprite && !e.Body) { const T = e.Tiles; return { hw: T.colunas * T.tamanho / 2, hh: T.linhas * T.tamanho / 2, ox: T.colunas * T.tamanho / 2, oy: T.linhas * T.tamanho / 2 }; }
       if (s.imagem) { const k = s.escala || 1; return { hw: (s.quadroW || 32) * k / 2, hh: (s.quadroH || 32) * k / 2, ox: s.offX || 0, oy: s.offY || 0 }; }
       if (b && b.forma === 'poligono') { let m = 1; for (const q of b.pontos) m = Math.max(m, Math.abs(q[0]), Math.abs(q[1])); return { hw: m, hh: m, ox: 0, oy: 0 }; }
@@ -128,6 +128,10 @@
       if (!X) { mapas(false);
       for (const e of todos) if (V || !e.Sprite.fixo) pintar(e, cx, cy, V ? 1e9 : L / z / 2, V ? 1e9 : A / z / 2);
       mapas(true); }
+      if (!scene.jogando) for (const e of scene.entities.values()) if (e.Joystick && e.Transform) {   // marcador do joystick só no editor
+        const r = Number.isFinite(e.Joystick.raio) ? e.Joystick.raio : 56; g.save(); g.globalAlpha = 0.7; g.strokeStyle = '#7dd3fc'; g.fillStyle = 'rgba(125,211,252,.15)'; g.lineWidth = 2 / z; g.beginPath(); g.arc(e.Transform.x, e.Transform.y, r, 0, 6.2832); g.fill(); g.stroke(); g.beginPath(); g.arc(e.Transform.x, e.Transform.y, r * 0.4, 0, 6.2832); g.stroke();
+        g.fillStyle = '#7dd3fc'; g.font = (12 / z) + 'px system-ui,sans-serif'; g.textAlign = 'center'; g.fillText('joystick (' + (e.Joystick.modo || 'flutuante') + ')', e.Transform.x, e.Transform.y - r - 6 / z); g.restore();
+      }
       if (this.selecionada != null) {
         const e = scene.get(this.selecionada);
         if (e && e.Transform) {
