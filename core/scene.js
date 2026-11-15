@@ -72,6 +72,8 @@
     const dx = px - e.Transform.x, dy = py - e.Transform.y;
     return circ ? dx * dx + dy * dy <= r * r : Math.abs(dx) <= w / 2 && Math.abs(dy) <= h / 2;
   };
+  // Texto puro: tem rótulo e nenhuma propriedade de forma/cor → desenha só o texto (sem o retângulo padrão atrás).
+  C.soTexto = e => { const s = e.Sprite; return !!(s && s.rotulo && s.cor === undefined && s.cor2 === undefined && !s.borda && s.forma === undefined && s.w === undefined && s.h === undefined && s.raio === undefined && !s.imagem && !e.Body); };
   class Scene {
     constructor() { this.entities = new Map(); this.nextId = 1; this.estado = {}; this.efeitos = null; this._remover = new Set(); this.jogando = false; }
     create(dados = {}) {

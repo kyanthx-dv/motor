@@ -11,6 +11,7 @@
       const L = CanvasRenderer.limitesBase(e), k = e.Transform && Number.isFinite(e.Transform.escala) && e.Transform.escala > 0 ? e.Transform.escala : 1; return k === 1 ? L : { hw: L.hw * k, hh: L.hh * k, ox: L.ox * k, oy: L.oy * k };
     }
     static limitesBase(e) {
+      if (C.soTexto(e)) { const t = e.Sprite.tamanhoTexto || 14, w = Math.max(t, String(e.Sprite.rotulo).length * t * 0.3); return { hw: w, hh: t * 0.65, ox: 0, oy: 0 }; }   // texto puro: área aproximada do texto
       const b = e.Body, s = e.Sprite || {}; if (e.Joystick && !e.Sprite && !b) { const r = Number.isFinite(e.Joystick.raio) ? e.Joystick.raio : 56; return { hw: r, hh: r, ox: 0, oy: 0 }; }
       if (e.Tiles && !e.Sprite && !e.Body) { const T = e.Tiles; return { hw: T.colunas * T.tamanho / 2, hh: T.linhas * T.tamanho / 2, ox: T.colunas * T.tamanho / 2, oy: T.linhas * T.tamanho / 2 }; }
       if (s.imagem) { const k = s.escala || 1; return { hw: (s.quadroW || 32) * k / 2, hh: (s.quadroH || 32) * k / 2, ox: s.offX || 0, oy: s.offY || 0 }; }
@@ -119,7 +120,7 @@
         g.lineWidth = s.larguraBorda || 2; g.beginPath();
         if (f === 'circulo' || f === 'anel') g.arc(x, y, raio, 0, Math.PI * 2); else if (pg) { pg.forEach((q, i) => i ? g.lineTo(x + q[0], y + q[1]) : g.moveTo(x + q[0], y + q[1])); g.closePath(); } else if (s.arredondar > 0 && g.roundRect) g.roundRect(x - w / 2, y - h / 2, w, h, Math.min(s.arredondar, w / 2, h / 2)); else g.rect(x - w / 2, y - h / 2, w, h);
         if (f === 'anel') { g.strokeStyle = s.cor || '#fff'; g.stroke(); }
-        else { const B = e.Botao; let pin = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
+        else { const B = e.Botao; let pin = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || (C.soTexto(e) ? 'rgba(0,0,0,0)' : '#ccc');   // texto puro: sem fundo
           if (s.cor2 && !pg) { const hz = s.gradiente === 'horizontal', gr = hz ? g.createLinearGradient(x - hx, 0, x + hx, 0) : g.createLinearGradient(0, y - hy, 0, y + hy); gr.addColorStop(0, pin); gr.addColorStop(1, s.cor2); pin = gr; }   // gradiente cor → cor2
           g.fillStyle = pin;
           if (s.sombra && !this.simples) { g.shadowColor = s.sombraCor || 'rgba(0,0,0,.45)'; g.shadowBlur = (Number.isFinite(s.sombraBlur) ? s.sombraBlur : 8) * this.dpr; g.shadowOffsetY = (Number.isFinite(s.sombraY) ? s.sombraY : 3) * this.dpr; }

@@ -46,7 +46,7 @@
     _item(id, pai) { let it = this.itens.get(id); if (!it) { it = { c: new this.P.Container(), g: null, sp: null, tx: null, chave: '', pai: null }; this.itens.set(id, it); } if (it.pai !== pai) { pai.addChild(it.c); it.pai = pai; } return it; }
     _forma(it, s, b, e) {
       const P = this.P, f = s.forma || b.forma || (s.raio || b.raio ? 'circulo' : 'retangulo'), raio = s.raio ?? b.raio ?? 10, w = s.w ?? b.w ?? 20, h = s.h ?? b.h ?? 20, B = e.Botao;
-      const fill = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || '#ccc';
+      const fill = (B && B.apertado && (s.corApertado || s.corSobre)) || (B && B.sobre && s.corSobre) || s.cor || (C.soTexto(e) ? 'rgba(0,0,0,0)' : '#ccc');
       const pg = f === 'poligono' ? (s.pontos || b.pontos || []) : null;
       const ch = [f, raio, w, h, fill, s.borda, s.larguraBorda, s.arredondar, pg && pg.join(), s.cor2, s.gradiente].join('|');
       if (ch === it.chave) return; it.chave = ch;
