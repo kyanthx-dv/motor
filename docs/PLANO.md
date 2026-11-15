@@ -23,7 +23,7 @@
 - Exportar minificado (dificulta cópia do código; não impede — o código chega ao jogador de qualquer jeito).
 
 **v1.3 — Conteúdo**
-- Editor de animação ✅ (clipes por spritesheet, pré-visualização no inspetor), escala no Transform, camadas de tiles múltiplas e autotile.
+- Editor de animação ✅ (clipes por spritesheet, pré-visualização no inspetor), escala no Transform ✅ (visual; física não muda), camadas de tiles múltiplas e autotile.
 - Blocos/modelos prontos: diálogo, inventário, vida, menu.
 
 **v2.0 — App e plugins**
