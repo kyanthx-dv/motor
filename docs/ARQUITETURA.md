@@ -275,3 +275,7 @@ Botão "Exportar jogo (.html)" (aba Projetos): `EditorExportar.gerar()` junta n�
 
 ## 49. Estilo de botões e inspetor completo
 `Sprite`: `cor2` + `gradiente` ('vertical'|'horizontal'), `opacidade` (0–1), `sombra` com `sombraCor`/`sombraBlur`/`sombraY`, `negrito` (padrão sim), `italico`, `corTextoSobre`, além do que já havia (`arredondar`, `borda`, `larguraBorda`, `corSobre`, `corApertado`, `fonte`, `tamanhoTexto`, `alinhar`). `Botao.desativado`: sem hover nem clique e desenhado a 45% de opacidade. Canvas 2D e WebGL desenham tudo isso (no WebGL ainda sem sombra). **Inspetor:** agora mostra todas as propriedades dos componentes do objeto, inclusive as que ele ainda não tem (apagadas, "(padrão)"): preencher cria, esvaziar remove. `Transform.rot` (radianos) e `Body.forma = poligono` aparecem no inspetor.
+
+## 50. Joystick como objeto de cena
+
+O joystick virtual é o componente `Joystick` de uma entidade (botão **+ Joystick** do editor; um por cena): `modo` (flutuante/fixo/desligado), `visivel`, `x`/`y` (posição do fixo, 0–1), `raio`, `zonaMorta`, `zona`. Tudo editável no inspetor. `Core.joystickDe(scene)` escolhe a configuração: o componente, ou o antigo `estado.joystick` (projetos antigos continuam funcionando). Os scripts leem `ctx.input.joystick` como antes. Durante o Play a caixa de seleção do editor não é desenhada.

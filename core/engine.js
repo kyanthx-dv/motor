@@ -13,6 +13,8 @@
   C.VERSAO = '1.0.0';   // versão do motor (aparece no editor e em ctx.engine.versao)
   // Linha (1 = primeira do script) de um erro lançado dentro de um script, lida da pilha (sourceURL motor-script-NOME.js); null se não der.
   C.linhaScript = (x, nome) => { const m = x && typeof x.stack === 'string' && x.stack.match(new RegExp('motor-script-' + nome + '\\.js:(\\d+):(\\d+)')); return m ? Math.max(1, +m[1] - 2) : null; };
+  // Configuração do joystick: vem do componente Joystick de uma entidade (objeto de cena, editável no inspetor); senão do antigo estado.joystick.
+  C.joystickDe = scene => { for (const e of scene.entities.values()) if (e.Joystick && typeof e.Joystick === 'object') return e.Joystick; return scene.estado.joystick; };
   class Engine {
     constructor(opts = {}) {
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
@@ -86,7 +88,7 @@
       this.scene.jogando = true;   // fronteira pública: testes e replays
       const ctx = this.ctx; ctx.dt = dt;
       ctx.tela = this.renderer ? { largura: this.renderer.largura, altura: this.renderer.altura } : { largura: 800, altura: 450 };
-      if (this.input && this.input.configurar) this.input.configurar(this.scene.estado.joystick);
+      if (this.input && this.input.configurar) this.input.configurar(C.joystickDe(this.scene));
       ctx.input = this.input ? this.input.poll() : SEM_INPUT();
       for (const e of this.scene.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; }
       this._emPasso = true;

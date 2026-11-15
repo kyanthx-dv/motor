@@ -19,7 +19,7 @@
   const sincronizar = () => { for (const e of cena.query('Transform')) { e.Transform.px = e.Transform.x; e.Transform.py = e.Transform.y; } };
   const redesenhar = () => { sujo = true; };
   function obsTexto() { const n = $('obs'); if (!n) return; const t = engine.rodando ? Object.entries(engine.observados || {}).map(([k, v]) => k + ' = ' + v).join('  ·  ') : ''; if (n.textContent !== t) n.textContent = t; n.hidden = !t; }
-  function loop() { obsTexto(); if (sujo && !engine.emWorker) { sujo = false; if (!engine.rodando && C.Systems.hierarquia) C.Systems.hierarquia(cena); sincronizar(); renderer.selecionada = sel; renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
+  function loop() { obsTexto(); { const vis = engine.rodando ? null : sel; renderer.selecionada = vis; if (gl) gl.selecionada = vis; } if (sujo && !engine.emWorker) { sujo = false; if (!engine.rodando && C.Systems.hierarquia) C.Systems.hierarquia(cena); sincronizar(); renderer.debug = $('c-col').checked; renderer.desenhar(cena, 0, engine); } requestAnimationFrame(loop); }
   new ResizeObserver(redesenhar).observe(tela);   // registrado depois do observer do renderer: ele redimensiona primeiro
 
   const msg = (t, tipo) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (tipo || ''); };
@@ -81,6 +81,7 @@
   function nomeLivre(base) { let nome = base, n = 2; while (cena.find(nome)) nome = base + ' ' + n++; return nome; }
   function criar() { const e = cena.create({ nome: nomeLivre('objeto'), Transform: { x: 400, y: 225 }, Body: { forma: 'circulo', raio: 18, massa: 1, elasticidade: 0.4 }, Sprite: { forma: 'circulo', raio: 18, cor: '#a78bfa' } }); selecionar(e.id); msg('Objeto criado.', 'ok'); json(); }
   function criarTexto() { const e = cena.create({ nome: nomeLivre('texto'), Transform: { x: 20, y: 20 }, Sprite: { fixo: true, rotulo: 'Texto', corTexto: '#ffffff', tamanhoTexto: 24, alinhar: 'center', fonte: 'system-ui' } }); selecionar(e.id); msg('Texto criado.', 'ok'); json(); }
+  function criarJoystick() { if ([...cena.entities.values()].some(x => x.Joystick)) return msg('Já existe um Joystick na cena (só um por cena).', 'erro'); const e = cena.create({ nome: nomeLivre('joystick'), Transform: { x: 0, y: 0 }, Joystick: { modo: 'flutuante', visivel: true, x: 0.14, y: 0.78, raio: 56, zonaMorta: 0.12, zona: 'tela' } }); selecionar(e.id); msg('Joystick criado: ajuste modo, posição e raio no inspetor.', 'ok'); json(); }
   function criarBotao() { const e = cena.create({ nome: nomeLivre('botao'), Transform: { x: 400, y: 225 }, Sprite: { fixo: true, forma: 'retangulo', w: 160, h: 48, rotulo: 'Botão', cor: '#2563eb', corSobre: '#3b82f6', corApertado: '#1d4ed8', borda: '#93c5fd', larguraBorda: 2, arredondar: 10, sombra: true, corTexto: '#ffffff', tamanhoTexto: 18, alinhar: 'center', fonte: 'system-ui' }, Botao: { acao: {} } }); selecionar(e.id); msg('Botão criado.', 'ok'); json(); }
   function duplicar() { const e = cena.get(sel); if (!e) return; const d = JSON.parse(JSON.stringify(e)); delete d.id; d.nome = nomeLivre((e.nome || 'objeto') + ' cópia'); d.Transform.x += 24; d.Transform.y += 24; const novo = cena.create(d); selecionar(novo.id); msg('Objeto duplicado.', 'ok'); json(); }
   function remover() { if (sel == null || !cena.get(sel)) return; cena.destroy(sel); cena.flush(); sel = null; listar(); props(); redesenhar(); atualizarAcoes(); msg('Objeto removido.', 'ok'); json(); }
@@ -122,6 +123,7 @@
     Body: [['forma', 'sel', ['circulo', 'retangulo', 'poligono']], ['raio', 'num'], ['w', 'num'], ['h', 'num'], ['massa', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['sensor', 'bool']],
     Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['corSobre', 'cor'], ['corApertado', 'cor'], ['borda', 'cor'], ['larguraBorda', 'num'], ['arredondar', 'num'], ['cor2', 'cor'], ['gradiente', 'sel', ['vertical', 'horizontal']], ['opacidade', 'num'], ['sombra', 'bool'], ['sombraCor', 'cor'], ['sombraBlur', 'num'], ['sombraY', 'num'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['corTextoSobre', 'cor'], ['negrito', 'bool'], ['italico', 'bool'], ['alinhar', 'sel', ['left', 'center', 'right']], ['fonte', 'txt'], ['fixo', 'bool'], ['imagem', 'txt'], ['quadroW', 'num'], ['quadroH', 'num'], ['escala', 'num'], ['espelhar', 'bool']],
     Botao: [['desativado', 'bool']],
+    Joystick: [['modo', 'sel', ['flutuante', 'fixo', 'desligado']], ['visivel', 'bool'], ['x', 'num'], ['y', 'num'], ['raio', 'num'], ['zonaMorta', 'num'], ['zona', 'sel', ['tela', 'esquerda', 'direita']]],
     Controller: [['aceleracao', 'num'], ['velMax', 'num']]
   };
   function campo(rotulo, entrada) { const d = el('div', 'campo'), l = el('label', null, rotulo); entrada.id = 'f-' + rotulo + Math.random().toString(36).slice(2, 6); l.htmlFor = entrada.id; d.append(l, entrada); return d; }
@@ -232,7 +234,7 @@
     try { C.Serializer.deJSON(cena, JSON.parse($('json').value)); msg('Cena carregada.', 'ok'); } catch (x) { msg('Não carregou (a cena atual foi mantida): ' + x.message, 'erro'); return; }
     selecionar(sel); variaveis(); redesenhar(); json();
   });
-  $('e-criar').addEventListener('click', criar); $('e-texto').addEventListener('click', criarTexto); $('e-botao').addEventListener('click', criarBotao); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
+  $('e-criar').addEventListener('click', criar); $('e-texto').addEventListener('click', criarTexto); $('e-botao').addEventListener('click', criarBotao); $('e-joystick').addEventListener('click', criarJoystick); $('e-duplicar').addEventListener('click', duplicar); $('e-remover').addEventListener('click', remover);
   $('e-play').addEventListener('click', jogar); $('e-parar').addEventListener('click', parar); $('e-jogar').addEventListener('click', jogar); $('e-sair-jogar').addEventListener('click', parar); $('e-desfazer').addEventListener('click', desfazer); $('e-refazer').addEventListener('click', refazer);
   document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey || ev.target.closest?.('input,textarea') || ev.target.matches('select') || ev.target.isContentEditable) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
   // Exemplo pronto vira um projeto novo (nunca sobrescreve o seu).

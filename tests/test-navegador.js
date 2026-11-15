@@ -515,6 +515,21 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     ok(st.rod && st.passos > 0, 'jogo exportado em pasta inicia e roda (' + JSON.stringify(st) + ')'); ok(st.render === 'webgl' && nomes.includes('pixi.min.js'), 'exportado em pasta usa WebGL quando escolhido nos gráficos (' + st.render + ')');
     await pj2.close(); await pe.close(); srv.close(); srv2.close();
   }
+  { // joystick como objeto de cena + caixa de seleção some no Play
+    const pq = await b.newPage(); await pq.goto(url('editor/index') + '?abas=todas'); await pq.waitForTimeout(500);
+    await pq.click('#e-joystick'); await pq.waitForTimeout(100);
+    const j = await pq.evaluate(() => { const e = [...editor.cena.entities.values()].find(x => x.Joystick); return { tem: !!e, modo: e && e.Joystick.modo, sel: editor.sel === (e && e.id), cfg: Core.joystickDe(editor.cena).modo }; });
+    ok(j.tem && j.modo === 'flutuante' && j.sel && j.cfg === 'flutuante', 'joystick: botão cria objeto de cena com componente Joystick (' + JSON.stringify(j) + ')');
+    await pq.evaluate(() => { const e = [...editor.cena.entities.values()].find(x => x.Joystick); editor.aplicar('Joystick', 'modo', 'fixo'); editor.aplicar('Joystick', 'x', 0.3); });
+    const cfg = await pq.evaluate(() => Core.joystickDe(editor.cena)); ok(cfg.modo === 'fixo' && cfg.x === 0.3, 'joystick: propriedades vêm do inspetor (' + JSON.stringify(cfg) + ')');
+    await pq.click('#e-joystick'); ok(await pq.evaluate(() => [...editor.cena.entities.values()].filter(x => x.Joystick).length === 1), 'joystick: só um por cena');
+    const antes = await pq.evaluate(() => { editor.selecionar([...editor.cena.entities.values()].find(x => x.Sprite).id); return editor.renderer.selecionada; });
+    await pq.waitForTimeout(150); const antes2 = await pq.evaluate(() => editor.renderer.selecionada);
+    await pq.evaluate(() => editor.play()); await pq.waitForTimeout(250); const durante = await pq.evaluate(() => editor.renderer.selecionada);
+    await pq.evaluate(() => editor.parar()); await pq.waitForTimeout(250); const depois = await pq.evaluate(() => editor.renderer.selecionada);
+    ok(antes2 != null && durante == null && depois != null, 'caixa de seleção some durante o Play e volta ao parar (' + [antes2, durante, depois].join(',') + ')');
+    await pq.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
