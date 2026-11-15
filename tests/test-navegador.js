@@ -546,6 +546,11 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const r = await pe2.evaluate(() => { const e = editor.cena.create({ nome: 'grande', Transform: { x: 300, y: 200 }, Sprite: { w: 20, h: 20, cor: '#0f0' } }); editor.cena.flush(); const A = Core.CanvasRenderer.limitesDe(e); e.Transform.escala = 3; const B = Core.CanvasRenderer.limitesDe(e); return { a: A.hw, b: B.hw }; });
     ok(r.a === 10 && r.b === 30, 'Transform.escala multiplica a área do objeto (' + r.a + ' → ' + r.b + ')'); await pe2.close();
   }
+  { // texto puro não desenha o retângulo cinza atrás
+    const pt = await b.newPage(); await pt.goto(url('editor/index') + '?abas=todas'); await pt.waitForTimeout(500);
+    const r = await pt.evaluate(() => { const a = editor.cena.create({ nome: 't1', Transform: { x: 5, y: 5 }, Sprite: { rotulo: 'Oi' } }), c = editor.cena.create({ nome: 't2', Transform: { x: 5, y: 5 }, Sprite: { rotulo: 'Oi', cor: '#f00' } }); return { puro: Core.soTexto(a), comCor: Core.soTexto(c) }; });
+    ok(r.puro === true && r.comCor === false, 'texto puro (só rótulo) fica sem fundo; com cor mantém o fundo (' + JSON.stringify(r) + ')'); await pt.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
