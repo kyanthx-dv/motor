@@ -17,7 +17,7 @@
     $('n-out').textContent = itens.length ? '(' + itens.length + ')' : ''; ol.scrollTop = ol.scrollHeight;
   }
   ed.engine.events.on('saida', d => add(d.texto, d.nivel === 'erro' ? 'erro' : 'info'));
-  ed.engine.events.on('erro-script', d => add('Erro no script "' + d.script + '" (' + d.fase + '): ' + d.mensagem, 'erro'));
+  ed.engine.events.on('erro-script', d => add('Erro no script "' + d.script + '"' + (d.linha ? ' linha ' + d.linha : '') + ' (' + d.fase + '): ' + d.mensagem, 'erro'));
   (function acompanhar() { if (ed.engine.rodando !== rodou) { rodou = ed.engine.rodando; const li = { h: hora(), texto: rodou ? '▶ Play' : '■ Parado', tipo: 'sis' }; itens.push(li); desenhar(); } requestAnimationFrame(acompanhar); })();
   $('out-limpar').addEventListener('click', () => { itens.length = 0; desenhar(); }); $('out-erros').addEventListener('change', desenhar);
   // valores do bloco "observar valor": ao vivo no Output e, em tela cheia, no canto da tela

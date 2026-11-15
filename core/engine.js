@@ -11,6 +11,8 @@
   };
   const SEM_INPUT = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false }, joystick: { ativo: false, dx: 0, dy: 0, forca: 0, angulo: 0, modo: 'desligado' } });
   C.VERSAO = '1.0.0';   // versão do motor (aparece no editor e em ctx.engine.versao)
+  // Linha (1 = primeira do script) de um erro lançado dentro de um script, lida da pilha (sourceURL motor-script-NOME.js); null se não der.
+  C.linhaScript = (x, nome) => { const m = x && typeof x.stack === 'string' && x.stack.match(new RegExp('motor-script-' + nome + '\\.js:(\\d+):(\\d+)')); return m ? Math.max(1, +m[1] - 2) : null; };
   class Engine {
     constructor(opts = {}) {
       if (!C.Scene || !C.Events || !C.Variaveis) throw new Error('Core: carregue events.js, scene.js e variaveis.js antes de engine.js');
@@ -108,9 +110,9 @@
           if (!C.Variaveis.NOME.test(nome)) throw new Error('nome de script inválido');
           if (this.scripts[nome]) throw new Error('já existe um script com esse nome no código do jogo');
           const f = fontes[nome]; if (!f || typeof f.fonte !== 'string') throw new Error('script sem "fonte" (texto)');
-          this.scripts[nome] = new Function(f.fonte + '\n;return { iniciar: typeof iniciar === "function" ? iniciar : undefined, atualizar: typeof atualizar === "function" ? atualizar : undefined, eventos: typeof eventos === "object" && eventos ? eventos : undefined };')();
+          this.scripts[nome] = new Function(f.fonte + '\n;return { iniciar: typeof iniciar === "function" ? iniciar : undefined, atualizar: typeof atualizar === "function" ? atualizar : undefined, eventos: typeof eventos === "object" && eventos ? eventos : undefined };\n//# sourceURL=motor-script-' + nome + '.js')();
           this._compilados.push(nome);
-        } catch (x) { erros.push({ script: nome, mensagem: String(x && x.message || x) }); if (typeof console !== 'undefined') console.warn('[Core] script "' + nome + '" não foi compilado: ' + (x && x.message || x)); }
+        } catch (x) { erros.push({ script: nome, mensagem: String(x && x.message || x), linha: C.linhaScript(x, nome) }); if (typeof console !== 'undefined') console.warn('[Core] script "' + nome + '" não foi compilado: ' + (x && x.message || x)); }
       }
       return erros;
     }

@@ -469,4 +469,11 @@ const nova=()=>new C.Engine();
  const b1=mk(true);e.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:100,y:100,tx:100,ty:100,down:true,pressed:true,ativo:true}})};
  e.passo();ok(cl===0&&b1.Botao.sobre===false&&b1.Botao.apertado===false,'botão desativado não reage a toque nem clique');
  b1.Botao.desativado=false;e.passo();ok(cl===1&&b1.Botao.sobre===true,'botão ativado volta a reagir');}
+{ // erro de script informa a linha
+  const E = new Core.Engine({ renderer: { desenhar() {}, largura: 100, altura: 100 }, agendador: { agora: () => 0, pedir: () => 0, cancelar() {} } });
+  E.scene.estado.scripts = { lin: { fonte: 'function atualizar(e) {\n  var a = 1;\n  undefinida.x();\n}' }, topo: { fonte: 'var a = 1;\nnulo.y;' } };
+  E.scene.create({ nome: 'q', Transform: { x: 0, y: 0 }, Script: { nome: 'lin' } }); E.scene.flush(); let ev = null; E.events.on('erro-script', d => { ev = d; });
+  const er = E.compilarScripts(); ok(er.length === 1 && er[0].script === 'topo' && er[0].linha === 2, 'erro ao compilar traz a linha (' + JSON.stringify(er) + ')');
+  E.passo(); E.events.flush(); ok(ev && ev.linha === 3, 'erro em atualizar traz a linha (' + JSON.stringify(ev) + ')');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
