@@ -119,7 +119,7 @@
 
   // ---- propriedades (só mostra o que a entidade já tem)
   const CAMPOS = {
-    Transform: [['x', 'num'], ['y', 'num'], ['rot', 'num']],
+    Transform: [['x', 'num'], ['y', 'num'], ['rot', 'num'], ['escala', 'num']],
     Body: [['forma', 'sel', ['circulo', 'retangulo', 'poligono']], ['raio', 'num'], ['w', 'num'], ['h', 'num'], ['massa', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['sensor', 'bool']],
     Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['corSobre', 'cor'], ['corApertado', 'cor'], ['borda', 'cor'], ['larguraBorda', 'num'], ['arredondar', 'num'], ['cor2', 'cor'], ['gradiente', 'sel', ['vertical', 'horizontal']], ['opacidade', 'num'], ['sombra', 'bool'], ['sombraCor', 'cor'], ['sombraBlur', 'num'], ['sombraY', 'num'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['corTextoSobre', 'cor'], ['negrito', 'bool'], ['italico', 'bool'], ['alinhar', 'sel', ['left', 'center', 'right']], ['fonte', 'txt'], ['fixo', 'bool'], ['imagem', 'txt'], ['quadroW', 'num'], ['quadroH', 'num'], ['escala', 'num'], ['espelhar', 'bool']],
     Botao: [['desativado', 'bool']],

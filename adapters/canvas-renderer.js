@@ -8,6 +8,9 @@
   class CanvasRenderer {
     // Caixa aproximada de uma entidade (usada pelo depurador para clicar e destacar). Prefere a imagem do Sprite, depois o Body.
     static limitesDe(e) {
+      const L = CanvasRenderer.limitesBase(e), k = e.Transform && Number.isFinite(e.Transform.escala) && e.Transform.escala > 0 ? e.Transform.escala : 1; return k === 1 ? L : { hw: L.hw * k, hh: L.hh * k, ox: L.ox * k, oy: L.oy * k };
+    }
+    static limitesBase(e) {
       const b = e.Body, s = e.Sprite || {}; if (e.Joystick && !e.Sprite && !b) { const r = Number.isFinite(e.Joystick.raio) ? e.Joystick.raio : 56; return { hw: r, hh: r, ox: 0, oy: 0 }; }
       if (e.Tiles && !e.Sprite && !e.Body) { const T = e.Tiles; return { hw: T.colunas * T.tamanho / 2, hh: T.linhas * T.tamanho / 2, ox: T.colunas * T.tamanho / 2, oy: T.linhas * T.tamanho / 2 }; }
       if (s.imagem) { const k = s.escala || 1; return { hw: (s.quadroW || 32) * k / 2, hh: (s.quadroH || 32) * k / 2, ox: s.offX || 0, oy: s.offY || 0 }; }
@@ -90,7 +93,10 @@
       const pintar = (e, cx, cy, meioW, meioH) => {
         const s = e.Sprite; if (s.invisivel) return;
         const op = (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1);
+        const k = e.Transform.escala, esc = Number.isFinite(k) && k > 0 && k !== 1;   // Transform.escala: só visual (a física não muda)
+        if (esc) { g.save(); g.translate(e.Transform.x, e.Transform.y); g.scale(k, k); g.translate(-e.Transform.x, -e.Transform.y); }
         if (op < 1) { g.globalAlpha = Math.max(0, op); pintar0(e, cx, cy, meioW, meioH); g.globalAlpha = 1; } else pintar0(e, cx, cy, meioW, meioH);
+        if (esc) g.restore();
       };
       const pintar0 = (e, cx, cy, meioW, meioH) => {
         const s = e.Sprite;
