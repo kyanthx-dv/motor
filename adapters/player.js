@@ -7,12 +7,18 @@
     engine: null,
     async iniciar(jogo) {
       const doc = document, corpo = doc.body, cenaAtual = jogo.cenas[jogo.atual]; if (!cenaAtual) throw new Error('projeto sem cena inicial');
-      const tela = doc.createElement('canvas'); tela.id = 'tela'; tela.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;background:#000;display:block';
-      corpo.appendChild(tela);
+      const caixa = doc.createElement('div'); caixa.style.cssText = 'position:fixed;inset:0;background:#000';
+      const tela = doc.createElement('canvas'); tela.id = 'tela'; tela.style.cssText = 'width:100%;height:100%;background:#000;display:block';
+      caixa.appendChild(tela); corpo.appendChild(caixa);
       const assets = new C.Assets(), imagens = {}; for (const n in jogo.cenas) Object.assign(imagens, (jogo.cenas[n].estado || {}).imagens || {});
       await Promise.all(Object.entries(imagens).map(([n, src]) => new Promise(ok => { const i = new Image(); i.onload = () => { assets.registrar(n, i); ok(); }; i.onerror = ok; i.src = src; })));
       const t = (cenaAtual.estado && cenaAtual.estado.tamanho) || { largura: 800, altura: 450 };
-      const renderer = new C.CanvasRenderer(tela, { largura: t.largura, altura: t.altura, fundo: '#000', assets });
+      let renderer = new C.CanvasRenderer(tela, { largura: t.largura, altura: t.altura, fundo: '#000', assets });
+      this.render = '2d';
+      if (jogo.render === 'webgl' && C.PixiRenderer) {   // WebGL opcional (pixi.min.js ao lado); se falhar, segue em Canvas 2D
+        const g = await C.PixiRenderer.criar(tela, { largura: t.largura, altura: t.altura, fundo: '#000', assets, pixiUrl: jogo.pixiUrl || 'pixi.min.js' });
+        if (g) { g.ligar(true); g.redimensionar(); renderer = g; this.render = 'webgl'; }
+      }
       const prefixo = 'motor.jogo.' + String(jogo.nome || 'jogo').replace(/[^a-zA-Z0-9_-]/g, '_') + '.', armazem = C.Armazem ? C.Armazem.navegador(prefixo) : null;
       const input = new C.Input(tela, renderer), audio = C.Audio ? new C.Audio() : null;
       const sons = Object.assign({}, ...Object.values(jogo.cenas).map(c => (c.estado || {}).sons || {}));
