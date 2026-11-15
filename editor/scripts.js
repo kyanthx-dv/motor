@@ -4,7 +4,8 @@
   const ed = window.editor, C = Core, cena = ed.cena, $ = id => document.getElementById(id);
   const MODELO = '// Roda uma vez, quando o jogo começa.\nfunction iniciar(e, ctx) {\n}\n\n// Roda 60 vezes por segundo. e = este objeto; ctx.vars = variáveis do jogo.\nfunction atualizar(e, dt, ctx) {\n  e.Transform.x += 40 * dt;\n}\n';
   const fontes = () => cena.estado.scripts || (cena.estado.scripts = {});
-  let atual = null;
+  let atual = null, verCodigo = false;
+  const vb = document.createElement('button'); vb.type = 'button'; vb.id = 'sc-vercod'; vb.hidden = true; vb.addEventListener('click', () => { verCodigo = !verCodigo; atualizar(); }); $('sc-conv').after(vb);
   // Alguns ambientes (ex.: páginas hospedadas com CSP, como artefatos) proíbem criar código a partir de texto: aí scripts NÃO rodam.
   const semEval = (() => { try { new Function('return 1')(); return false; } catch (x) { return true; } })();
   if (semEval) { const a = $('sc-aviso'); a.hidden = false; a.textContent = 'Este ambiente bloqueia código criado a partir de texto (CSP): os scripts não rodam aqui. Abra o editor pelo arquivo editor/index.html no seu computador ou pelo GitHub Pages.'; }
@@ -35,8 +36,9 @@
   $('sc-conv').addEventListener('click', () => { if (atual) { delete fontes()[atual].blocos; atualizar(); ed.json(); } });
   $('sc-anexar').disabled = !atual || !e; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
     $('sc-info').textContent = (e ? 'Objeto selecionado: ' + (e.nome || '#' + e.id) + ' · script: ' + (tem || 'nenhum') : 'Nenhum objeto selecionado.') + (atual ? ' · "' + atual + '" usado por ' + usos(atual).length + ' objeto(s)' : '');
-    const bl = $('bl'), com = usaBlocos(atual); bl.hidden = !com; if (!com) bl.innerHTML = ''; $('sc-conv').hidden = !com; f.readOnly = com;
+    const bl = $('bl'), com = usaBlocos(atual); bl.hidden = !com; if (!com) bl.innerHTML = ''; $('sc-conv').hidden = !(com && verCodigo); f.readOnly = com;
     if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), cenas: () => window.EditorCenas ? EditorCenas.nomes() : [], etiquetas: () => coletar().tags, atributos: () => coletar().attrs, objetos: () => [...ed.cena.entities.values()].map(x => x.nome).filter(Boolean), aoMudar: regerar }); }
+    const cx = f.closest('.cod') || f; cx.hidden = com && !verCodigo; vb.hidden = !com; $('sc-conv').hidden = !(com && verCodigo); $('sc-anexar').classList.add('primario'); vb.textContent = verCodigo ? 'esconder código' : 'ver código gerado';   // com blocos, o código fica escondido (só leitura) a menos que o dev peça
     verificar();
   }
   const varrer = (x, f) => { if (Array.isArray(x)) x.forEach(y => varrer(y, f)); else if (x && typeof x === 'object') for (const k in x) { f(k, x[k]); varrer(x[k], f); } };
