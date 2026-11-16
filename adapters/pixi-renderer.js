@@ -88,11 +88,13 @@
       this.mundo.scale.set(esc * z); this.mundo.position.set(ox + esc * (L / 2 - cx * z), oy + esc * (A / 2 - cy * z));
       this.ui.scale.set(esc); this.ui.position.set(ox, oy);
       this._tiles(sc, vistos);
-      const lista = sc.query('Transform', 'Sprite').sort((a, b) => (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id);
+      const CM = C.Camadas.mapa(sc), li = e => { const l = CM.get(e.Sprite.grupo); return l ? l.i : -1; };
+      const lista = sc.query('Transform', 'Sprite').sort((a, b) => li(a) - li(b) || (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id);
       lista.forEach((e, rank) => {
         const s = e.Sprite, t = e.Transform, b = e.Body || {}, id = 's' + e.id; vistos.add(id);
-        const it = this._item(id, s.fixo ? this.ui : this.mundo); it.c.zIndex = rank; it.c.visible = !s.invisivel; it.c.alpha = Math.max(0, Math.min(1, (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1))); if (s.invisivel) return;
-        it.c.position.set(t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha, t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha); it.c.rotation = t.rot || 0; it.c.scale.set(Number.isFinite(t.escala) && t.escala > 0 ? t.escala : 1);
+        const Ly = CM.get(s.grupo), oc = Ly && !Ly.vis; const it = this._item(id, s.fixo ? this.ui : this.mundo); it.c.zIndex = rank; it.c.visible = !s.invisivel && !oc; it.c.alpha = Math.max(0, Math.min(1, (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1) * (Ly ? Ly.op : 1))); if (s.invisivel || oc) return;
+        const pj = Ly && sc.jogando && !s.fixo && Ly.par !== 1 ? 1 - Ly.par : 0;   // paralaxe: só no jogo
+        it.c.position.set((t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha) + cx * pj, (t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha) + cy * pj); it.c.rotation = t.rot || 0; it.c.scale.set(Number.isFinite(t.escala) && t.escala > 0 ? t.escala : 1);
         const img = s.imagem && this.assets && this.assets.get(s.imagem);
         if (img) {
           const fw = s.quadroW || img.width, fh = s.quadroH || img.height, k = s.escala || 1, a = e.Animacao || {}, tex = this._tex(s.imagem, a.quadro || 0, a.linha || 0, fw, fh);

@@ -492,4 +492,12 @@ const nova=()=>new C.Engine();
   ok(e.vars.ler('ini')===1&&e.vars.ler('n')===5,'script de cena: iniciar uma vez e atualizar a cada passo sem objeto');ok(e.errosScript>=5,'script de cena: erro é isolado e contado');
   let falhou=false;try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{scriptsCena:'x'},entidades:[]});}catch(x){falhou=true;}ok(falhou,'script de cena: lista inválida é recusada');
 }
+{ // camadas nomeadas: validação e mapa
+  const bom=[{id:'fundo',nome:'Fundo',tipo:'mundo',opacidade:.5,paralaxe:.5},{id:'hud',tipo:'interface',visivel:false}];
+  C.Camadas.validar(bom);const m=C.Camadas.mapa({estado:{camadas:bom}});
+  ok(m.get('fundo').i===0&&m.get('fundo').op===.5&&m.get('fundo').par===.5&&m.get('hud').vis===false&&C.Camadas.mapa({estado:{}}).size===0,'camadas: mapa lê ordem, opacidade, paralaxe e visibilidade');
+  const ruins=[[{id:'a b'}],[{id:'a'},{id:'a'}],[{id:'a',opacidade:2}],[{id:'a',tipo:'x'}],[{id:'a',paralaxe:'1'}],'x',[{id:'a',visivel:1}]];let n=0;for(const r of ruins){try{C.Camadas.validar(r);}catch(x){n++;}}
+  ok(n===ruins.length,'camadas: listas inválidas são recusadas');
+  let rec=false;try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{camadas:[{id:'!'}]},entidades:[]});}catch(x){rec=true;}ok(rec,'camadas: save com camada inválida falha');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
