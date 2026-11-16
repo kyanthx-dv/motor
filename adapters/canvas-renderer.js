@@ -98,7 +98,7 @@
       const ord = (a, b) => (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id;
       const todos = scene.query('Transform', 'Sprite').sort(ord);
       const pintar = (e, cx, cy, meioW, meioH) => {
-        const s = e.Sprite; if (s.invisivel) return;
+        const s = e.Sprite; if (s.invisivel || (!scene.jogando && this.ocultarGrupo && this.ocultarGrupo[s.fixo ? 'ui' : 'mundo'])) return;
         const op = (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1);
         const k = e.Transform.escala, esc = Number.isFinite(k) && k > 0 && k !== 1;   // Transform.escala: só visual (a física não muda)
         const rot = e.Transform.rot && !(s.imagem && this.assets && this.assets.get(s.imagem)) && !(e.Body && e.Body.forma === 'poligono');   // formas/texto também giram (imagem gira no próprio desenho)

@@ -176,3 +176,5 @@ select.add{background:transparent;color:var(--acento);border:2px dashed var(--ac
 .bloco>.topo:hover .bt,.bloco>.topo:focus-within .bt{opacity:1}
 @media (hover:none){.bloco>.topo .bt{opacity:.85}}
 .bloco>.topo>span:first-child,.bloco>.topo>b:first-child{margin-right:2px}
+
+.camadas{display:inline-flex;gap:2px;margin-left:6px}.camadas button{padding:2px 6px}.camadas button.off{opacity:.55}.camadas button.on{background:#f59e0b;color:#111}

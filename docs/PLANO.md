@@ -29,7 +29,7 @@
 **v1.4 — Aparência e primeiros passos do editor**
 - Tema Scratch dos blocos ✅ em CSS (cor sólida, valores em pílula, "C" com corpo, encaixe; feito sem mexer na estrutura) (referência: cores sólidas, encaixe, valores em pílula, blocos em C para se/repetir). Exige mexer na estrutura dos blocos, não só no CSS.
 - Temas do editor: seletor com temas prontos + arquivo JSON importável. Um tema só muda variáveis de CSS de uma lista permitida (cores, fontes), nunca CSS livre nem JavaScript. Loja de temas: só com contas e servidor, junto com a rede social do app (depois do v2.0).
-- Painel de camadas Mundo/Interface no editor (hoje a interface é só `Sprite.fixo`): esconder/mostrar cada uma, arrastar objeto entre elas. Organização do editor, não muda o jogo.
+- Camadas: ✅ atalhos Mundo/Interface no editor (👁 ocultar, 🔒 travar clique; só na edição). Falta (próximo): camadas nomeadas criadas pelo usuário (Mundo e Interface), com ordem, opacidade, paralaxe, ocultar/travar salvos no projeto.
 - Exportar: ajustes finos (futuro): orientação, encaixe de tela, FPS, ícone/nome do PWA, minificação, assets sob demanda.
 - Scripts de cena ✅: botão "Rodar na cena" na aba Scripts (roda sem objeto; `estado.scriptsCena`). Galeria: exemplos Pega-moedas e Mini-RPG ✅ (mais exemplos depois).
 - Tutorial interativo de 5 minutos dentro do editor ✅ (botão Tutorial: 7 passos que avançam sozinhos); galeria de mini-jogos.

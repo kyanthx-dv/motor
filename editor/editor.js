@@ -251,7 +251,7 @@
   function escolher(x, y) {
     let melhor = null, area = Infinity;
     for (const e of cena.entities.values()) {
-      if (!e.Transform || (!e.Sprite && !e.Body && !e.Joystick)) continue; const l = C.CanvasRenderer.limitesDe(e);
+      if (!e.Transform || (!e.Sprite && !e.Body && !e.Joystick)) continue; if (window.editor && window.editor.camadaTrava && window.editor.camadaTrava(e)) continue; const l = C.CanvasRenderer.limitesDe(e);
       if (Math.abs(x - e.Transform.x - l.ox) <= l.hw && Math.abs(y - e.Transform.y - l.oy) <= l.hh && l.hw * l.hh < area) { area = l.hw * l.hh; melhor = e; }
     }
     return melhor;
@@ -277,6 +277,6 @@
 
   exemplo(); listar(); props(); variaveis(); json();
   function importarProjeto(nome, viva, todas) { if (engine.rodando) parar(); projetos[nome] = viva; if (window.EditorCenas && EditorCenas.importar) EditorCenas.importar(nome, todas); guardarProjetos(); abrirProjeto(nome); }
-  window.editor = { play, parar, jogar, carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, importarProjeto, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, get sel() { return sel; }, get cenaViva() { return host ? host.scene : cena; }, get projetoAtual() { return projetoAtual; } };
+  window.editor = { play, parar, jogar, carregarCena(j) { if (engine.rodando) parar(); C.Serializer.deJSON(cena, JSON.parse(JSON.stringify(j))); selecionar(null); variaveis(); json(); historicoLimpar(); persistirAtual(); }, importarProjeto, persistir: persistirAtual, engine, renderer, cena, selecionar, aplicar, escolher, mundo, redesenhar, json, aoSelecionar: null, camadaTrava: null, get sel() { return sel; }, get cenaViva() { return host ? host.scene : cena; }, get projetoAtual() { return projetoAtual; } };
   inicializarProjetos(); historicoLimpar(); loop();
 })();

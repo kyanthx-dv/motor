@@ -35,7 +35,7 @@
     const nomeDe = (ctx, id) => { const o = ctx.scene.get(id); return o && o.nome; };
     const scripts = {
       aldeao: { fonte: 'var falou = false;\nvar eventos = { gatilho: function (e, d, ctx) {\n  var o = ctx.scene.get(d.outro); if (!falou && o && o.nome === "jogador") { falou = true; ctx.events.emit("dialogo-abrir", { id: "inicio" }); }\n} };\n' },
-      pocao: { fonte: 'var eventos = { gatilho: function (e, d, ctx) {\n  var o = ctx.scene.get(d.outro); if (o && o.nome === "jogador") { ctx.events.emit("inv-adicionar", { item: "pocao", qtd: 1 }); ctx.scene.destroy(e.id); }\n} };\n' },
+      pocao: { fonte: 'var eventos = { gatilho: function (e, d, ctx) {\n  var o = ctx.scene.get(d.outro); if (o && o.nome === "jogador" && !e.Script.estado.pego) { e.Script.estado.pego = true; ctx.events.emit("inv-adicionar", { item: "pocao", qtd: 1 }); ctx.scene.destroy(e.id); }\n} };\n' },
       slime: { fonte: 'function atualizar(e, dt, ctx) {\n  var j = ctx.scene.find("jogador"); if (!j) return;\n  var dx = j.Transform.x - e.Transform.x, dy = j.Transform.y - e.Transform.y, d = Math.hypot(dx, dy) || 1;\n  e.Transform.x += dx / d * 40 * dt; e.Transform.y += dy / d * 40 * dt;\n}\nvar eventos = { gatilho: function (e, d, ctx) {\n  var o = ctx.scene.get(d.outro); if (o && o.nome === "jogador") ctx.events.emit("dano", { qtd: 1 });\n} };\n' },
       regras: { fonte: '// SCRIPT DE CENA: roda sem objeto. Aqui: ao morrer, recomeça o jogo.\nvar ligado = false;\nfunction iniciar(e, ctx) {\n  if (ligado) return; ligado = true;\n  ctx.events.on("morreu", function () { ctx.engine.reiniciar(); });\n}\n' }
     };
