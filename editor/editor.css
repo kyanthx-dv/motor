@@ -132,3 +132,9 @@ body.tem-scripts-grande .bottom-dock{z-index:31}
 
 button.primario:not(:disabled){background:var(--acento);color:var(--acento-fg);border-color:var(--acento)}
 #sc-vercod{background:transparent;border-style:dashed}
+
+.tutorial{position:fixed;right:16px;bottom:16px;z-index:60;width:min(320px,calc(100vw - 32px));background:var(--painel);border:1px solid var(--acento);border-radius:12px;box-shadow:0 10px 30px #0006;padding:12px 14px}
+.tutorial h3{margin:4px 0 6px;font-size:16px}.tutorial p{margin:0 0 8px;line-height:1.45}.tutorial code{background:var(--campo);padding:0 4px;border-radius:4px}
+.tut-top{display:flex;justify-content:space-between;align-items:center;color:var(--mudo)}.tut-top button{border:0;background:transparent;cursor:pointer;color:inherit;font-size:14px}
+.tut-barra{height:5px;background:var(--linha);border-radius:3px;overflow:hidden;margin:6px 0 10px}.tut-barra i{display:block;height:100%;background:var(--acento);transition:width .3s}
+.tut-bt{display:flex;justify-content:flex-end;gap:8px}

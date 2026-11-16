@@ -597,6 +597,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     ok(r.sem === false && r.mouse === true, 'joystick: sem objeto Joystick não aparece; com objeto funciona também com mouse (' + JSON.stringify(r) + ')');
     ok(r.s1 === true && r.s2 === false, 'toque: o ponteiro deixa de "pairar" depois que o dedo sobe (botão não fica branco) (' + JSON.stringify(r) + ')'); await pq.close();
   }
+  { // tutorial guiado: avança sozinho quando o passo é feito
+    const pu = await b.newPage({ viewport: { width: 1300, height: 800 } }); await pu.goto(url('editor/index') + '?abas=todas'); await pu.waitForTimeout(500);
+    await pu.click('#e-tutorial'); await pu.waitForTimeout(100); const p0 = await pu.evaluate(() => ({ passo: EditorTutorial.passo(), aberto: !!document.getElementById('tutorial') }));
+    await pu.evaluate(() => { editor.cena.create({ nome: 'r', Transform: { x: 100, y: 100 }, Sprite: { w: 30, h: 30, cor: '#ccc' }, Body: { forma: 'retangulo', w: 30, h: 30 } }); }); await pu.waitForTimeout(700);
+    const p1 = await pu.evaluate(() => EditorTutorial.passo()); await pu.evaluate(() => { editor.cena.find('r').Sprite.cor = '#f00'; }); await pu.waitForTimeout(700);
+    const p2 = await pu.evaluate(() => EditorTutorial.passo()); await pu.click('#tut-pular'); await pu.click('#tut-pular'); await pu.click('#tut-pular'); await pu.click('#tut-pular');
+    await pu.evaluate(() => editor.play()); await pu.waitForTimeout(900); const p6 = await pu.evaluate(() => EditorTutorial.passo()); await pu.evaluate(() => editor.parar()); await pu.waitForTimeout(900);
+    const fim = await pu.evaluate(() => ({ passo: EditorTutorial.passo(), texto: document.getElementById('tutorial').textContent }));
+    ok(p0.passo === 0 && p0.aberto && p1 === 1 && p2 === 2, 'tutorial: abre e avança sozinho ao criar objeto e mudar a cor (' + [p0.passo, p1, p2] + ')');
+    ok(p6 === 6 && fim.passo === 7 && /Pronto/.test(fim.texto), 'tutorial: Play e Parar concluem o guia (' + [p6, fim.passo] + ')'); await pu.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();
