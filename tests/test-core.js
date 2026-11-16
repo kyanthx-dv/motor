@@ -486,4 +486,10 @@ const nova=()=>new C.Engine();
   ok(Core.Tiles.mascara(T, 1, 2) === 1, 'autotile: ponta de baixo só tem vizinho ao norte (1)');
   const sc = new Core.Scene(); let erro = false; try { sc.create({ nome: 'm', Transform: { x: 0, y: 0 }, Tiles: { tamanho: 16, colunas: 1, linhas: 1, paleta: [{ cor: '#000', auto: 'sim' }], dados: [1] } }); } catch (e) { erro = true; } ok(erro, 'autotile: auto precisa ser verdadeiro/falso');
 }
+{ // scripts de cena: rodam sem objeto
+  const e=new C.Engine(); e.scene.estado.scripts={ctl:{fonte:'var n=0;function iniciar(e,ctx){ctx.vars.declarar("ini",1);}function atualizar(e,dt,ctx){n++;if(e.id!==-1)throw new Error("id");ctx.vars.existe("n")?ctx.vars.definir("n",n):ctx.vars.declarar("n",n);}'},ruim:{fonte:'function atualizar(){throw new Error("x");}'}};
+  e.scene.estado.scriptsCena=['ctl','ruim','nao-existe'];e.compilarScripts();for(let i=0;i<5;i++)e.passo();
+  ok(e.vars.ler('ini')===1&&e.vars.ler('n')===5,'script de cena: iniciar uma vez e atualizar a cada passo sem objeto');ok(e.errosScript>=5,'script de cena: erro é isolado e contado');
+  let falhou=false;try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{scriptsCena:'x'},entidades:[]});}catch(x){falhou=true;}ok(falhou,'script de cena: lista inválida é recusada');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

@@ -14,6 +14,7 @@
     if (!atual || semEval) { msg(''); return; }
     try { new Function($('sc-fonte').value); msg('Sintaxe ok.', 'ok'); } catch (x) { msg('Erro de sintaxe: ' + x.message, 'erro'); }
   }
+  const lcena = () => cena.estado.scriptsCena || [];
   function usos(nome) { return [...cena.entities.values()].filter(e => e.Script && e.Script.nome === nome); }
   const usaBlocos = n => !!(n && fontes()[n] && fontes()[n].blocos);
   function regerar() {   // blocos -> código (o motor só conhece o código)
@@ -34,8 +35,8 @@
     fontes()[nome] = { blocos: [], fonte: EditorBlocos.gerar([]) }; atual = nome; $('sc-nome').value = ''; $('sc-fonte').value = fontes()[nome].fonte; atualizar(); ed.json();
   });
   $('sc-conv').addEventListener('click', () => { if (atual) { delete fontes()[atual].blocos; atualizar(); ed.json(); } });
-  $('sc-anexar').disabled = !atual || !e; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
-    $('sc-info').textContent = (e ? 'Objeto selecionado: ' + (e.nome || '#' + e.id) + ' · script: ' + (tem || 'nenhum') : 'Nenhum objeto selecionado.') + (atual ? ' · "' + atual + '" usado por ' + usos(atual).length + ' objeto(s)' : '');
+  $('sc-anexar').disabled = !atual || !e; $('sc-cena').disabled = !atual; $('sc-cena').textContent = atual && lcena().includes(atual) ? 'Parar de rodar na cena' : 'Rodar na cena'; $('sc-desanexar').disabled = !tem; $('sc-remover').disabled = !atual;
+    $('sc-info').textContent = (e ? 'Objeto selecionado: ' + (e.nome || '#' + e.id) + ' · script: ' + (tem || 'nenhum') : 'Nenhum objeto selecionado.') + (atual ? ' · "' + atual + '" usado por ' + usos(atual).length + ' objeto(s)' + (lcena().includes(atual) ? ' + cena' : '') : '');
     const bl = $('bl'), com = usaBlocos(atual); bl.hidden = !com; if (!com) bl.innerHTML = ''; $('sc-conv').hidden = !(com && verCodigo); f.readOnly = com;
     if (com) { bl.innerHTML = ''; EditorBlocos.montar(bl, fontes()[atual], { vars: () => Object.keys(ed.engine.vars.todas()), scripts: () => Object.keys(fontes()), cenas: () => window.EditorCenas ? EditorCenas.nomes() : [], etiquetas: () => coletar().tags, atributos: () => coletar().attrs, objetos: () => [...ed.cena.entities.values()].map(x => x.nome).filter(Boolean), aoMudar: regerar }); }
     const cx = f.closest('.cod') || f; cx.hidden = com && !verCodigo; vb.hidden = !com; $('sc-conv').hidden = !(com && verCodigo); $('sc-anexar').classList.add('primario'); vb.textContent = verCodigo ? 'esconder código' : 'ver código gerado';   // com blocos, o código fica escondido (só leitura) a menos que o dev peça
@@ -56,9 +57,10 @@
     if (fontes()[nome]) { msg('Já existe um script chamado "' + nome + '".', 'erro'); return; }
     fontes()[nome] = { fonte: MODELO }; atual = nome; $('sc-nome').value = ''; $('sc-fonte').value = MODELO; atualizar(); ed.json();
   });
+  $('sc-cena').addEventListener('click', () => { if (!atual) return; const l = lcena().slice(), i = l.indexOf(atual); if (i >= 0) l.splice(i, 1); else l.push(atual); if (l.length) cena.estado.scriptsCena = l; else delete cena.estado.scriptsCena; atualizar(); ed.json(); });
   $('sc-anexar').addEventListener('click', () => { const e = cena.get(ed.sel); if (!e || !atual) return; e.Script = { nome: atual }; atualizar(); ed.json(); });
   $('sc-desanexar').addEventListener('click', () => { const e = cena.get(ed.sel); if (e) delete e.Script; atualizar(); ed.json(); });
-  $('sc-remover').addEventListener('click', () => { if (!atual) return; for (const e of usos(atual)) delete e.Script; delete fontes()[atual]; atual = null; $('sc-fonte').value = ''; atualizar(); ed.json(); });
+  $('sc-remover').addEventListener('click', () => { if (!atual) return; for (const e of usos(atual)) delete e.Script; if (cena.estado.scriptsCena) cena.estado.scriptsCena = cena.estado.scriptsCena.filter(n => n !== atual); delete fontes()[atual]; atual = null; $('sc-fonte').value = ''; atualizar(); ed.json(); });
   // Depois do Play (o editor já chamou engine.iniciar -> compilarScripts): mostra erros de compilação.
   $('e-play').addEventListener('click', () => { const er = ed.engine.errosScripts || []; if (er.length) msg('Ao iniciar: ' + er.map(x => x.script + (x.linha ? ' (linha ' + x.linha + ')' : '') + ': ' + x.mensagem).join(' | '), 'erro'); });
   ed.aoSelecionar = atualizar; atualizar();

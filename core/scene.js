@@ -129,7 +129,7 @@
       }
       return r;
     }
-    clear() { this.entities.clear(); this._remover.clear(); this.nextId = 1; this.estado = {}; this.efeitos = null; this.jogando = false; }
+    clear() { this.entities.clear(); this._remover.clear(); this.nextId = 1; this.estado = {}; this.efeitos = null; this.jogando = false; this._cenaRt = null; }
   }
   C.Scene = Scene;
 })(typeof window !== 'undefined' ? window : globalThis);

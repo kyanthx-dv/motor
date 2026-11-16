@@ -629,6 +629,16 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     });
     ok(r.er === 0 && r.oculto && r.aberto && r.ramo && r.fechou, 'modelo diálogo: abre, ramifica, fecha, grava variável e dispara evento (' + JSON.stringify(r) + ')');
     ok(r.teto && r.inv1 && r.inv2 && r.cura && r.morreu && r.vida === 0, 'modelos inventário e vida: teto por slot, invulnerabilidade, poção cura, morte (' + JSON.stringify(r) + ')');
+    const sc = await pm.evaluate(() => { document.getElementById('sc-lista').value = 'vida'; document.getElementById('sc-lista').dispatchEvent(new Event('change')); document.getElementById('sc-cena').click(); const a = (editor.cena.estado.scriptsCena || []).join(); document.getElementById('sc-cena').click(); return { a, b: editor.cena.estado.scriptsCena }; });
+    ok(sc.a === 'vida' && sc.b === undefined, 'editor: botão "Rodar na cena" liga e desliga o script de cena (' + JSON.stringify(sc) + ')');
+    const rpg = await pm.evaluate(() => {
+      const j = EditorExemplos.miniRpg(), e = new Core.Engine(); Core.Serializer.deJSON(e.scene, j); const er = e.compilarScripts().length;
+      for (let i = 0; i < 3; i++) e.passo(); const jg = e.scene.find('jogador'); const al = e.scene.find('aldeao'); jg.Transform.x = al.Transform.x; jg.Transform.y = al.Transform.y;
+      for (let i = 0; i < 4; i++) e.passo(); const dialogo = e.scene.find('dialogo-caixa').Sprite.opacidade === 1;
+      const po = e.scene.find('pocao 1'); jg.Transform.x = po.Transform.x; jg.Transform.y = po.Transform.y; for (let i = 0; i < 4; i++) e.passo();
+      return { er, dialogo, pocao: e.vars.ler('inv_pocao'), vida: e.vars.ler('vida'), sumiu: !e.scene.find('pocao 1') };
+    });
+    ok(rpg.er === 0 && rpg.dialogo && rpg.pocao === 1 && rpg.sumiu && rpg.vida === 5, 'exemplo Mini-RPG: aldeão abre diálogo, poção entra no inventário (' + JSON.stringify(rpg) + ')');
     await pm.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));

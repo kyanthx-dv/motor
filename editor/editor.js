@@ -239,9 +239,10 @@
   document.addEventListener('keydown', ev => { if (!ev.ctrlKey && !ev.metaKey || ev.target.closest?.('input,textarea') || ev.target.matches('select') || ev.target.isContentEditable) return; if (ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); desfazer(); } else if (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey)) { ev.preventDefault(); refazer(); } });
   // Exemplo pronto vira um projeto novo (nunca sobrescreve o seu).
   $('p-exemplo').addEventListener('click', () => {
-    if (engine.rodando) parar(); const base = 'Pega-moedas'; let nome = base, i = 2; while (projetos[nome]) nome = base + ' ' + i++;
-    projetos[nome] = EditorExemplos.pegaMoedas(); guardarProjetos(); abrirProjeto(nome);
+    abrirExemplo('Pega-moedas', EditorExemplos.pegaMoedas);
   });
+  function abrirExemplo(base, fazer) { if (engine.rodando) parar(); let nome = base, i = 2; while (projetos[nome]) nome = base + ' ' + i++; projetos[nome] = fazer(); guardarProjetos(); abrirProjeto(nome); }
+  $('p-exemplo-rpg').addEventListener('click', () => abrirExemplo('Mini-RPG', EditorExemplos.miniRpg));
   $('projeto-criar').addEventListener('click', criarProjeto); $('projeto-abrir').addEventListener('click', () => abrirProjeto($('projetos').value)); $('projeto-renomear').addEventListener('click', renomearProjeto); $('projeto-apagar').addEventListener('click', apagarProjeto);
   document.addEventListener('fullscreenchange', () => { if (modoJogo && !document.fullscreenElement) parar(); });
 
