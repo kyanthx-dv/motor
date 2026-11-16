@@ -278,7 +278,7 @@ Botão "Exportar jogo (.html)" (aba Projetos): `EditorExportar.gerar()` junta n�
 
 ## 50. Joystick como objeto de cena
 
-O joystick virtual é o componente `Joystick` de uma entidade (botão **+ Joystick** do editor; um por cena): `modo` (flutuante/fixo/desligado), `visivel`, `x`/`y` (posição do fixo, 0–1), `raio`, `zonaMorta`, `zona`. A posição é a do objeto na cena (arraste o marcador azul; vale para o modo fixo); o resto fica no inspetor. `Core.joystickDe(scene)` escolhe a configuração: o componente, ou o antigo `estado.joystick` (projetos antigos continuam funcionando). Os scripts leem `ctx.input.joystick` como antes. Durante o Play a caixa de seleção do editor não é desenhada.
+O joystick virtual é o componente `Joystick` de uma entidade (botão **+ Joystick** do editor; um por cena): `modo` (flutuante/fixo/desligado), `zona` (`base` = padrão: só pega o toque dentro do raio do joystick, o resto é clique normal; `tela`/`esquerda`/`direita` = qualquer toque na área), `visivel`, `x`/`y` (posição do fixo, 0–1), `raio`, `zonaMorta`, `zona`. A posição é a do objeto na cena (arraste o marcador azul; vale para o modo fixo); o resto fica no inspetor. `Core.joystickDe(scene)` escolhe a configuração: o componente, ou o antigo `estado.joystick` (projetos antigos continuam funcionando). Os scripts leem `ctx.input.joystick` como antes. Durante o Play a caixa de seleção do editor não é desenhada.
 
 ## 51. Editor de código
 

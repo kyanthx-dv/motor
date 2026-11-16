@@ -319,7 +319,7 @@
         "visivel": true,
         "raio": 56,
         "zonaMorta": 0.12,
-        "zona": "tela"
+        "zona": "base"
       },
       "id": 8
     }

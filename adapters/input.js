@@ -13,7 +13,7 @@
       this.canvas = canvas; this.renderer = renderer; this.teclas = teclas || TECLAS;
       this.listeners = [];
       this.down = new Set(); this.edge = new Set(); this.soltou = new Set(); this.keys = new Set(); this.keysEdge = new Set();
-      this.joystick = { ativo: false, x0: 0, y0: 0, x: 0, y: 0, dx: 0, dy: 0, raio: 56, id: null, modo: 'flutuante', visivel: true, fixo: false, zonaMorta: 0.12, zona: 'tela', fx: 0.14, fy: 0.78 };
+      this.joystick = { ativo: false, x0: 0, y0: 0, x: 0, y: 0, dx: 0, dy: 0, raio: 56, id: null, modo: 'flutuante', visivel: true, fixo: false, zonaMorta: 0.12, zona: 'base', fx: 0.14, fy: 0.78 };
       this.pointer = { x: 0, y: 0, tx: 0, ty: 0, down: false, ativo: false }; this.pEdge = false; this.ptId = null;   // um ponteiro principal no canvas; botões HTML são independentes
       this.mapa = new Map();
       for (const a in this.teclas) for (const k of this.teclas[a]) this.mapa.set(k, a);
@@ -43,11 +43,12 @@
       const fim = e => { if (e.pointerId !== this.ptId) return; const j = this.joystick; j.ativo = false; j.dx = j.dy = 0; j.id = null; this.ptId = null; this.pointer.down = false; if (e.pointerType !== 'mouse') this._deixar = true; };   // dedo levantou: o 'sobre' dos botões some depois do quadro que viu o toque
       ouvir(canvas, 'pointerup', fim); ouvir(canvas, 'pointercancel', fim);
     }
+    // zona 'base' (padrão): só pega o toque dentro do raio do joystick (base parada); fora disso é um clique normal.
     // Configuração do joystick virtual (vem da cena: estado.joystick). modo: 'flutuante' (nasce onde o dedo toca), 'fixo' (sempre na mesma posição) ou 'desligado'.
     configurar(c) {
       const j = this.joystick; const semConfig = !c; c = c || {}; const modo = semConfig ? 'desligado' : ['flutuante', 'fixo', 'desligado'].includes(c.modo) ? c.modo : 'flutuante', n = (v, pad, a, b) => (Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : pad);
-      j.modo = modo; j.visivel = c.visivel !== false; j.raio = n(c.raio, 56, 20, 200); j.zonaMorta = n(c.zonaMorta, 0.12, 0, 0.9); j.zona = ['tela', 'esquerda', 'direita'].includes(c.zona) ? c.zona : 'tela'; j.fx = n(c.x, 0.14, 0, 1); j.fy = n(c.y, 0.78, 0, 1);
-      j.fixo = modo === 'fixo'; if (modo === 'desligado' && j.ativo) { j.ativo = false; j.dx = j.dy = 0; j.id = null; }
+      j.modo = modo; j.visivel = c.visivel !== false; j.raio = n(c.raio, 56, 20, 200); j.zonaMorta = n(c.zonaMorta, 0.12, 0, 0.9); j.zona = ['base', 'tela', 'esquerda', 'direita'].includes(c.zona) ? c.zona : 'base'; j.fx = n(c.x, 0.14, 0, 1); j.fy = n(c.y, 0.78, 0, 1);
+      j.fixo = modo === 'fixo' || j.zona === 'base'; if (modo === 'desligado' && j.ativo) { j.ativo = false; j.dx = j.dy = 0; j.id = null; }
       if (modo !== 'desligado' && !j.ativo) { const r = this.canvas.getBoundingClientRect(); j.x0 = r.width * j.fx; j.y0 = r.height * j.fy; j.x = j.x0; j.y = j.y0; }   // parado: base na posição configurada (também no flutuante)
     }
     podeJoystick(p) {

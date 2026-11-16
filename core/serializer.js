@@ -63,7 +63,7 @@
       }
       const jc = d.estado && d.estado.joystick;
       if (jc !== undefined) {
-        if (!isObj(jc) || (jc.modo !== undefined && !['flutuante', 'fixo', 'desligado'].includes(jc.modo)) || (jc.zona !== undefined && !['tela', 'esquerda', 'direita'].includes(jc.zona)) || (jc.visivel !== undefined && typeof jc.visivel !== 'boolean')) throw new Error('save inválido: estado.joystick (modo flutuante/fixo/desligado, zona tela/esquerda/direita, visivel verdadeiro/falso)');
+        if (!isObj(jc) || (jc.modo !== undefined && !['flutuante', 'fixo', 'desligado'].includes(jc.modo)) || (jc.zona !== undefined && !['base', 'tela', 'esquerda', 'direita'].includes(jc.zona)) || (jc.visivel !== undefined && typeof jc.visivel !== 'boolean')) throw new Error('save inválido: estado.joystick (modo flutuante/fixo/desligado, zona tela/esquerda/direita, visivel verdadeiro/falso)');
         for (const [k, a, b] of [['x', 0, 1], ['y', 0, 1], ['raio', 20, 200], ['zonaMorta', 0, 0.9]]) if (jc[k] !== undefined && !(Number.isFinite(jc[k]) && jc[k] >= a && jc[k] <= b)) throw new Error('save inválido: estado.joystick.' + k + ' fora de ' + a + '–' + b);
       }
       const cam = d.estado && d.estado.camera; if (cam !== undefined && (!isObj(cam) || (cam.zoom !== undefined && !(isFinite(cam.zoom) && cam.zoom > 0)))) throw new Error('save inválido: estado.camera (zoom precisa ser > 0)');
