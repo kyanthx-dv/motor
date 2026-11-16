@@ -68,7 +68,7 @@
     _msg(m) {
       this.ultimo = performance.now();
       if (m.t === 'frame') {
-        const mapa = new Map(); for (const e of m.e) mapa.set(e.id, e); this.scene.entities = mapa; this.scene.estado = m.est; this.scene.efeitos = m.ef; this.vars = m.vars; this.fake.fps = m.fps; this.fake.passos = m.passos;
+        const mapa = new Map(); for (const e of m.e) mapa.set(e.id, e); this.scene.entities = mapa; this.scene.estado = m.est; this.scene.efeitos = m.ef; this.scene.jogando = true; this.vars = m.vars; this.fake.fps = m.fps; this.fake.passos = m.passos;
       } else if (m.t === 'pronto') { this.pronto = true; this.erros = m.erros || []; }
       else if (m.t === 'audio') { const a = this.audio; if (a && ['tocar', 'parar', 'pararTudo', 'efeito'].includes(m.m) && typeof a[m.m] === 'function') { try { a[m.m](...m.a); } catch (x) {} } }
       else if (m.t === 'dev') { const d = C.Dispositivo; if (d && (m.m === 'vibrar' || m.m === 'telaCheia')) { try { d[m.m](...m.a); } catch (x) {} } }
