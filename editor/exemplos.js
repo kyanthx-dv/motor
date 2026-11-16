@@ -46,7 +46,7 @@
       { nome: 'slime', Transform: { x: 650, y: 330 }, Body: { forma: 'circulo', raio: 14, massa: 0, sensor: true }, Sprite: { forma: 'circulo', raio: 14, cor: '#22c55e' }, Script: { nome: 'slime' } },
       { nome: 'pocao 1', Transform: { x: 300, y: 330 }, Body: { forma: 'circulo', raio: 10, massa: 0, sensor: true }, Sprite: { forma: 'circulo', raio: 8, cor: '#ef4444' }, Script: { nome: 'pocao' } },
       { nome: 'pocao 2', Transform: { x: 560, y: 110 }, Body: { forma: 'circulo', raio: 10, massa: 0, sensor: true }, Sprite: { forma: 'circulo', raio: 8, cor: '#ef4444' }, Script: { nome: 'pocao' } },
-      { nome: 'joystick', Transform: { x: 112, y: 351 }, Joystick: { modo: 'flutuante', visivel: true, raio: 56, zonaMorta: 0.12, zona: 'tela' } }
+      { nome: 'joystick', Transform: { x: 112, y: 351 }, Joystick: { modo: 'flutuante', visivel: true, raio: 56, zonaMorta: 0.12, zona: 'base' } }
     ];
     for (const k of ['dialogo', 'inventario', 'vida']) { const m = M.definicao(k); scripts[m.ctl] = { fonte: m.script }; ents.push({ nome: m.ctl, Transform: { x: 0, y: 0 }, Script: { nome: m.ctl } }, ...m.objetos()); }
     return { formato: root.Core.Serializer.FORMATO, estado: { scripts, scriptsCena: ['regras'] }, entidades: ents };

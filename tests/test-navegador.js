@@ -18,7 +18,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.goto(url('index')); await p.waitForTimeout(300);
   const ponteiros = await p.evaluate(() => {
     const c = document.getElementById('tela'), ev = (tipo, id, pointerType) => c.dispatchEvent(new PointerEvent(tipo, { pointerId: id, pointerType, clientX: 300, clientY: 200, bubbles: true, isPrimary: true }));
-    ev('pointerdown', 11, 'mouse'); const mouse = { down: jogo.input.pointer.down, joystick: jogo.input.joystick.ativo }; ev('pointerup', 11, 'mouse'); jogo.input.configurar({ modo: 'flutuante' });
+    ev('pointerdown', 11, 'mouse'); const mouse = { down: jogo.input.pointer.down, joystick: jogo.input.joystick.ativo }; ev('pointerup', 11, 'mouse'); jogo.input.configurar({ modo: 'flutuante', zona: 'tela' });
     ev('pointerdown', 12, 'touch'); const touch = { down: jogo.input.pointer.down, joystick: jogo.input.joystick.ativo }; ev('pointerup', 12, 'touch');
     return { mouse, touch };
   });
@@ -592,8 +592,11 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const pq = await b.newPage(); await pq.goto(url('editor/index') + '?abas=todas'); await pq.waitForTimeout(500);
     const r = await pq.evaluate(() => { const c = document.getElementById('tela'), I = new Core.Input(c, editor.renderer), ev = (t, id, pt) => c.dispatchEvent(new PointerEvent(t, { pointerId: id, pointerType: pt, clientX: 200, clientY: 200, bubbles: true, isPrimary: true }));
       I.configurar(undefined); ev('pointerdown', 31, 'touch'); const sem = I.joystick.ativo; ev('pointerup', 31, 'touch');
-      I.configurar({ modo: 'flutuante' }); ev('pointerdown', 32, 'mouse'); const mouse = I.joystick.ativo; ev('pointerup', 32, 'mouse'); I.poll();
-      ev('pointerdown', 33, 'touch'); ev('pointerup', 33, 'touch'); const s1 = I.poll().pointer.ativo, s2 = I.poll().pointer.ativo; I.destruir(); return { sem, mouse, s1, s2 }; });
+      I.configurar({ modo: 'flutuante', zona: 'tela' }); ev('pointerdown', 32, 'mouse'); const mouse = I.joystick.ativo; ev('pointerup', 32, 'mouse'); I.poll();
+      ev('pointerdown', 33, 'touch'); ev('pointerup', 33, 'touch'); const s1 = I.poll().pointer.ativo, s2 = I.poll().pointer.ativo; I.configurar({ modo: 'flutuante' }); const rc = c.getBoundingClientRect(), evp = (t, id, x, y) => c.dispatchEvent(new PointerEvent(t, { pointerId: id, pointerType: 'touch', clientX: rc.left + x, clientY: rc.top + y, bubbles: true, isPrimary: true }));
+      evp('pointerdown', 34, rc.width * 0.6, rc.height * 0.2); const longe = I.joystick.ativo, clique = I.pointer.down; evp('pointerup', 34, 0, 0); evp('pointerdown', 35, rc.width * 0.14 + 10, rc.height * 0.78 + 10); const perto = I.joystick.ativo; evp('pointerup', 35, 0, 0);
+      I.destruir(); return { sem, mouse, s1, s2, longe, clique, perto }; });
+    ok(r.longe === false && r.clique === true && r.perto === true, 'joystick: zona base só pega o toque dentro do raio; fora é clique normal (' + JSON.stringify(r) + ')');
     ok(r.sem === false && r.mouse === true, 'joystick: sem objeto Joystick não aparece; com objeto funciona também com mouse (' + JSON.stringify(r) + ')');
     ok(r.s1 === true && r.s2 === false, 'toque: o ponteiro deixa de "pairar" depois que o dedo sobe (botão não fica branco) (' + JSON.stringify(r) + ')'); await pq.close();
   }
