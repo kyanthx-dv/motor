@@ -32,7 +32,7 @@
 - Painel de camadas Mundo/Interface no editor (hoje a interface é só `Sprite.fixo`): esconder/mostrar cada uma, arrastar objeto entre elas. Organização do editor, não muda o jogo.
 - Exportar: ajustes finos (futuro): orientação, encaixe de tela, FPS, ícone/nome do PWA, minificação, assets sob demanda.
 - Scripts de cena: script que roda sem precisar de um objeto (ideia do dono; hoje precisa de um objeto com Script).
-- Tutorial interativo de 5 minutos dentro do editor; galeria de mini-jogos.
+- Tutorial interativo de 5 minutos dentro do editor ✅ (botão Tutorial: 7 passos que avançam sozinhos); galeria de mini-jogos.
 - Testar tudo no celular real.
 
 **v2.0 — App e plugins**
