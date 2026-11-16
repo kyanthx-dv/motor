@@ -31,7 +31,7 @@
 - Temas do editor: seletor com temas prontos + arquivo JSON importável. Um tema só muda variáveis de CSS de uma lista permitida (cores, fontes), nunca CSS livre nem JavaScript. Loja de temas: só com contas e servidor, junto com a rede social do app (depois do v2.0).
 - Painel de camadas Mundo/Interface no editor (hoje a interface é só `Sprite.fixo`): esconder/mostrar cada uma, arrastar objeto entre elas. Organização do editor, não muda o jogo.
 - Exportar: ajustes finos (futuro): orientação, encaixe de tela, FPS, ícone/nome do PWA, minificação, assets sob demanda.
-- Scripts de cena: script que roda sem precisar de um objeto (ideia do dono; hoje precisa de um objeto com Script).
+- Scripts de cena ✅: botão "Rodar na cena" na aba Scripts (roda sem objeto; `estado.scriptsCena`). Galeria: exemplos Pega-moedas e Mini-RPG ✅ (mais exemplos depois).
 - Tutorial interativo de 5 minutos dentro do editor ✅ (botão Tutorial: 7 passos que avançam sozinhos); galeria de mini-jogos.
 - Modelos prontos de RPG ✅ (menu ＋ Novo objeto): diálogo com escolhas, inventário com slots/quantidades/uso, vida com dano e invulnerabilidade; conversam por eventos (`dialogo-abrir`, `inv-adicionar`, `dano`, `curar`). Código editável na aba Scripts.
 - Testar tudo no celular real.

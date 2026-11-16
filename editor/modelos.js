@@ -158,5 +158,5 @@
   for (const k of Object.keys(MODELOS)) {
     const b = document.createElement('button'); b.type = 'button'; b.id = 'm-' + k; b.textContent = MODELOS[k].rotulo; b.addEventListener('click', () => instalar(MODELOS[k])); painel.append(b);
   }
-  root.EditorModelos = { instalar: k => instalar(MODELOS[k]), nomes: () => Object.keys(MODELOS) };
+  root.EditorModelos = { definicao: k => MODELOS[k], instalar: k => instalar(MODELOS[k]), nomes: () => Object.keys(MODELOS) };
 })(window);

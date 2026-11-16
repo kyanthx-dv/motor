@@ -41,6 +41,7 @@
         if (!isObj(sc)) throw new Error('save inválido: estado.scripts precisa ser um objeto');
         for (const k in sc) if (!C.Variaveis.NOME.test(k) || !isObj(sc[k]) || typeof sc[k].fonte !== 'string' || sc[k].fonte.length > 50000 || (sc[k].blocos !== undefined && (!Array.isArray(sc[k].blocos) || JSON.stringify(sc[k].blocos).length > 200000))) throw new Error('save inválido: script "' + k + '" (nome inválido ou fonte ausente/grande demais)');
       }
+      const sl = d.estado && d.estado.scriptsCena; if (sl !== undefined && (!Array.isArray(sl) || sl.length > 50 || sl.some(n => typeof n !== 'string' || !C.Variaveis.NOME.test(n)))) throw new Error('save inválido: estado.scriptsCena precisa ser uma lista de nomes de script (até 50)');
       const tam = d.estado && d.estado.tamanho; if (tam !== undefined && (!isObj(tam) || !(tam.largura >= 100 && tam.largura <= 10000) || !(tam.altura >= 100 && tam.altura <= 10000))) throw new Error('save inválido: estado.tamanho precisa de largura e altura entre 100 e 10000');
       const ls = d.estado && d.estado.listas;
       if (ls !== undefined) {

@@ -13,6 +13,16 @@
       if (!s.iniciado) { s.iniciado = true; s.estado = s.estado || {}; s.params = s.params || {}; if (def.iniciar) tentar('iniciar', () => def.iniciar(e, ctx)); }
       if (def.atualizar) tentar('atualizar', () => def.atualizar(e, dt, ctx));
     }
+    // Scripts de cena: nomes em estado.scriptsCena rodam sem precisar de objeto (e = objeto virtual "(cena)", id -1; sem Transform).
+    const lc = scene.estado && scene.estado.scriptsCena; if (!Array.isArray(lc)) return;
+    const rt = scene._cenaRt || (scene._cenaRt = new Map());
+    for (const nome of lc) {
+      const def = ctx.engine.scripts[nome]; if (!def) continue;
+      let v = rt.get(nome); if (!v) { v = { id: -1, nome: '(cena)', Script: { nome, estado: {}, params: {}, iniciado: false } }; rt.set(nome, v); }
+      const tentar = (fase, fn) => { try { fn(); } catch (x) { falhou(ctx, v, nome, fase, x); } };
+      if (!v.Script.iniciado) { v.Script.iniciado = true; if (def.iniciar) tentar('iniciar', () => def.iniciar(v, ctx)); }
+      if (def.atualizar) tentar('atualizar', () => def.atualizar(v, dt, ctx));
+    }
   };
   function falhou(ctx, e, nome, fase, x) {
     const en = ctx.engine; en.errosScript = (en.errosScript || 0) + 1;
