@@ -608,6 +608,29 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     ok(p0.passo === 0 && p0.aberto && p1 === 1 && p2 === 2, 'tutorial: abre e avança sozinho ao criar objeto e mudar a cor (' + [p0.passo, p1, p2] + ')');
     ok(p6 === 6 && fim.passo === 7 && /Pronto/.test(fim.texto), 'tutorial: Play e Parar concluem o guia (' + [p6, fim.passo] + ')'); await pu.close();
   }
+  { // modelos de RPG: diálogo, inventário e vida conversam por eventos; marcador do joystick some no Play
+    const pm = await b.newPage({ viewport: { width: 1300, height: 800 } }); await pm.goto(url('editor/index') + '?abas=todas'); await pm.waitForTimeout(500);
+    const r = await pm.evaluate(() => {
+      const ed = editor; ed.cena.create({ nome: 'jogador', Transform: { x: 100, y: 100 }, Sprite: { w: 20, h: 20, cor: '#fff' } });
+      for (const k of EditorModelos.nomes()) EditorModelos.instalar(k);
+      const dup = EditorModelos.nomes().length; const j = Core.Serializer.paraJSON(ed.cena);
+      const e = new Core.Engine(); Core.Serializer.deJSON(e.scene, j); const er = e.compilarScripts(); e.iniciar && 0;
+      const passa = n => { for (let i = 0; i < n; i++) e.passo(); }, op = n => e.scene.find(n).Sprite.opacidade, tx = n => e.scene.find(n).Sprite.rotulo;
+      passa(2); const oculto = op('dialogo-caixa') === 0;
+      e.events.emit('dialogo-abrir', { id: 'inicio' }); passa(2); const aberto = op('dialogo-caixa') === 1 && /Olá/.test(tx('dialogo-fala')) && tx('dialogo-op1') === 'Sim, por favor' && op('dialogo-op3') === 0;
+      e.events.emit('dialogo-op1', {}); passa(2); const ramo = /poção/.test(tx('dialogo-fala'));
+      e.events.emit('dialogo-op1', {}); passa(3); const fechou = op('dialogo-caixa') === 0 && e.vars.ler('ajudou') === true && e.vars.ler('inv_pocao') === 1 && tx('inv-slot1') === 'Poção';
+      e.events.emit('inv-adicionar', { item: 'pocao', qtd: 20 }); passa(2); const teto = e.vars.ler('inv_pocao') === 9 && tx('inv-slot1') === 'Poção x9';
+      e.events.emit('dano', { qtd: 2 }); e.events.emit('dano', { qtd: 2 }); passa(3); const inv1 = e.vars.ler('vida') === 3;
+      passa(70); e.events.emit('dano', { qtd: 1 }); passa(2); const inv2 = e.vars.ler('vida') === 2;
+      e.events.emit('inv-slot1', {}); passa(3); const cura = e.vars.ler('vida') === 3 && e.vars.ler('inv_pocao') === 8;
+      let morreu = false; e.events.on('morreu', () => { morreu = true; }); passa(70); e.events.emit('dano', { qtd: 9 }); passa(3);
+      return { dup, er: er.length, oculto, aberto, ramo, fechou, teto, inv1, inv2, cura, morreu, vida: e.vars.ler('vida') };
+    });
+    ok(r.er === 0 && r.oculto && r.aberto && r.ramo && r.fechou, 'modelo diálogo: abre, ramifica, fecha, grava variável e dispara evento (' + JSON.stringify(r) + ')');
+    ok(r.teto && r.inv1 && r.inv2 && r.cura && r.morreu && r.vida === 0, 'modelos inventário e vida: teto por slot, invulnerabilidade, poção cura, morte (' + JSON.stringify(r) + ')');
+    await pm.close();
+  }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
   await b.close(); console.log(falhas ? falhas + ' falha(s)' : 'todos os testes de navegador passaram'); process.exit(falhas ? 1 : 0);
 })();

@@ -33,6 +33,7 @@
 - Exportar: ajustes finos (futuro): orientação, encaixe de tela, FPS, ícone/nome do PWA, minificação, assets sob demanda.
 - Scripts de cena: script que roda sem precisar de um objeto (ideia do dono; hoje precisa de um objeto com Script).
 - Tutorial interativo de 5 minutos dentro do editor ✅ (botão Tutorial: 7 passos que avançam sozinhos); galeria de mini-jogos.
+- Modelos prontos de RPG ✅ (menu ＋ Novo objeto): diálogo com escolhas, inventário com slots/quantidades/uso, vida com dano e invulnerabilidade; conversam por eventos (`dialogo-abrir`, `inv-adicionar`, `dano`, `curar`). Código editável na aba Scripts.
 - Testar tudo no celular real.
 
 **v2.0 — App e plugins**
