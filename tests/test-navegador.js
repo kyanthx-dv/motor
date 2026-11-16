@@ -639,6 +639,12 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       return { er, dialogo, pocao: e.vars.ler('inv_pocao'), vida: e.vars.ler('vida'), sumiu: !e.scene.find('pocao 1') };
     });
     ok(rpg.er === 0 && rpg.dialogo && rpg.pocao === 1 && rpg.sumiu && rpg.vida === 5, 'exemplo Mini-RPG: aldeão abre diálogo, poção entra no inventário (' + JSON.stringify(rpg) + ')');
+    const cm = await pm.evaluate(() => {
+      const ed = editor; ed.cena.create({ nome: 'ui-a', Transform: { x: 300, y: 300 }, Sprite: { fixo: true, forma: 'retangulo', w: 400, h: 400, cor: '#123' } }); ed.cena.create({ nome: 'mundo-a', Transform: { x: 300, y: 300 }, Sprite: { forma: 'retangulo', w: 60, h: 60, cor: '#456' } });
+      const antes = ed.camadaTrava(ed.cena.find('ui-a')); document.getElementById('cam-trava-ui').click(); const trava = ed.camadaTrava(ed.cena.find('ui-a')) && !ed.camadaTrava(ed.cena.find('mundo-a'));
+      document.getElementById('cam-ver-mundo').click(); const oculto = ed.renderer.ocultarGrupo.mundo === true && ed.camadaTrava(ed.cena.find('mundo-a')); document.getElementById('cam-ver-mundo').click(); return { antes, trava, oculto, volta: ed.renderer.ocultarGrupo.mundo === false };
+    });
+    ok(!cm.antes && cm.trava && cm.oculto && cm.volta, 'camadas rápidas: travar/ocultar Mundo e Interface no editor (' + JSON.stringify(cm) + ')');
     await pm.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));
