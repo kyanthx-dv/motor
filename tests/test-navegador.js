@@ -648,6 +648,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       document.getElementById('cam-ver-mundo').click(); const oculto = ed.renderer.ocultarGrupo.mundo === true && ed.camadaTrava(ed.cena.find('mundo-a')); document.getElementById('cam-ver-mundo').click(); return { antes, trava, oculto, volta: ed.renderer.ocultarGrupo.mundo === false };
     });
     ok(!cm.antes && cm.trava && cm.oculto && cm.volta, 'camadas rápidas: travar/ocultar Mundo e Interface no editor (' + JSON.stringify(cm) + ')');
+    const cp = await pm.evaluate(async () => {
+      const ed = editor, quadro = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); ed.cena.create({ nome: 'faixa', Transform: { x: 400, y: 225 }, Sprite: { forma: 'retangulo', w: 6000, h: 6000, cor: '#ff0000' } }); ed.selecionar(ed.cena.find('faixa').id);
+      document.getElementById('cam-abrir').click(); const botoes = [...document.querySelectorAll('#cam-painel button')]; botoes.find(b => b.textContent === '+ Camada de Mundo').click(); [...document.querySelectorAll('#cam-painel button')].find(b => b.textContent === '+ Camada de Interface').click();
+      const camadas = JSON.parse(JSON.stringify(ed.cena.estado.camadas)); [...document.querySelectorAll('#cam-painel button')].filter(b => b.textContent === '⇦ sel')[1].click();
+      const f = ed.cena.find('faixa').Sprite, c = ed.canvas || document.getElementById('tela'); const px = () => { const g = c.getContext('2d'), d = g.getImageData(c.width >> 1, c.height >> 1, 1, 1).data; return [d[0], d[1], d[2]].join(); };
+      ed.redesenhar(); await quadro(); const vis = px(); ed.cena.estado.camadas[1].visivel = false; ed.redesenhar(); await quadro(); const oculto = px(); ed.cena.estado.camadas[1].visivel = true; ed.redesenhar();
+      const trava = (ed.cena.estado.camadas[1].bloqueada = true, ed.camadaTrava(ed.cena.find('faixa'))); ed.cena.estado.camadas[1].bloqueada = false;
+      [...document.querySelectorAll('#cam-painel button')].filter(b => b.textContent === '▲')[1].click(); const ordem = ed.cena.estado.camadas.map(x => x.tipo).join();
+      return { n: camadas.length, grupo: f.grupo, fixo: f.fixo, vis, oculto, trava, ordem, salvo: JSON.parse(ed.cena && document.getElementById('json').value).estado.camadas.length };
+    });
+    ok(cp.n === 2 && cp.grupo && cp.fixo === true && cp.vis !== cp.oculto && cp.trava && cp.ordem === 'interface,mundo' && cp.salvo === 2, 'camadas: painel cria, move o selecionado (UI vira fixo), oculta, trava, reordena e salva (' + JSON.stringify(cp) + ')');
     await pm.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));

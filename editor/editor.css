@@ -178,3 +178,4 @@ select.add{background:transparent;color:var(--acento);border:2px dashed var(--ac
 .bloco>.topo>span:first-child,.bloco>.topo>b:first-child{margin-right:2px}
 
 .camadas{display:inline-flex;gap:2px;margin-left:6px}.camadas button{padding:2px 6px}.camadas button.off{opacity:.55}.camadas button.on{background:#f59e0b;color:#111}
+#cam-painel{position:fixed;top:48px;right:8px;z-index:60;max-width:96vw;max-height:70vh;overflow:auto}.cam-linha{display:flex;gap:4px;align-items:center;margin:3px 0}.cam-linha input:not([type=number]){width:110px}.cam-linha input[type=number]{width:52px}.cam-linha.atual{outline:2px solid #f59e0b;border-radius:6px}

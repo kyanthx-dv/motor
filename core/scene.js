@@ -131,5 +131,27 @@
     }
     clear() { this.entities.clear(); this._remover.clear(); this.nextId = 1; this.estado = {}; this.efeitos = null; this.jogando = false; this._cenaRt = null; }
   }
+  // Camadas nomeadas: estado.camadas = [{ id, nome, tipo:'mundo'|'interface', opacidade 0-1, paralaxe 0-3, visivel, bloqueada }] na ordem de desenho
+  // (a primeira fica atrás). Sprite.grupo = id da camada. Sem estado.camadas nada muda. Camadas ordenam dentro do mundo e dentro da interface.
+  C.Camadas = {
+    TIPOS: ['mundo', 'interface'],
+    mapa(scene) {
+      const m = new Map(), l = scene.estado && scene.estado.camadas; if (!Array.isArray(l)) return m;
+      l.forEach((c, i) => { if (c && typeof c.id === 'string') m.set(c.id, { i, op: Number.isFinite(c.opacidade) ? Math.max(0, Math.min(1, c.opacidade)) : 1, par: Number.isFinite(c.paralaxe) ? Math.max(0, Math.min(3, c.paralaxe)) : 1, vis: c.visivel !== false, tipo: c.tipo }); });
+      return m;
+    },
+    validar(l) {
+      if (!Array.isArray(l) || l.length > 30) throw new Error('save inválido: estado.camadas precisa ser uma lista (até 30 camadas)');
+      const ids = new Set();
+      for (const c of l) {
+        if (!c || typeof c !== 'object' || Array.isArray(c) || typeof c.id !== 'string' || !/^[A-Za-z0-9_-]{1,30}$/.test(c.id) || ids.has(c.id)) throw new Error('save inválido: camada sem id válido (letras, números, _ e -; único)');
+        ids.add(c.id);
+        if (c.nome !== undefined && (typeof c.nome !== 'string' || c.nome.length > 40)) throw new Error('save inválido: nome da camada "' + c.id + '" precisa ser texto de até 40 letras');
+        if (c.tipo !== undefined && !C.Camadas.TIPOS.includes(c.tipo)) throw new Error('save inválido: tipo da camada "' + c.id + '" precisa ser mundo ou interface');
+        for (const [k, a, b] of [['opacidade', 0, 1], ['paralaxe', 0, 3]]) if (c[k] !== undefined && !(Number.isFinite(c[k]) && c[k] >= a && c[k] <= b)) throw new Error('save inválido: camada "' + c.id + '": ' + k + ' precisa estar entre ' + a + ' e ' + b);
+        for (const k of ['visivel', 'bloqueada']) if (c[k] !== undefined && typeof c[k] !== 'boolean') throw new Error('save inválido: camada "' + c.id + '": ' + k + ' precisa ser verdadeiro/falso');
+      }
+    }
+  };
   C.Scene = Scene;
 })(typeof window !== 'undefined' ? window : globalThis);

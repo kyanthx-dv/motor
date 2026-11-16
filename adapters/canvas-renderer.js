@@ -95,11 +95,17 @@
       if (X) this.mundoExterno(scene, alpha, z, cx, cy);
       g.setTransform(d * this.esc * z, 0, 0, d * this.esc * z, d * (this.ox + this.esc * (L / 2 - cx * z)), d * (this.oy + this.esc * (A / 2 - cy * z)));
       const meioW = V ? W / V.z / 2 + Math.abs(this.ox / V.z) + L : L / z / 2, meioH = V ? 1e9 : A / z / 2;
-      const ord = (a, b) => (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id;
+      const CM = C.Camadas.mapa(scene), li = e => { const l = CM.get(e.Sprite.grupo); return l ? l.i : -1; };
+      const ord = (a, b) => li(a) - li(b) || (a.Sprite.camada || 0) - (b.Sprite.camada || 0) || (a.Sprite.ordenarY ? a.Transform.y : 0) - (b.Sprite.ordenarY ? b.Transform.y : 0) || a.id - b.id;
       const todos = scene.query('Transform', 'Sprite').sort(ord);
-      const pintar = (e, cx, cy, meioW, meioH) => {
+      const pintar = (e, cx, cy, meioW, meioH) => {   // camada: visibilidade, opacidade e paralaxe (paralaxe só no jogo, não na edição)
+        const Ly = CM.get(e.Sprite.grupo); if (!Ly) { this._lop = 1; return pintar1(e, cx, cy, meioW, meioH); }
+        if (!Ly.vis) return; this._lop = Ly.op;
+        if (scene.jogando && !e.Sprite.fixo && Ly.par !== 1) { g.save(); g.translate(cx * (1 - Ly.par), cy * (1 - Ly.par)); pintar1(e, cx * Ly.par, cy * Ly.par, meioW, meioH); g.restore(); } else pintar1(e, cx, cy, meioW, meioH);
+      };
+      const pintar1 = (e, cx, cy, meioW, meioH) => {
         const s = e.Sprite; if (s.invisivel || (!scene.jogando && this.ocultarGrupo && this.ocultarGrupo[s.fixo ? 'ui' : 'mundo'])) return;
-        const op = (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1);
+        const op = (s.opacidade === undefined ? 1 : s.opacidade) * (e.Botao && e.Botao.desativado ? 0.45 : 1) * (this._lop === undefined ? 1 : this._lop);
         const k = e.Transform.escala, esc = Number.isFinite(k) && k > 0 && k !== 1;   // Transform.escala: só visual (a física não muda)
         const rot = e.Transform.rot && !(s.imagem && this.assets && this.assets.get(s.imagem)) && !(e.Body && e.Body.forma === 'poligono');   // formas/texto também giram (imagem gira no próprio desenho)
         if (esc || rot) { g.save(); g.translate(e.Transform.x, e.Transform.y); if (rot) g.rotate(e.Transform.rot); if (esc) g.scale(k, k); g.translate(-e.Transform.x, -e.Transform.y); }
