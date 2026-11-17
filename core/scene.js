@@ -41,6 +41,21 @@
       for (const k of ['dx', 'dy', 'rot']) if (P[k] !== undefined && !(typeof P[k] === 'number' && isFinite(P[k]))) throw new Error('entidade "' + n + '": Pai.' + k + ' precisa ser número');
     }
     if (e.Modelo !== undefined && (e.Modelo === null || typeof e.Modelo !== 'object')) throw new Error('entidade "' + n + '": Modelo precisa ser um objeto');
+    if (e.Corpo) {
+      const K = e.Corpo; if (!e.Transform) throw new Error('entidade "' + n + '": Corpo precisa de Transform');
+      if (K.tipo !== undefined && K.tipo !== 'dinamico' && K.tipo !== 'estatico') throw new Error('entidade "' + n + '": Corpo.tipo precisa ser dinamico ou estatico');
+      if (K.forma !== undefined && K.forma !== 'circulo' && K.forma !== 'retangulo') throw new Error('entidade "' + n + '": Corpo.forma precisa ser circulo ou retangulo');
+      for (const k of ['w', 'h', 'raio']) if (K[k] !== undefined && !(typeof K[k] === 'number' && isFinite(K[k]) && K[k] > 0)) throw new Error('entidade "' + n + '": Corpo.' + k + ' precisa ser um número maior que 0');
+      for (const k of ['densidade', 'atrito', 'elasticidade', 'amortecimento']) if (K[k] !== undefined && !(typeof K[k] === 'number' && isFinite(K[k]) && K[k] >= 0)) throw new Error('entidade "' + n + '": Corpo.' + k + ' precisa ser um número 0 ou maior');
+      if (K.rotacaoFixa !== undefined && typeof K.rotacaoFixa !== 'boolean') throw new Error('entidade "' + n + '": Corpo.rotacaoFixa precisa ser verdadeiro/falso');
+    }
+    if (e.Junta) {
+      const J = e.Junta; if (!e.Corpo) throw new Error('entidade "' + n + '": Junta precisa de Corpo (o objeto que está preso)');
+      if (typeof J.com !== 'string' || !J.com) throw new Error('entidade "' + n + '": Junta.com precisa ser o nome de outro objeto');
+      if (J.tipo !== undefined && J.tipo !== 'pino' && J.tipo !== 'mola') throw new Error('entidade "' + n + '": Junta.tipo precisa ser pino ou mola');
+      for (const k of ['comprimento', 'rigidez', 'amortecimento', 'ax', 'ay', 'bx', 'by']) if (J[k] !== undefined && !(typeof J[k] === 'number' && isFinite(J[k]))) throw new Error('entidade "' + n + '": Junta.' + k + ' precisa ser um número');
+      if (J.rigidez !== undefined && (J.rigidez < 0 || J.rigidez > 1)) throw new Error('entidade "' + n + '": Junta.rigidez precisa estar entre 0 e 1');
+    }
     if (e.Body) {
       const b = e.Body, circ = b.forma === 'circulo' || (!b.forma && b.raio !== undefined);
       if (!e.Transform) throw new Error('entidade "' + n + '": Body precisa de Transform');

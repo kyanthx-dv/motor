@@ -6,14 +6,18 @@
   const seguro = t => t.replace(/<\/script/gi, '<\\/script');
   // Ajustes de exportação: vêm de estado.exportar da cena aberta (ou da primeira cena que tiver).
   const cfgDe = pac => { const L = C => C.ExportarCfg.limpar, c = root.Core; const cs = [pac.cena, ...Object.values((pac.cenas && pac.cenas.cenas) || {})].map(x => x && x.estado && x.estado.exportar).filter(Boolean); return c.ExportarCfg.limpar(cs[0]); };
+  // O Matter.js só vai junto no jogo exportado se algum objeto usa Corpo (o arquivo tem ~80 KB).
+  const usaMatter = pac => [pac.cena, ...Object.values((pac.cenas && pac.cenas.cenas) || {})].some(c => c && (c.entidades || []).some(e => e && e.Corpo));
+  const lerMatter = async () => '/* matter.min.js */\n' + await (await fetch('../adapters/vendor/matter.min.js')).text();
   const ORI = { qualquer: 'any', paisagem: 'landscape', retrato: 'portrait' };
   async function gerar() {
     const urls = [...document.scripts].map(s => s.getAttribute('src') || '').filter(s => /^\.\.\/(core|adapters)\//.test(s) && !EXCLUIR.test(s)); urls.push('../adapters/worker-host.js', '../adapters/player.js');
     const codigos = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) throw new Error('não consegui ler ' + u + ' (' + r.status + ')'); codigos.push('/* ' + u.replace('../', '') + ' */\n' + await r.text()); }
     const pac = root.EditorArquivos.exportar(), cenas = Object.assign({}, pac.cenas.cenas); cenas[pac.cenas.atual] = pac.cena;
-    const nome = (ed.projetoAtual || 'jogo').replace(/\s*\(pasta\)$/, ''), cfg = cfgDe(pac), jogo = { nome, atual: pac.cenas.atual, cenas, versao: root.Core.VERSAO, exportar: cfg };
+    const nome = (ed.projetoAtual || 'jogo').replace(/\s*\(pasta\)$/, ''), cfg = cfgDe(pac), mt = usaMatter(pac) ? await lerMatter() : null, jogo = { nome, atual: pac.cenas.atual, cenas, versao: root.Core.VERSAO, exportar: cfg };
     const dados = JSON.stringify(jogo).replace(/</g, '\\u003c').replace(new RegExp(String.fromCharCode(0x2028), 'g'), '\\u2028').replace(new RegExp(String.fromCharCode(0x2029), 'g'), '\\u2029');
     const esc = (cfg.nomeApp || nome).replace(/[&<>"]/g, c => '&#' + c.charCodeAt(0) + ';');
+    if (mt) codigos.unshift(mt);
     return '<!doctype html>\n<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>' + esc + '</title>\n<style>html,body{margin:0;height:100%;background:' + (cfg.corFundo || '#000') + ';overflow:hidden;touch-action:none}</style></head><body>\n' +
       '<script>/* Jogo exportado com o Motor v' + root.Core.VERSAO + '. O motor roda num Web Worker; o código dele fica no bloco de texto abaixo. */</script>\n<script type="text/plain" id="motor-codigo">\n' + seguro(codigos.join('\n;\n')) + '\n</script>\n<script>\n(0, Function)(document.getElementById("motor-codigo").textContent)();\nCore.Player.iniciar(' + dados + ').catch(function (e) { document.body.textContent = "Não foi possível iniciar o jogo: " + e.message; });\n</script>\n'+'</body></html>\n';
   }
@@ -23,6 +27,7 @@
     const lerT = async u => { const r = await fetch(u); if (!r.ok) throw new Error('não consegui ler ' + u + ' (' + r.status + ')'); return r; };
     const cod = []; for (const u of urls) cod.push('/* ' + u.replace('../', '') + ' */\n' + await (await lerT(u)).text());
     const pac = root.EditorArquivos.exportar(), nome = (ed.projetoAtual || 'jogo').replace(/\s*\(pasta\)$/, ''), enc = new TextEncoder();
+    if (usaMatter(pac)) cod.unshift(await lerMatter());
     const arq = root.PastaProjeto.empacotar(pac, nome); arq['motor.js'] = enc.encode(cod.join('\n;\n'));
     const cfg = cfgDe(pac), bg = cfg.corFundo || '#10161f', titulo = cfg.nomeApp || nome, esc = titulo.replace(/[&<>"]/g, c => '&#' + c.charCodeAt(0) + ';');
     arq['index.html'] = enc.encode('<!doctype html>\n<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>' + esc + '</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="' + bg + '">\n<style>html,body{margin:0;height:100%;background:' + bg + ';overflow:hidden;touch-action:none}</style></head><body>\n<script>\n(async function () {\n  try {\n    var t = await (await fetch("motor.js")).text(), el = document.createElement("script"); el.type = "text/plain"; el.id = "motor-codigo"; el.textContent = t; document.head.appendChild(el); (0, Function)(t)();\n    var p = Core.PastaProjeto || window.PastaProjeto, d = p.desempacotar(await p.lerUrl("./"));\n    await Core.Player.iniciar({ nome: d.nome, atual: d.cenas.atual, cenas: d.cenas.cenas, versao: Core.VERSAO, render: "' + (($('e-render') || {}).value === 'graficos' ? 'webgl' : '2d') + '", pixiUrl: "pixi.min.js" });\n    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});\n  } catch (e) { document.body.textContent = "Não foi possível iniciar o jogo (abra por http/https, não por file://): " + e.message; }\n})();\n</script>\n</body></html>\n');

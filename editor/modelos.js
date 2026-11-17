@@ -158,5 +158,20 @@
   for (const k of Object.keys(MODELOS)) {
     const b = document.createElement('button'); b.type = 'button'; b.id = 'm-' + k; b.textContent = MODELOS[k].rotulo; b.addEventListener('click', () => instalar(MODELOS[k])); painel.append(b);
   }
+  // ---- Física Matter.js (corpos que giram e juntas): objetos prontos
+  const FIS = {
+    chao: ['▬ Chão físico', () => [{ nome: 'chao', Transform: { x: 400, y: 420 }, Sprite: { forma: 'retangulo', w: 720, h: 30, cor: '#475569' }, Corpo: { tipo: 'estatico', w: 720, h: 30 } }]],
+    caixa: ['📦 Caixa física', () => [{ nome: 'caixa', Transform: { x: 400, y: 100 }, Sprite: { forma: 'retangulo', w: 48, h: 48, cor: '#f59e0b' }, Corpo: { tipo: 'dinamico', w: 48, h: 48 } }]],
+    bola: ['⚽ Bola física', () => [{ nome: 'bola', Transform: { x: 330, y: 60 }, Sprite: { forma: 'circulo', raio: 24, cor: '#22c55e' }, Corpo: { tipo: 'dinamico', forma: 'circulo', raio: 24, elasticidade: 0.6 } }]],
+    pendulo: ['🔗 Pêndulo (junta)', () => [{ nome: 'pivo', Transform: { x: 560, y: 80 }, Sprite: { forma: 'circulo', raio: 8, cor: '#94a3b8' }, Corpo: { tipo: 'estatico', forma: 'circulo', raio: 8 } },
+      { nome: 'peso', Transform: { x: 680, y: 80 }, Sprite: { forma: 'circulo', raio: 20, cor: '#ef4444' }, Corpo: { tipo: 'dinamico', forma: 'circulo', raio: 20 }, Junta: { com: 'pivo', tipo: 'pino', comprimento: 120 } }]]
+  };
+  const tf = document.createElement('p'); tf.className = 't'; tf.textContent = 'Física Matter.js (corpos que giram):'; painel.append(tf);
+  for (const k of Object.keys(FIS)) {
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'f-' + k; b.textContent = FIS[k][0];
+    b.addEventListener('click', () => { if (ed.engine.rodando) return msg('Pare o jogo antes de adicionar.', 'erro'); let ult; for (const o of FIS[k][1]()) { let n = o.nome, i = 2; while (cena.find(n)) n = o.nome + i++; if (n !== o.nome && o.Junta) { /* mantém a referência ao pivô criado agora */ } o.nome = n; ult = cena.create(o); }
+      cena.flush(); ed.selecionar(ult.id); ed.json(); ed.redesenhar(); msg('Adicionado. Dê Play: o Matter.js move os objetos (gravidade em estado.matter).', 'ok'); });
+    painel.append(b);
+  }
   root.EditorModelos = { definicao: k => MODELOS[k], instalar: k => instalar(MODELOS[k]), nomes: () => Object.keys(MODELOS) };
 })(window);
