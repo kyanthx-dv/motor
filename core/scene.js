@@ -41,6 +41,14 @@
       for (const k of ['dx', 'dy', 'rot']) if (P[k] !== undefined && !(typeof P[k] === 'number' && isFinite(P[k]))) throw new Error('entidade "' + n + '": Pai.' + k + ' precisa ser número');
     }
     if (e.Modelo !== undefined && (e.Modelo === null || typeof e.Modelo !== 'object')) throw new Error('entidade "' + n + '": Modelo precisa ser um objeto');
+    for (const [nm, ext] of [['Barra', ['min', 'max', 'cor', 'arrastavel', 'desativado']], ['Alternar', ['textoLigado', 'textoDesligado', 'corLigado', 'corDesligado', 'desativado']]]) {
+      const K = e[nm]; if (!K) continue; if (!e.Transform || !e.Sprite) throw new Error('entidade "' + n + '": ' + nm + ' precisa de Transform e Sprite');
+      if (typeof K.var !== 'string' || !K.var) throw new Error('entidade "' + n + '": ' + nm + '.var precisa ser o nome de uma variável');
+      for (const k of ['textoLigado', 'textoDesligado', 'corLigado', 'corDesligado', 'cor']) if (K[k] !== undefined && typeof K[k] !== 'string') throw new Error('entidade "' + n + '": ' + nm + '.' + k + ' precisa ser texto');
+      if (K.min !== undefined && !(typeof K.min === 'number' && isFinite(K.min))) throw new Error('entidade "' + n + '": Barra.min precisa ser um número');
+      if (K.max !== undefined && !((typeof K.max === 'number' && isFinite(K.max)) || typeof K.max === 'string')) throw new Error('entidade "' + n + '": Barra.max precisa ser um número ou o nome de uma variável');
+      for (const k of ['arrastavel', 'desativado']) if (K[k] !== undefined && typeof K[k] !== 'boolean') throw new Error('entidade "' + n + '": ' + nm + '.' + k + ' precisa ser verdadeiro/falso');
+    }
     if (e.Corpo) {
       const K = e.Corpo; if (!e.Transform) throw new Error('entidade "' + n + '": Corpo precisa de Transform');
       if (K.tipo !== undefined && K.tipo !== 'dinamico' && K.tipo !== 'estatico') throw new Error('entidade "' + n + '": Corpo.tipo precisa ser dinamico ou estatico');

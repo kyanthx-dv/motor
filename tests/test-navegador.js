@@ -693,6 +693,12 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       return { n: camadas.length, grupo: f.grupo, fixo: f.fixo, vis, oculto, trava, ordem, salvo: JSON.parse(ed.cena && document.getElementById('json').value).estado.camadas.length };
     });
     ok(cp.n === 2 && cp.grupo && cp.fixo === true && cp.vis !== cp.oculto && cp.trava && cp.ordem === 'interface,mundo' && cp.salvo === 2, 'camadas: painel cria, move o selecionado (UI vira fixo), oculta, trava, reordena e salva (' + JSON.stringify(cp) + ')');
+    const ui = await pm.evaluate(async () => {
+      for (const k of ['barra', 'slider', 'alternar', 'painel']) document.getElementById('u-' + k).click();
+      const c = editor.cena, v = c.estado.vars || {}, j = JSON.stringify(Core.Serializer.paraJSON(c)); const e2 = new Core.Engine(); Core.Serializer.deJSON(e2.scene, JSON.parse(j)); for (let i = 0; i < 3; i++) e2.passo();
+      return { ok: !!c.find('barra').Barra && !!c.find('slider').Barra.arrastavel && !!c.find('alternar').Alternar && !!c.find('painel'), vars: [v.vida, v.vida_max, v.volume, v.som].join(), r: e2.scene.find('barra').Barra._r, rot: e2.scene.find('alternar').Sprite.rotulo };
+    });
+    ok(ui.ok && ui.vars === '5,5,0.7,true' && ui.r === 1 && ui.rot === 'Som: ligado', 'menu de componentes de UI cria barra, slider, alternar e painel já ligados às variáveis (' + JSON.stringify(ui) + ')');
     await pm.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));

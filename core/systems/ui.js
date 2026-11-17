@@ -21,5 +21,24 @@
         if (B.acao.evento) ctx.events.emit(B.acao.evento, { para: e.id });
       }
     }
+    // Barra { var, min=0, max (número ou nome de variável), cor, arrastavel }: enche conforme a variável; arrastável = slider (arrasta e grava na variável)
+    // Alternar { var, textoLigado, textoDesligado, corLigado, corDesligado }: clique liga/desliga a variável (booleana) e troca rótulo e cor
+    const lerV = (n, d) => (ctx.vars.existe(n) ? ctx.vars.ler(n) : d), gravaV = (n, v) => { if (ctx.vars.existe(n)) ctx.vars.definir(n, v); else ctx.vars.declarar(n, v); };
+    for (const e of scene.query('Barra', 'Transform', 'Sprite')) {
+      const B = e.Barra, S = e.Sprite; if (typeof B.var !== 'string') continue;
+      const mn = Number.isFinite(B.min) ? B.min : 0, mx = typeof B.max === 'string' ? Number(lerV(B.max, 1)) : Number.isFinite(B.max) ? B.max : 1, span = (mx - mn) || 1, w = S.w ?? 100, h = S.h ?? 20;
+      const px = S.fixo ? p.tx : p.x, py = S.fixo ? p.ty : p.y, dentro = p.ativo !== false && px !== undefined && Math.abs(px - e.Transform.x) <= w / 2 + 6 && Math.abs(py - e.Transform.y) <= h / 2 + 10;
+      if (B.arrastavel && !B.desativado) {
+        if (p.pressed && dentro) B._arr = true; if (!p.down) B._arr = false;
+        if (B._arr && px !== undefined) { const r = Math.max(0, Math.min(1, (px - (e.Transform.x - w / 2)) / w)); gravaV(B.var, mn + r * span); ctx.events.emit('barra-mudou', { para: e.id, valor: mn + r * span }); }
+      }
+      B._r = Math.max(0, Math.min(1, (Number(lerV(B.var, mn)) - mn) / span));
+    }
+    for (const e of scene.query('Alternar', 'Transform', 'Sprite')) {
+      const A = e.Alternar, S = e.Sprite; if (typeof A.var !== 'string') continue;
+      const w = S.w ?? 100, h = S.h ?? 40, px = S.fixo ? p.tx : p.x, py = S.fixo ? p.ty : p.y;
+      if (!A.desativado && p.pressed && p.ativo !== false && px !== undefined && Math.abs(px - e.Transform.x) <= w / 2 && Math.abs(py - e.Transform.y) <= h / 2) { gravaV(A.var, !lerV(A.var, false)); ctx.events.emit('alternou', { para: e.id, valor: !!lerV(A.var, false) }); }
+      const on = !!lerV(A.var, false); S.rotulo = on ? (A.textoLigado || 'Ligado') : (A.textoDesligado || 'Desligado'); S.cor = on ? (A.corLigado || '#16a34a') : (A.corDesligado || '#64748b');
+    }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

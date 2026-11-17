@@ -173,5 +173,19 @@
       cena.flush(); ed.selecionar(ult.id); ed.json(); ed.redesenhar(); msg('Adicionado. Dê Play: o Matter.js move os objetos (gravidade em estado.matter).', 'ok'); });
     painel.append(b);
   }
+  // ---- Componentes de interface: Barra (vida/progresso), Slider (barra arrastável), Alternar (liga/desliga) e Painel
+  const UI = {
+    barra: ['▰ Barra (vida/progresso)', () => [{ vars: { vida: 5, vida_max: 5 }, nome: 'barra', Transform: { x: 150, y: 30 }, Sprite: { fixo: true, forma: 'retangulo', w: 220, h: 20, cor: '#1e293b', borda: '#94a3b8', arredondar: 8, camada: 3, rotulo: '' }, Barra: { var: 'vida', max: 'vida_max', cor: '#ef4444' } }]],
+    slider: ['🎚 Slider (arrastar)', () => [{ vars: { volume: 0.7 }, nome: 'slider', Transform: { x: 400, y: 225 }, Sprite: { fixo: true, forma: 'retangulo', w: 260, h: 16, cor: '#1e293b', borda: '#94a3b8', arredondar: 8, camada: 3 }, Barra: { var: 'volume', min: 0, max: 1, cor: '#38bdf8', arrastavel: true } }]],
+    alternar: ['⏻ Alternar (liga/desliga)', () => [{ vars: { som: true }, nome: 'alternar', Transform: { x: 400, y: 290 }, Sprite: { fixo: true, forma: 'retangulo', w: 140, h: 40, cor: '#16a34a', arredondar: 10, corTexto: '#ffffff', tamanhoTexto: 16, fonte: 'system-ui', camada: 3, rotulo: 'Ligado' }, Alternar: { var: 'som', textoLigado: 'Som: ligado', textoDesligado: 'Som: desligado' } }]],
+    painel: ['▭ Painel', () => [{ nome: 'painel', Transform: { x: 400, y: 225 }, Sprite: { fixo: true, forma: 'retangulo', w: 360, h: 220, cor: 'rgba(15,23,42,.88)', borda: '#64748b', larguraBorda: 2, arredondar: 14, camada: 1 } }]]
+  };
+  const tu = document.createElement('p'); tu.className = 't'; tu.textContent = 'Componentes de interface:'; painel.append(tu);
+  for (const k of Object.keys(UI)) {
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'u-' + k; b.textContent = UI[k][0];
+    b.addEventListener('click', () => { if (ed.engine.rodando) return msg('Pare o jogo antes de adicionar.', 'erro'); let ult; for (const o of UI[k][1]()) { const vs = o.vars; delete o.vars; for (const v of Object.keys(vs || {})) { const est = cena.estado.vars || (cena.estado.vars = {}); if (est[v] === undefined) est[v] = vs[v]; } let n = o.nome, i = 2; while (cena.find(n)) n = o.nome + i++; o.nome = n; ult = cena.create(o); }
+      cena.flush(); ed.selecionar(ult.id); ed.json(); ed.redesenhar(); msg('Adicionado. Ajuste a variável no inspetor (Barra/Alternar → var).', 'ok'); });
+    painel.append(b);
+  }
   root.EditorModelos = { definicao: k => MODELOS[k], instalar: k => instalar(MODELOS[k]), nomes: () => Object.keys(MODELOS) };
 })(window);
