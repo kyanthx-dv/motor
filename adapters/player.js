@@ -19,6 +19,14 @@
         const g = await C.PixiRenderer.criar(tela, { largura: t.largura, altura: t.altura, fundo: '#000', assets, pixiUrl: jogo.pixiUrl || 'pixi.min.js' });
         if (g) { g.ligar(true); g.redimensionar(); renderer = g; this.render = 'webgl'; }
       }
+      const cfg = C.ExportarCfg ? C.ExportarCfg.limpar(jogo.exportar || Object.values(jogo.cenas).map(c => c && c.estado && c.estado.exportar).find(Boolean)) : {};
+      if (cfg.encaixe) renderer.encaixe = cfg.encaixe; if (cfg.corFundo) { doc.documentElement.style.background = doc.body.style.background = caixa.style.background = tela.style.background = cfg.corFundo; }
+      if (renderer.redimensionar) renderer.redimensionar();
+      if (cfg.orientacao === 'paisagem' || cfg.orientacao === 'retrato') {   // trava a orientação quando o navegador deixa; senão avisa para girar
+        const quer = cfg.orientacao === 'paisagem' ? 'landscape' : 'portrait', av = doc.createElement('div');
+        av.style.cssText = 'position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#10161f;color:#fff;font:600 20px system-ui,sans-serif;text-align:center;padding:24px;z-index:9'; av.textContent = 'Gire o aparelho para ' + (cfg.orientacao === 'paisagem' ? 'a horizontal' : 'a vertical') + ' para jogar.'; corpo.appendChild(av);
+        const conferir = () => { av.style.display = (innerWidth >= innerHeight) === (quer === 'landscape') ? 'none' : 'flex'; }; addEventListener('resize', conferir); conferir(); this.travarOrientacao = () => { try { const o = screen.orientation; if (o && o.lock) o.lock(quer).catch(() => {}); } catch (x) {} };
+      }
       const prefixo = 'motor.jogo.' + String(jogo.nome || 'jogo').replace(/[^a-zA-Z0-9_-]/g, '_') + '.', armazem = C.Armazem ? C.Armazem.navegador(prefixo) : null;
       const input = new C.Input(tela, renderer), audio = C.Audio ? new C.Audio() : null;
       const sons = Object.assign({}, ...Object.values(jogo.cenas).map(c => (c.estado || {}).sons || {}));
@@ -40,10 +48,10 @@
       }
       this.engine = engine; this.host = host; this.modo = usarWorker ? 'worker' : 'direto';
       const capa = doc.createElement('div'); capa.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;background:#10161f;color:#fff;font:600 22px system-ui,sans-serif;z-index:10';
-      const titulo = doc.createElement('div'); titulo.textContent = jogo.nome || 'Jogo'; const b = doc.createElement('button'); b.type = 'button'; b.textContent = '▶ Jogar';
+      const titulo = doc.createElement('div'); titulo.textContent = cfg.nomeApp || jogo.nome || 'Jogo'; const b = doc.createElement('button'); b.type = 'button'; b.textContent = '▶ Jogar';
       b.style.cssText = 'font:600 20px system-ui,sans-serif;padding:14px 36px;border-radius:12px;border:0;background:#4aa3ff;color:#04121f'; capa.append(titulo, b); corpo.appendChild(capa);
       b.addEventListener('click', () => {
-        capa.remove(); if (C.Dispositivo && /android|ios/.test(C.Dispositivo.ler('plataforma'))) C.Dispositivo.telaCheia(true);
+        capa.remove(); if (this.travarOrientacao) this.travarOrientacao(); if (C.Dispositivo && /android|ios/.test(C.Dispositivo.ler('plataforma'))) C.Dispositivo.telaCheia(true);
         if (host) host.iniciar(); else engine.iniciar();
       });
       return engine;

@@ -422,6 +422,16 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     ok(await p.evaluate(() => editor.engine.rodando && editor.cena.entities.size > 8 && (editor.engine.errosScripts || []).length === 0), 'mini-rpg roda no editor sem erro de script');
     ok(await p.evaluate(() => getComputedStyle(document.getElementById('tela')).touchAction === 'none'), 'toque: a tela do jogo tem touch-action:none (joystick funciona no celular)');
     if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT }); await p.evaluate(() => editor.parar());
+    { // ajustes finos de exportação
+      const ax = await p.evaluate(async () => {
+        document.getElementById('ex-ajustes').click(); const q = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('change')); };
+        q('ex-nome', 'Super Jogo'); q('ex-orient', 'paisagem'); q('ex-encaixe', 'inteiro'); q('ex-cor', '#102030');
+        const cfg = JSON.parse(JSON.stringify(editor.cena.estado.exportar)), html = await EditorExportar.gerar(); const zip = await EditorExportar.gerarPasta(), man = JSON.parse(new TextDecoder().decode(zip['manifest.webmanifest']));
+        return { cfg, html: { titulo: /<title>Super Jogo<\/title>/.test(html), cor: html.includes('background:#102030'), dados: html.includes('"orientacao":"paisagem"') }, man: [man.name, man.orientation, man.background_color].join() };
+      });
+      ok(ax.cfg.nomeApp === 'Super Jogo' && ax.cfg.orientacao === 'paisagem' && ax.cfg.encaixe === 'inteiro' && ax.cfg.corFundo === '#102030' && ax.html.titulo && ax.html.cor && ax.html.dados && ax.man === 'Super Jogo,landscape,#102030', 'exportar: painel de ajustes grava e o .html usa nome, cor e orientação (' + JSON.stringify(ax) + ')');
+      await p.evaluate(() => { document.getElementById('ex-ajustes').click(); delete editor.cena.estado.exportar; editor.json(); });
+    }
     // exportar jogo: um .html que roda sozinho (nova página, sem o editor)
     const html = await p.evaluate(() => EditorExportar.gerar());
     ok(/Core\.Player\.iniciar/.test(html) && !/class PixiRenderer|new P\.Application/.test(html) && html.length < 400000, 'exportar: gera um .html único e leve (' + Math.round(html.length / 1024) + ' KB, sem PixiJS)');

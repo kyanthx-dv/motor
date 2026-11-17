@@ -39,7 +39,7 @@
     redimensionar() {
       const r = this.canvas.getBoundingClientRect(); this.dpr = this.simples ? 1 : Math.min(window.devicePixelRatio || 1, 3);
       this.canvas.width = Math.max(1, Math.round(r.width * this.dpr)); this.canvas.height = Math.max(1, Math.round(r.height * this.dpr));
-      this.esc = Math.min(r.width / this.largura, r.height / this.altura) || 1;
+      this.esc = Math.min(r.width / this.largura, r.height / this.altura) || 1; if (this.encaixe === 'inteiro' && this.esc >= 1) this.esc = Math.floor(this.esc);   // encaixe inteiro: pixel art sem borrar
       this.ox = (r.width - this.largura * this.esc) / 2; this.oy = (r.height - this.altura * this.esc) / 2;
     }
     _guias(g, scene, L, A, W, H, d) {

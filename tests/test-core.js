@@ -500,4 +500,10 @@ const nova=()=>new C.Engine();
   ok(n===ruins.length,'camadas: listas inválidas são recusadas');
   let rec=false;try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{camadas:[{id:'!'}]},entidades:[]});}catch(x){rec=true;}ok(rec,'camadas: save com camada inválida falha');
 }
+{ // ajustes de exportação
+  C.ExportarCfg.validar({nomeApp:'Meu jogo',orientacao:'paisagem',encaixe:'inteiro',corFundo:'#112233'});
+  let n=0;for(const r of [{nomeApp:5},{orientacao:'x'},{encaixe:'y'},{corFundo:'red'},{corFundo:'#12'},[],null]){try{C.ExportarCfg.validar(r);}catch(x){n++;}}
+  const l=C.ExportarCfg.limpar({nomeApp:'  A  ',orientacao:'zz',encaixe:'inteiro',corFundo:'javascript:1'});
+  ok(n===7&&l.nomeApp==='A'&&l.encaixe==='inteiro'&&l.orientacao===undefined&&l.corFundo===undefined,'exportar: ajustes inválidos são recusados e limpar() ignora o que não vale');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
