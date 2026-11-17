@@ -4,16 +4,28 @@
 (function (root) {
   const ed = root.editor, ta = document.getElementById('sc-fonte'); if (!ta) return;
   const el = (t, c) => { const n = document.createElement(t); if (c) n.className = c; return n; };
+  // Cada item: 'nome' (propriedade) ou 'nome|(assinatura)' (função: ao aceitar vira nome() com o cursor dentro).
   const API = {
-    ctx: ['vars', 'listas', 'input', 'scene', 'engine', 'dispositivo', 'audio', 'efeitos', 'caminho', 'events', 'tela', 'dt', 'escrever', 'sobre', 'depois', 'tween', 'salvarPartida', 'carregarPartida', 'existePartida'],
-    'ctx.vars': ['ler', 'definir', 'somar'], 'ctx.listas': ['adicionar', 'remover', 'item', 'definir', 'tamanho', 'contem', 'todos', 'limpar', 'aleatorio'],
-    'ctx.input': ['axes', 'pointer', 'joystick', 'tecla', 'apertou', 'soltou'], 'ctx.scene': ['create', 'find', 'get', 'query', 'destroy', 'clonar', 'animar', 'adotar', 'soltar', 'estado'],
-    'ctx.engine': ['tempo', 'aleatorio', 'irPara', 'reiniciar', 'observar'], 'ctx.efeitos': ['tremer', 'fade', 'particulas'], 'ctx.dispositivo': ['vibrar', 'telaCheia', 'ler'],
-    'ctx.caminho': ['parar'], 'ctx.tela': ['largura', 'altura'], 'ctx.audio': ['tocar', 'parar', 'volume'],
-    e: ['id', 'nome', 'Transform', 'Sprite', 'Body', 'Animacao', 'Script', 'Etiquetas', 'Attr', 'Botao', 'Rota', 'Pai'], 'e.Transform': ['x', 'y', 'rot', 'escala'],
-    'e.Sprite': ['cor', 'w', 'h', 'raio', 'rotulo', 'opacidade', 'imagem', 'invisivel', 'fixo', 'forma'], 'e.Body': ['vx', 'vy', 'w', 'h', 'raio', 'estatico', 'sensor', 'gravidade', 'elasticidade'], 'e.Animacao': ['atual', 'quadro', 'terminou']
+    ctx: ['vars', 'listas', 'input', 'scene', 'engine', 'dispositivo', 'audio', 'efeitos', 'caminho', 'events', 'tela', 'dt', 'matter', 'escrever|(texto)', 'sobre|(objeto, "tag")', 'depois|(segundos, fn)', 'tween|(objeto, "Comp.campo", alvo, seg)', 'salvarPartida|(nome)', 'carregarPartida|(nome)', 'existePartida|(nome)'],
+    'ctx.vars': ['ler|("nome")', 'definir|("nome", valor)', 'somar|("nome", n)', 'existe|("nome")', 'declarar|("nome", valor)'],
+    'ctx.listas': ['adicionar|("lista", valor)', 'remover|("lista", i)', 'item|("lista", i)', 'definir|("lista", i, valor)', 'tamanho|("lista")', 'contem|("lista", valor)', 'todos|("lista")', 'limpar|("lista")', 'aleatorio|("lista")'],
+    'ctx.input': ['axes|()', 'pointer', 'joystick', 'tecla|("nome")', 'apertou|("acao")', 'soltou|("acao")'],
+    'ctx.scene': ['create|({ nome, Transform })', 'find|("nome")', 'get|(id)', 'query|("Comp")', 'destroy|(id)', 'clonar|(objeto)', 'animar|(objeto, "clip")', 'adotar|(filho, pai)', 'soltar|(filho)', 'estado'],
+    'ctx.engine': ['tempo', 'aleatorio|()', 'irPara|("cena")', 'reiniciar|()', 'observar|("nome", fn)'],
+    'ctx.efeitos': ['tremer|(cena, forca, seg)', 'fade|(cena, ...)', 'particulas|(cena, x, y, {})'], 'ctx.dispositivo': ['vibrar|(ms)', 'telaCheia|(sim)', 'ler|("plataforma")'],
+    'ctx.caminho': ['parar|(objeto)'], 'ctx.tela': ['largura', 'altura'], 'ctx.audio': ['tocar|("som")', 'efeito|("som")', 'parar|()', 'volume|(0-1)'],
+    'ctx.events': ['on|("evento", fn)', 'emit|("evento", dados)'], 'ctx.matter': ['forca|(objeto, fx, fy)', 'velocidade|(objeto, vx, vy)', 'ler|(objeto)'],
+    e: ['id', 'nome', 'Transform', 'Sprite', 'Body', 'Corpo', 'Junta', 'Animacao', 'Script', 'Etiquetas', 'Attr', 'Botao', 'Rota', 'Pai'], 'e.Transform': ['x', 'y', 'rot', 'escala'],
+    'e.Sprite': ['cor', 'w', 'h', 'raio', 'rotulo', 'opacidade', 'imagem', 'invisivel', 'fixo', 'forma', 'grupo'], 'e.Body': ['vx', 'vy', 'w', 'h', 'raio', 'estatico', 'sensor', 'gravidade', 'elasticidade'], 'e.Animacao': ['atual', 'quadro', 'terminou'],
+    Math: ['abs|(x)', 'floor|(x)', 'ceil|(x)', 'round|(x)', 'min|(a, b)', 'max|(a, b)', 'sqrt|(x)', 'sin|(x)', 'cos|(x)', 'atan2|(y, x)', 'hypot|(a, b)', 'random|()', 'PI']
   };
-  const GLOBAIS = ['ctx', 'e', 'dt', 'function', 'iniciar', 'atualizar', 'ao_colidir', 'const', 'let', 'var', 'if', 'else', 'for', 'while', 'return', 'true', 'false', 'null', 'Math'];
+  const SNIP = [
+    ['iniciar', '(e, ctx) { }', 'function iniciar(e, ctx) {\n  |\n}'], ['atualizar', '(e, dt, ctx) { }', 'function atualizar(e, dt, ctx) {\n  |\n}'],
+    ['eventos', '= { colisao, gatilho, clique }', 'var eventos = {\n  colisao: function (e, d, ctx) {\n    |\n  }\n};'], ['se', 'if (…) { }', 'if (|) {\n  \n}'], ['senao', 'else { }', 'else {\n  |\n}'],
+    ['para', 'for (…) { }', 'for (var i = 0; i < |; i++) {\n  \n}'], ['enquanto', 'while (…) { }', 'while (|) {\n  \n}'], ['funcao', 'function nome() { }', 'function |() {\n  \n}']
+  ];
+  const GLOBAIS = ['ctx', 'e', 'dt', 'function', 'const', 'let', 'var', 'if', 'else', 'for', 'while', 'return', 'true', 'false', 'null', 'Math', 'Object', 'Array', 'JSON', 'Number', 'String'];
+  const EVENTOS = ['colisao', 'gatilho', 'clique', 'dano', 'curar', 'morreu', 'dialogo-abrir', 'inv-adicionar', 'inv-usar', 'inv-mudou', 'erro-script'];
   const KW = /^(function|const|let|var|if|else|for|while|do|return|break|continue|switch|case|default|new|typeof|of|in|try|catch|throw|true|false|null|undefined|this)$/;
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   function colorir(src) {
@@ -43,18 +55,44 @@
   function linhaDe(p) { const v = ta.value, a = v.lastIndexOf('\n', p - 1) + 1, b = v.indexOf('\n', p); return [a, b < 0 ? v.length : b]; }
   function fecharPop() { pop.hidden = true; sugest = []; }
   function contexto() { const p = ta.selectionStart, m = /([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\.?([\w$]*)$/.exec(ta.value.slice(Math.max(0, p - 80), p)); return m ? { cheio: m[0], base: m[1], resto: m[2], ponto: m[0].includes('.') } : null; }
-  function sugerir() {
-    const c = contexto(); if (!c) return fecharPop(); let lista = [], pref = '';
-    if (c.ponto) { const i = c.cheio.lastIndexOf('.'); const base = c.cheio.slice(0, i); pref = c.cheio.slice(i + 1); lista = API[base] || []; } else { pref = c.cheio; lista = pref.length >= 2 ? GLOBAIS : []; }
-    sugest = lista.filter(x => x.startsWith(pref) && x !== pref).slice(0, 8); if (!sugest.length) return fecharPop();
-    idx = 0; pop.innerHTML = ''; sugest.forEach((s, i) => { const d = el('div', 'cod-it' + (i === 0 ? ' on' : '')); d.textContent = s; d.addEventListener('mousedown', ev => { ev.preventDefault(); idx = i; aceitar(); }); pop.append(d); });
-    const linha = ta.value.slice(0, ta.selectionStart).split('\n'); pop.style.top = (linha.length * 18 + 8 - ta.scrollTop) + 'px'; pop.style.left = Math.min(260, 8 + linha[linha.length - 1].length * 7.2 - ta.scrollLeft) + 'px'; pop.hidden = false; pop.dataset.pref = pref;
+  // dentro de uma string de argumento ("nome da variável", "objeto", "som"...): sugere nomes que EXISTEM na cena
+  function dadosCena() {
+    const c = ed.cena || {}, est = c.estado || {}, n = o => Object.keys(o || {});
+    const objs = c.entities ? [...c.entities.values()].map(x => x.nome).filter(Boolean) : [];
+    const emit = [...new Set((ta.value.match(/emit\(\s*["']([^"']+)["']/g) || []).map(x => x.replace(/^emit\(\s*["']/, '')))];
+    return { vars: n(est.vars), listas: n(est.listas), objs, sons: n(est.sons), cenas: n(ed.cenasNomes ? ed.cenasNomes() : {}), eventos: [...new Set([...EVENTOS, ...emit])] };
   }
-  function aceitar() { const s = sugest[idx]; if (!s) return; const p = ta.selectionStart, pref = pop.dataset.pref; troca(p - pref.length, p, s); fecharPop(); }
-  ta.addEventListener('input', () => { if (document.activeElement === ta) sugerir(); marcar(null); });
+  const ARG = [[/ctx\.vars\.(?:ler|definir|somar|existe|declarar)\(\s*$/, 'vars'], [/ctx\.listas\.\w+\(\s*$/, 'listas'], [/ctx\.scene\.find\(\s*$/, 'objs'], [/ctx\.audio\.(?:tocar|efeito)\(\s*$/, 'sons'], [/ctx\.engine\.irPara\(\s*$/, 'cenas'], [/ctx\.events\.(?:on|emit)\(\s*$/, 'eventos'], [/ctx\.(?:sobre)\(\s*[\w.]+\s*,\s*$/, 'etiq']];
+  function itens(forcar) {
+    const p = ta.selectionStart, antes = ta.value.slice(Math.max(0, p - 120), p);
+    const ms = /(["'])([^"'\n]*)$/.exec(antes);
+    if (ms) { const cab = antes.slice(0, antes.length - ms[0].length), dc = dadosCena(); for (const [re, k] of ARG) if (re.test(cab)) return { pref: ms[2], lista: (dc[k] || []).map(x => ({ l: x, s: k === 'vars' ? 'variável' : k === 'objs' ? 'objeto' : k === 'sons' ? 'som' : k, ins: x, str: true })) }; return null; }
+    const c = contexto(); if (!c) return forcar ? { pref: '', lista: GLOBAIS.map(x => ({ l: x, ins: x })).concat(SNIP.map(([l, s, i]) => ({ l, s, ins: i }))) } : null;
+    if (c.ponto) { const i = c.cheio.lastIndexOf('.'), base = c.cheio.slice(0, i); let a = API[base] || (/^[a-z]\w*$/i.test(base) && !API[base] && /^(d|outro|o|alvo|obj|filho|pai)$/.test(base) ? API.e : null) || []; return { pref: c.cheio.slice(i + 1), lista: a.map(x => { const [n, sig] = x.split('|'); return { l: n, s: sig || '', ins: sig ? n + '(|)' : n }; }) }; }
+    if (c.cheio.length < 2 && !forcar) return null;
+    const vars = [...new Set((ta.value.match(/\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)/g) || []).map(x => x.split(/\s+/)[1]))];
+    return { pref: c.cheio, lista: GLOBAIS.map(x => ({ l: x, ins: x })).concat(vars.map(x => ({ l: x, s: 'sua variável', ins: x })), SNIP.map(([l, s, i]) => ({ l, s, ins: i }))) };
+  }
+  let medida = 0; const charW = () => { if (medida) return medida; const t = el('span'); t.textContent = 'MMMMMMMMMM'; t.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font:inherit'; pilha.append(t); medida = t.getBoundingClientRect().width / 10 || 7.8; t.remove(); return medida; };
+  function sugerir(forcar) {
+    const r = itens(forcar); if (!r) return fecharPop(); const pref = r.pref, q = pref.toLowerCase();
+    const pontua = x => { const l = x.l.toLowerCase(); return l === q ? -1 : l.startsWith(q) ? 0 : l.includes(q) ? 1 : 9; };
+    sugest = r.lista.filter(x => x.l !== pref && (forcar || !q || pontua(x) < 9)).map((x, i) => ({ x, i })).sort((a, b) => pontua(a.x) - pontua(b.x) || (q ? a.x.l.localeCompare(b.x.l) : a.i - b.i)).map(o => o.x).slice(0, 10); if (!sugest.length) return fecharPop();
+    idx = 0; pop.innerHTML = ''; sugest.forEach((x, i) => { const d = el('div', 'cod-it' + (i === 0 ? ' on' : '')); const n = el('b'); n.textContent = x.l; d.append(n); if (x.s) { const g = el('span', 'cod-sig'); g.textContent = x.s; d.append(g); } d.addEventListener('mousedown', ev => { ev.preventDefault(); idx = i; aceitar(); }); pop.append(d); });
+    const linha = ta.value.slice(0, ta.selectionStart).split('\n'); pop.style.top = (linha.length * 18 + 8 - ta.scrollTop) + 'px'; pop.style.left = Math.max(0, Math.min(pilha.clientWidth - 240, 10 + linha[linha.length - 1].length * charW() - ta.scrollLeft)) + 'px'; pop.hidden = false; pop.dataset.pref = pref;
+  }
+  function aceitar() {
+    const x = sugest[idx]; if (!x) return; const p = ta.selectionStart, pref = pop.dataset.pref, base = p - pref.length;
+    if (x.str) { const dep = ta.value[p] || '', fim = dep === '"' || dep === "'" ? 1 : 0; troca(base, p, x.ins); ta.setSelectionRange(base + x.ins.length + fim, base + x.ins.length + fim); fecharPop(); return; }
+    const ind = /^\s*/.exec(ta.value.slice(linhaDe(p)[0], p))[0]; let ins = x.ins.replace(/\n/g, '\n' + ind); const cur = ins.indexOf('|'); if (cur >= 0) ins = ins.slice(0, cur) + ins.slice(cur + 1);
+    troca(base, p, ins, cur >= 0 ? base + cur : null); fecharPop();
+  }
+  ta.addEventListener('input', () => { if (document.activeElement === ta) sugerir(false); marcar(null); });
+  ta.addEventListener('click', fecharPop);
   ta.addEventListener('blur', () => setTimeout(fecharPop, 120));
   ta.addEventListener('keydown', ev => {
     if (ta.readOnly) return; const v = ta.value, a = ta.selectionStart, b = ta.selectionEnd;
+    if (ev.key === ' ' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); sugerir(true); return; }
     if (!pop.hidden) { if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); idx = (idx + (ev.key === 'ArrowDown' ? 1 : sugest.length - 1)) % sugest.length; [...pop.children].forEach((d, i) => d.classList.toggle('on', i === idx)); return; } if (ev.key === 'Enter' || ev.key === 'Tab') { ev.preventDefault(); aceitar(); return; } if (ev.key === 'Escape') { ev.preventDefault(); fecharPop(); return; } }
     if (ev.key === 'Tab') { ev.preventDefault(); const [ls] = linhaDe(a), fim = linhaDe(b)[1], bloco = v.slice(ls, fim), multi = a !== b || ev.shiftKey;
       if (!multi) return troca(a, b, '  ', a + 2);

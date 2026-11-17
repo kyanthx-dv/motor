@@ -593,9 +593,20 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const v = await pc.evaluate(() => document.getElementById('sc-fonte').value.split('\n').slice(-4).join('|'));
     ok(v.includes('if (x) {|  foo("a")|}'), 'auto-indent e fechamento de ( e " (' + v + ')');
     await pc.keyboard.press('Control+End'); await pc.keyboard.type('\nctx.vars.'); await pc.waitForTimeout(250);
-    const info = await pc.evaluate(() => ({ pop: !document.querySelector('.cod-pop').hidden && [...document.querySelectorAll('.cod-it')].map(x => x.textContent).join(), cores: document.querySelectorAll('.cod-hl i.k').length > 0 && document.querySelectorAll('.cod-hl i.c').length > 0, linhas: document.querySelector('.cod-n').textContent.trim().split('\n').length > 5 }));
-    ok(info.pop === 'ler,definir,somar' && info.cores && info.linhas, 'editor de código: autocompletar ctx.vars., cores e números de linha (' + JSON.stringify(info) + ')');
-    await pc.keyboard.press('Enter'); const ap = await pc.evaluate(() => document.getElementById('sc-fonte').value.slice(-12)); ok(ap.endsWith('ctx.vars.ler'), 'Enter aceita a sugestão (' + ap + ')'); await pc.close();
+    const info = await pc.evaluate(() => ({ pop: !document.querySelector('.cod-pop').hidden && [...document.querySelectorAll('.cod-it b')].map(x => x.textContent).join(), cores: document.querySelectorAll('.cod-hl i.k').length > 0 && document.querySelectorAll('.cod-hl i.c').length > 0, linhas: document.querySelector('.cod-n').textContent.trim().split('\n').length > 5 }));
+    ok(info.pop === 'ler,definir,somar,existe,declarar' && info.cores && info.linhas, 'editor de código: autocompletar ctx.vars., cores e números de linha (' + JSON.stringify(info) + ')');
+    await pc.keyboard.press('Enter'); const ap = await pc.evaluate(() => document.getElementById('sc-fonte').value.slice(-14)); ok(ap.endsWith('ctx.vars.ler()'), 'Enter aceita a sugestão e deixa o cursor dentro dos parênteses (' + ap + ')');
+    const cur = await pc.evaluate(() => { const t = document.getElementById('sc-fonte'); return t.value[t.selectionStart - 1] + t.value[t.selectionStart]; }); ok(cur === '()', 'cursor entre os parênteses (' + cur + ')');
+    await pc.evaluate(() => { editor.cena.estado.vars = Object.assign({}, editor.cena.estado.vars, { vida_jogador: 3, pontos: 0 }); const t = document.getElementById('sc-fonte'); t.value = ''; t.focus(); });
+    await pc.keyboard.type('ctx.vars.somar("vi'); await pc.waitForTimeout(250);
+    const nomes = await pc.evaluate(() => [...document.querySelectorAll('.cod-it b')].map(x => x.textContent).join()); ok(nomes === 'vida_jogador', 'autocompleta nomes de variáveis da cena dentro das aspas (' + nomes + ')');
+    await pc.keyboard.press('Tab'); const fim = await pc.evaluate(() => document.getElementById('sc-fonte').value); ok(fim === 'ctx.vars.somar("vida_jogador")', 'aceitar nome de variável pula a aspa (' + fim + ')');
+    await pc.evaluate(() => { const t = document.getElementById('sc-fonte'); t.value = ''; t.focus(); }); await pc.keyboard.type('atu'); await pc.waitForTimeout(250); await pc.keyboard.press('Tab');
+    const sn = await pc.evaluate(() => { const t = document.getElementById('sc-fonte'); return [t.value, t.selectionStart]; }); ok(sn[0].startsWith('function atualizar(e, dt, ctx) {') && sn[1] === sn[0].indexOf('\n  ') + 3, 'snippet "atualizar" cria a função com o cursor no corpo (' + JSON.stringify(sn) + ')');
+    const g = await pc.evaluate(() => { const t = document.querySelector('.cod-ta').getBoundingClientRect(), c = document.querySelector('.cod').getBoundingClientRect(); return [Math.round(t.height), Math.round(c.height - 2)]; }); ok(Math.abs(g[0] - g[1]) <= 2, 'editor de código: o textarea tem a altura da caixa (' + g + ')');
+    await pc.evaluate(() => { const t = document.getElementById('sc-fonte'); t.value = Array.from({ length: 40 }, (_, i) => 'var linha' + i + ' = ' + i + ';').join('\n'); t.dispatchEvent(new Event('input')); t.scrollTop = 0; });
+    const bx = await (await pc.$('.cod-ta')).boundingBox(); await pc.mouse.click(bx.x + 60, bx.y + 6 + 18 * 3 + 9); const sel = await pc.evaluate(() => document.getElementById('sc-fonte').value.slice(0, document.getElementById('sc-fonte').selectionStart).split('\n').length);
+    ok(sel === 4, 'clicar numa linha coloca o cursor nela (linha ' + sel + ')'); await pc.close();
   }
   { // blocos: código gerado escondido por padrão, com botão para ver
     const pb = await b.newPage({ viewport: { width: 1300, height: 800 } }); await pb.goto(url('editor/index') + '?abas=todas'); await pb.waitForTimeout(500);
