@@ -14,7 +14,7 @@
 - Play do editor no `WorkerHost` (hoje um laço infinito ainda trava a aba do editor). Exige levar variáveis observadas, Output e erros de script para mensagens.
 - Erros de script com nome do script e linha.
 - Teste real do Play no celular (a causa do "não anda" no editor ainda é desconhecida; o jogo exportado anda).
-- Limpeza do repositório: arquivos legados na raiz (`artifact-*.html`, `TAREFAS*.md`, `games/`) vão para `legado/`.
+- Limpeza do repositório ✅: removidos os arquivos legados (artefatos antigos, filas de tarefas, guias obsoletos). Os demos `games/` ficam como exemplos de uso do núcleo.
 
 **v1.2 — Distribuição sem limites**
 - Exportar como **pasta/ZIP com assets em arquivos** ✅ **feito** (botão "Exportar jogo (pasta web .zip)": index.html + motor.js + projeto/cenas/assets + manifest + sw; carregamento sob demanda ainda não). O .html único continua para jogos pequenos.

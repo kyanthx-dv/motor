@@ -1,8 +1,8 @@
 {
   "name": "motor",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "private": true,
-  "description": "Núcleo de uma engine de jogos em JavaScript",
+  "description": "Engine de jogos 2D por blocos + JavaScript, com editor no navegador",
   "scripts": {
     "test": "node tests/test-core.js",
     "test:navegador": "node tests/test-navegador.js"

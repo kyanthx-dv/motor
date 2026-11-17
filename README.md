@@ -1,7 +1,9 @@
-# Motor — engine de jogos 2D por blocos (v1.0.0)
+# Motor — engine de jogos 2D por blocos + JavaScript (v1.4)
 
 **Testar agora (sem instalar nada):** https://kyanthx-dv.github.io/motor/editor/ · exemplo pronto: https://kyanthx-dv.github.io/motor/editor/?projeto=../projetos/mini-rpg/
-Use Ctrl+F5 depois de cada atualização. Veja `docs/VERSAO-1.md` (o que a v1.0 inclui) e `docs/PLANO.md` (o que vem a seguir).
+Use Ctrl+F5 depois de cada atualização. Veja `docs/PLANO.md` (o que já foi feito e o que vem a seguir) e `docs/VERSAO-1.md` (a v1.0 original).
+
+**O que o editor tem hoje:** blocos + editor de código (autocomplete), tilemap com autotile, animação, Joystick/Botões/UI, camadas nomeadas (ordem, opacidade, paralaxe), modelos de RPG (diálogo, inventário, vida), física normal + plugin Matter.js (corpos que giram e juntas), Play em Worker, exportação (.html único ou pasta/ZIP/PWA, com ajustes de nome, orientação, encaixe e cor) e o app Android em [motor-app](https://github.com/kyanthx-dv/motor-app).
 
 # Núcleo da Engine
 
