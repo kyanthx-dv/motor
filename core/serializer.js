@@ -41,6 +41,7 @@
         if (!isObj(sc)) throw new Error('save inválido: estado.scripts precisa ser um objeto');
         for (const k in sc) if (!C.Variaveis.NOME.test(k) || !isObj(sc[k]) || typeof sc[k].fonte !== 'string' || sc[k].fonte.length > 50000 || (sc[k].blocos !== undefined && (!Array.isArray(sc[k].blocos) || JSON.stringify(sc[k].blocos).length > 200000))) throw new Error('save inválido: script "' + k + '" (nome inválido ou fonte ausente/grande demais)');
       }
+      if (d.estado && d.estado.matter !== undefined) { const m = d.estado.matter; if (!m || typeof m !== 'object' || Array.isArray(m) || ['gravidadeX', 'gravidadeY'].some(k => m[k] !== undefined && !(typeof m[k] === 'number' && isFinite(m[k])))) throw new Error('save inválido: estado.matter precisa ser { gravidadeX, gravidadeY } com números'); }
       if (d.estado && d.estado.exportar !== undefined) C.ExportarCfg.validar(d.estado.exportar);
       if (d.estado && d.estado.camadas !== undefined) C.Camadas.validar(d.estado.camadas);
       const sl = d.estado && d.estado.scriptsCena; if (sl !== undefined && (!Array.isArray(sl) || sl.length > 50 || sl.some(n => typeof n !== 'string' || !C.Variaveis.NOME.test(n)))) throw new Error('save inválido: estado.scriptsCena precisa ser uma lista de nomes de script (até 50)');

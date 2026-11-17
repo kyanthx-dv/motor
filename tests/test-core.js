@@ -1,6 +1,7 @@
 // Rode com: node tests/test-core.js
-const fs=require('fs'),vm=require('vm');
-for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','systems/caminho','systems/efeitos','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
+const fs=require('fs'),vm=require('vm'),path=require('path');
+vm.runInThisContext(fs.readFileSync(path.join(__dirname,'..','adapters','vendor','matter.min.js'),'utf8'));
+for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','systems/caminho','systems/efeitos','systems/matter','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
 const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
@@ -505,5 +506,20 @@ const nova=()=>new C.Engine();
   let n=0;for(const r of [{nomeApp:5},{orientacao:'x'},{encaixe:'y'},{corFundo:'red'},{corFundo:'#12'},[],null]){try{C.ExportarCfg.validar(r);}catch(x){n++;}}
   const l=C.ExportarCfg.limpar({nomeApp:'  A  ',orientacao:'zz',encaixe:'inteiro',corFundo:'javascript:1'});
   ok(n===7&&l.nomeApp==='A'&&l.encaixe==='inteiro'&&l.orientacao===undefined&&l.corFundo===undefined,'exportar: ajustes inválidos são recusados e limpar() ignora o que não vale');
+}
+{ // plugin Matter.js
+  const e=new C.Engine();C.Serializer.deJSON(e.scene,{formato:C.Serializer.FORMATO,estado:{},entidades:[
+    {nome:'chao',Transform:{x:400,y:300},Corpo:{tipo:'estatico',w:800,h:20}},
+    {nome:'caixa',Transform:{x:400,y:100},Corpo:{tipo:'dinamico',w:40,h:40}},
+    {nome:'pivo',Transform:{x:100,y:50},Corpo:{tipo:'estatico',forma:'circulo',raio:5}},
+    {nome:'peso',Transform:{x:200,y:50},Corpo:{tipo:'dinamico',forma:'circulo',raio:10},Junta:{com:'pivo',tipo:'pino',comprimento:100}}]});
+  let col=0;e.events.on('colisao',d=>{col++;});for(let i=0;i<180;i++)e.passo();
+  const cx=e.scene.find('caixa'),pw=e.scene.find('peso'),pv=e.scene.find('pivo'),dist=Math.hypot(pw.Transform.x-pv.Transform.x,pw.Transform.y-pv.Transform.y);
+  ok(cx.Transform.y>250&&cx.Transform.y<285,'matter: caixa cai e para em cima do chão (y='+cx.Transform.y.toFixed(1)+')');
+  ok(Math.abs(dist-100)<3&&pw.Transform.y>pv.Transform.y,'matter: junta de pino mantém o pêndulo a 100 px do pivô (d='+dist.toFixed(1)+')');
+  ok(col>0,'matter: evento colisao é emitido');
+  const antes=cx.Transform.y;cx.Transform.x=400;cx.Transform.y=50;e.passo();ok(Math.abs(cx.Transform.y-50)<2&&cx.Transform.y<antes,'matter: teletransporte por script é respeitado');
+  const e2=new C.Engine();C.Serializer.deJSON(e2.scene,{formato:C.Serializer.FORMATO,estado:{matter:{gravidadeY:0}},entidades:[{nome:'a',Transform:{x:10,y:10},Corpo:{tipo:'dinamico',w:10,h:10}}]});for(let i=0;i<30;i++)e2.passo();ok(Math.abs(e2.scene.find('a').Transform.y-10)<0.01,'matter: gravidadeY 0 não derruba');
+  let n=0;for(const x of [{Corpo:{tipo:'x'}},{Corpo:{w:-1}},{Corpo:{rotacaoFixa:1}},{Junta:{com:'a'}},{Corpo:{},Junta:{com:''}},{Corpo:{},Junta:{com:'a',rigidez:2}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0}},x)]});}catch(er){n++;}}ok(n===6,'matter: Corpo/Junta inválidos são recusados');
 }
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);

@@ -422,6 +422,19 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     ok(await p.evaluate(() => editor.engine.rodando && editor.cena.entities.size > 8 && (editor.engine.errosScripts || []).length === 0), 'mini-rpg roda no editor sem erro de script');
     ok(await p.evaluate(() => getComputedStyle(document.getElementById('tela')).touchAction === 'none'), 'toque: a tela do jogo tem touch-action:none (joystick funciona no celular)');
     if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT }); await p.evaluate(() => editor.parar());
+    { // Matter.js no editor: objetos prontos, Play em worker e exportação com a biblioteca
+      const pf = await b.newPage({ viewport: { width: 1300, height: 800 } }); const errf = []; pf.on('pageerror', e => errf.push(e.message)); await pf.goto('http://localhost:' + porta + '/editor/index.html?abas=todas'); await pf.waitForTimeout(500);
+      const semMt = await pf.evaluate(async () => !(await EditorExportar.gerar()).includes('matter-js 0.20.0'));
+      await pf.evaluate(() => { for (const k of ['chao', 'caixa', 'pendulo']) document.getElementById('f-' + k).click(); });
+      const y0 = await pf.evaluate(() => editor.cena.find('caixa').Transform.y); await pf.evaluate(() => editor.play()); await pf.waitForTimeout(1800);
+      const f = await pf.evaluate(() => { const c = editor.cenaViva || editor.cena, x = c.find('caixa'), pw = c.find('peso'), pv = c.find('pivo'); return { y: x.Transform.y, d: Math.hypot(pw.Transform.x - pv.Transform.x, pw.Transform.y - pv.Transform.y), modo: editor.engine.emWorker }; });
+      await pf.evaluate(() => editor.parar());
+      const html = await pf.evaluate(() => EditorExportar.gerar()), pz = await pf.evaluate(async () => { const a = await EditorExportar.gerarPasta(); return /matter-js 0\.20\.0/.test(new TextDecoder().decode(a['motor.js'])); });
+      const p3 = await b.newPage(); await p3.setContent(html); await p3.waitForTimeout(400); await p3.click('button'); await p3.waitForTimeout(1800);
+      const jy = await p3.evaluate(() => Core.Player.engine.scene.find('caixa') ? Core.Player.engine.scene.find('caixa').Transform.y : -1); await p3.close();
+      ok(semMt && f.y > y0 + 100 && f.y < 440 && Math.abs(f.d - 120) < 4 && errf.length === 0, 'matter no editor: sem Corpo o arquivo não leva a biblioteca; no Play a caixa cai e o pêndulo segura (' + JSON.stringify(f) + ' y0=' + y0 + ' ' + errf.join('|') + ')');
+      ok(html.includes('matter-js 0.20.0') && pz && jy > y0 + 100, 'matter na exportação: .html e pasta levam a biblioteca e o jogo exportado simula (y=' + jy + ')'); await pf.close();
+    }
     { // ajustes finos de exportação
       const ax = await p.evaluate(async () => {
         document.getElementById('ex-ajustes').click(); const q = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('change')); };

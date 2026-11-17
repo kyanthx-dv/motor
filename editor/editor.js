@@ -101,7 +101,7 @@
   let codigoMotor = null;
   async function obterCodigo() {   // fonte do motor (núcleo + adaptadores) para o Worker; null = rodar direto na página
     if (codigoMotor) return codigoMotor; if (typeof Worker !== 'function' || typeof Blob !== 'function' || !C.WorkerHost || window.__semWorker || location.protocol === 'file:') return null;
-    try { const urls = [...document.scripts].map(x => x.getAttribute('src') || '').filter(x => /^\.\.\/(core|adapters)\//.test(x) && !/pixi|debug|vendor|worker-host|player/.test(x)); urls.push('../adapters/worker-host.js'); const t = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) return null; t.push(await r.text()); } codigoMotor = t.join('\n;\n'); return codigoMotor; } catch (x) { return null; }
+    try { const urls = [...document.scripts].map(x => x.getAttribute('src') || '').filter(x => /^\.\.\/(core|adapters)\//.test(x) && !/pixi|debug|vendor|worker-host|player/.test(x)); urls.unshift('../adapters/vendor/matter.min.js'); urls.push('../adapters/worker-host.js'); const t = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) return null; t.push(await r.text()); } codigoMotor = t.join('\n;\n'); return codigoMotor; } catch (x) { return null; }
   }
   let host = null;
   function jogoAtual() { const pac = window.EditorArquivos.exportar(), cenas = Object.assign({}, pac.cenas.cenas); cenas[pac.cenas.atual] = pac.cena; return { nome: projetoAtual || 'jogo', atual: pac.cenas.atual, cenas, versao: C.VERSAO }; }
@@ -123,6 +123,8 @@
     Body: [['forma', 'sel', ['circulo', 'retangulo', 'poligono']], ['raio', 'num'], ['w', 'num'], ['h', 'num'], ['massa', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['sensor', 'bool']],
     Sprite: [['forma', 'sel', ['retangulo', 'circulo']], ['cor', 'cor'], ['corSobre', 'cor'], ['corApertado', 'cor'], ['borda', 'cor'], ['larguraBorda', 'num'], ['arredondar', 'num'], ['cor2', 'cor'], ['gradiente', 'sel', ['vertical', 'horizontal']], ['opacidade', 'num'], ['sombra', 'bool'], ['sombraCor', 'cor'], ['sombraBlur', 'num'], ['sombraY', 'num'], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['rotulo', 'txt'], ['tamanhoTexto', 'num'], ['corTexto', 'cor'], ['corTextoSobre', 'cor'], ['negrito', 'bool'], ['italico', 'bool'], ['alinhar', 'sel', ['left', 'center', 'right']], ['fonte', 'txt'], ['fixo', 'bool'], ['imagem', 'txt'], ['quadroW', 'num'], ['quadroH', 'num'], ['escala', 'num'], ['espelhar', 'bool']],
     Botao: [['desativado', 'bool']],
+    Corpo: [['tipo', 'sel', ['dinamico', 'estatico']], ['forma', 'sel', ['retangulo', 'circulo']], ['w', 'num'], ['h', 'num'], ['raio', 'num'], ['densidade', 'num'], ['atrito', 'num'], ['elasticidade', 'num'], ['amortecimento', 'num'], ['rotacaoFixa', 'bool']],
+    Junta: [['com', 'txt'], ['tipo', 'sel', ['pino', 'mola']], ['comprimento', 'num'], ['rigidez', 'num'], ['amortecimento', 'num'], ['ax', 'num'], ['ay', 'num'], ['bx', 'num'], ['by', 'num']],
     Joystick: [['modo', 'sel', ['flutuante', 'fixo', 'desligado']], ['visivel', 'bool'], ['raio', 'num'], ['zonaMorta', 'num'], ['zona', 'sel', ['base', 'tela', 'esquerda', 'direita']]],
     Controller: [['aceleracao', 'num'], ['velMax', 'num']]
   };
