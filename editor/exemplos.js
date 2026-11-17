@@ -48,7 +48,7 @@
       { nome: 'pocao 2', Transform: { x: 560, y: 110 }, Body: { forma: 'circulo', raio: 10, massa: 0, sensor: true }, Sprite: { forma: 'circulo', raio: 8, cor: '#ef4444' }, Script: { nome: 'pocao' } },
       { nome: 'joystick', Transform: { x: 112, y: 351 }, Joystick: { modo: 'flutuante', visivel: true, raio: 56, zonaMorta: 0.12, zona: 'base' } }
     ];
-    for (const k of ['dialogo', 'inventario', 'vida']) { const m = M.definicao(k); scripts[m.ctl] = { fonte: m.script }; ents.push({ nome: m.ctl, Transform: { x: 0, y: 0 }, Script: { nome: m.ctl } }, ...m.objetos()); }
+    let proximo = 100; for (const k of ['dialogo', 'inventario', 'vida']) { const m = M.definicao(k); scripts[m.ctl] = { fonte: m.script }; const l = M.entidades(k, proximo); proximo += l.length; ents.push(...l); }
     return { formato: root.Core.Serializer.FORMATO, estado: { scripts, scriptsCena: ['regras'] }, entidades: ents };
   };
   X.lista = { 'Pega-moedas': X.pegaMoedas, 'Mini-RPG': X.miniRpg };
