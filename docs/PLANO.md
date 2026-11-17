@@ -30,7 +30,7 @@
 - Tema Scratch dos blocos ✅ em CSS (cor sólida, valores em pílula, "C" com corpo, encaixe; feito sem mexer na estrutura) (referência: cores sólidas, encaixe, valores em pílula, blocos em C para se/repetir). Exige mexer na estrutura dos blocos, não só no CSS.
 - Temas do editor: seletor com temas prontos + arquivo JSON importável. Um tema só muda variáveis de CSS de uma lista permitida (cores, fontes), nunca CSS livre nem JavaScript. Loja de temas: só com contas e servidor, junto com a rede social do app (depois do v2.0).
 - Camadas ✅: atalhos 👁/🔒 Mundo/Interface e painel ☰ Camadas (camadas nomeadas salvas no projeto: ordem, opacidade, paralaxe no jogo, ocultar, travar, mover o selecionado; `estado.camadas` + `Sprite.grupo`).
-- Exportar: ajustes finos (futuro): orientação, encaixe de tela, FPS, ícone/nome do PWA, minificação, assets sob demanda.
+- Exportar: ajustes finos ✅ (⚙ Exportação: nome do app, orientação, encaixe inteiro, cor de fundo). Faltam: ícone próprio, minificação, assets sob demanda; FPS fica de fora (mudaria a física).
 - Scripts de cena ✅: botão "Rodar na cena" na aba Scripts (roda sem objeto; `estado.scriptsCena`). Galeria: exemplos Pega-moedas e Mini-RPG ✅ (mais exemplos depois).
 - Tutorial interativo de 5 minutos dentro do editor ✅ (botão Tutorial: 7 passos que avançam sozinhos); galeria de mini-jogos.
 - Modelos prontos de RPG ✅ (menu ＋ Novo objeto): diálogo com escolhas, inventário com slots/quantidades/uso, vida com dano e invulnerabilidade; conversam por eventos (`dialogo-abrir`, `inv-adicionar`, `dano`, `curar`). Código editável na aba Scripts.
