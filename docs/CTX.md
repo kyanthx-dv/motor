@@ -39,6 +39,13 @@ var eventos = {                              // opcional
 | aparelho | `ctx.dispositivo.vibrar(80)` · `ctx.dispositivo.telaCheia(true)` |
 | escrever no Output | `ctx.escrever("olá")` |
 
+| Matter.js (objetos com `Corpo`) | `ctx.matter.forca(e, fx, fy)` · `ctx.matter.velocidade(e, vx, vy)` · `ctx.matter.ler(e)` → `{vx, vy, giro}` |
+| eventos | `ctx.events.on("dano", d => ...)` · `ctx.events.emit("dano", { qtd: 1 })` |
+| camadas | `ctx.scene.estado.camadas[i].visivel = false` (ou `.opacidade`, `.paralaxe`) |
+| script de cena | na aba Scripts, **Rodar na cena** (sem objeto; `e.id` é -1) |
+
+Modelos prontos (menu ＋ Novo objeto): diálogo (`dialogo-abrir {id}`), inventário (`inv-adicionar {item,qtd}`, `inv-usar`), vida (`dano {qtd}`, `curar {qtd}`, evento `morreu`).
+
 Outros: `ctx.engine.aleatorio(1, 6)` (inteiro), `ctx.engine.tempo` (segundos desde o início), `ctx.tela.largura / altura`, `ctx.sobre(objeto)` (ponteiro está em cima?).
 
-> Os nomes são os mesmos dos blocos: se não lembrar um comando, monte o bloco e use **ver código gerado** para ver como ele fica em código. No editor de código, digite `ctx.` para o autocompletar.
+> Os nomes são os mesmos dos blocos: se não lembrar um comando, monte o bloco e use **ver código gerado** para ver como ele fica em código. No editor de código, digite `ctx.` para o autocompletar (ou Ctrl+Espaço; dentro de aspas ele sugere variáveis, objetos e sons da cena).
