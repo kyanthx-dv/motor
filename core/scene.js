@@ -153,5 +153,25 @@
       }
     }
   };
+  // Ajustes de exportação (estado.exportar): nomeApp, orientacao (qualquer|paisagem|retrato), encaixe (conter|inteiro), corFundo (#rgb/#rrggbb).
+  C.ExportarCfg = {
+    ORIENT: ['qualquer', 'paisagem', 'retrato'], ENCAIXE: ['conter', 'inteiro'], COR: /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/,
+    validar(x) {
+      if (x === null || typeof x !== 'object' || Array.isArray(x)) throw new Error('save inválido: estado.exportar precisa ser um objeto');
+      if (x.nomeApp !== undefined && (typeof x.nomeApp !== 'string' || x.nomeApp.length > 30)) throw new Error('save inválido: exportar.nomeApp precisa ser texto de até 30 letras');
+      if (x.orientacao !== undefined && !C.ExportarCfg.ORIENT.includes(x.orientacao)) throw new Error('save inválido: exportar.orientacao precisa ser qualquer, paisagem ou retrato');
+      if (x.encaixe !== undefined && !C.ExportarCfg.ENCAIXE.includes(x.encaixe)) throw new Error('save inválido: exportar.encaixe precisa ser conter ou inteiro');
+      if (x.corFundo !== undefined && !(typeof x.corFundo === 'string' && C.ExportarCfg.COR.test(x.corFundo))) throw new Error('save inválido: exportar.corFundo precisa ser uma cor #rgb ou #rrggbb');
+    },
+    // Versão limpa e segura (ignora o que for inválido) para quem consome: player e exportadores.
+    limpar(x) {
+      const o = {}; if (!x || typeof x !== 'object') return o;
+      if (typeof x.nomeApp === 'string' && x.nomeApp.trim()) o.nomeApp = x.nomeApp.trim().slice(0, 30);
+      if (C.ExportarCfg.ORIENT.includes(x.orientacao)) o.orientacao = x.orientacao;
+      if (C.ExportarCfg.ENCAIXE.includes(x.encaixe)) o.encaixe = x.encaixe;
+      if (typeof x.corFundo === 'string' && C.ExportarCfg.COR.test(x.corFundo)) o.corFundo = x.corFundo;
+      return o;
+    }
+  };
   C.Scene = Scene;
 })(typeof window !== 'undefined' ? window : globalThis);
