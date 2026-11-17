@@ -179,3 +179,29 @@ select.add{background:transparent;color:var(--acento);border:2px dashed var(--ac
 
 .camadas{display:inline-flex;gap:2px;margin-left:6px}.camadas button{padding:2px 6px}.camadas button.off{opacity:.55}.camadas button.on{background:#f59e0b;color:#111}
 #cam-painel{position:fixed;top:48px;right:8px;z-index:60;max-width:96vw;max-height:70vh;overflow:auto}.cam-linha{display:flex;gap:4px;align-items:center;margin:3px 0}.cam-linha input:not([type=number]){width:110px}.cam-linha input[type=number]{width:52px}.cam-linha.atual{outline:2px solid #f59e0b;border-radius:6px}
+
+/* ===== Blocos: pílulas de valor legíveis (se / comparar / contas / atributo) e que seguem o tema claro/escuro ===== */
+:root{--pil-bg:#fff;--pil-fg:#1f2933;--pil-linha:rgba(0,0,0,.18);--pil-seta:%23667}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pil-bg:#10151c;--pil-fg:#eef1f6;--pil-linha:rgba(255,255,255,.28)}}
+:root[data-theme="dark"]{--pil-bg:#10151c;--pil-fg:#eef1f6;--pil-linha:rgba(255,255,255,.28)}
+.bloco .val{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px 4px;vertical-align:middle;max-width:100%;box-sizing:border-box;background:var(--pil-bg);color:var(--pil-fg);border-radius:10px;padding:2px 4px 2px 8px;box-shadow:inset 0 0 0 1px var(--pil-linha);line-height:1.25}
+.bloco .val .val{background:color-mix(in srgb,var(--pil-bg) 90%,var(--cat));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pil-linha) 70%,var(--cat))}
+.bloco .val .val .val{background:color-mix(in srgb,var(--pil-bg) 80%,var(--cat))}
+.bloco .val input,.bloco .val select{color:var(--pil-fg);background:transparent;font:inherit;font-weight:600}
+.bloco .val select option,.bloco .topo select option{background:var(--pil-bg);color:var(--pil-fg)}
+.bloco .val input{width:64px;min-width:36px;padding:1px 3px}
+.bloco .val>select:not(:first-child){max-width:180px;width:auto;padding:1px 14px 1px 4px;text-overflow:ellipsis}
+.bloco .val>span{color:var(--pil-fg);opacity:.75;font-weight:700}
+.bloco .topo{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.bloco .topo select,.bloco .topo input{color:var(--pil-fg);background:var(--pil-bg);font-weight:600}
+.bloco .val select{width:auto;field-sizing:content;max-width:200px;opacity:1}.bloco .val>select:not(:first-child){field-sizing:content}.bloco .val>select:first-child{width:22px;max-width:22px}
+.bloco .val input,.bloco .val select:not(:first-child){color:var(--pil-fg)!important;-webkit-text-fill-color:var(--pil-fg)}
+
+/* ===== Editor de código: a altura vale para a caixa (.cod), nunca para o textarea (antes o textarea ficava mais alto que a caixa: o clique e o cursor não batiam com o texto) ===== */
+.cod .cod-ta.codigo,.cod .cod-hl{height:100%!important;min-height:0!important;max-height:none}
+.cod{height:240px;min-height:200px;max-height:none}
+.scripts-grande .cod{height:60vh}
+#centro-scripts .cod{height:calc(100vh - 340px);min-height:240px}
+.cod-ta{cursor:text;touch-action:auto;-webkit-user-select:text;user-select:text}
+.cod-hl,.cod-n{touch-action:auto}
+.cod-pop{min-width:220px;max-width:min(420px,90%)}.cod-it{display:flex;gap:10px;justify-content:space-between;align-items:baseline}.cod-it b{font-weight:600}.cod-sig{color:var(--mudo);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
