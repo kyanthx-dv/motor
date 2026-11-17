@@ -653,10 +653,10 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       const dup = EditorModelos.nomes().length; const j = Core.Serializer.paraJSON(ed.cena);
       const e = new Core.Engine(); Core.Serializer.deJSON(e.scene, j); const er = e.compilarScripts(); e.iniciar && 0;
       const passa = n => { for (let i = 0; i < n; i++) e.passo(); }, op = n => e.scene.find(n).Sprite.opacidade, tx = n => e.scene.find(n).Sprite.rotulo;
-      passa(2); const oculto = op('dialogo-caixa') === 0;
-      e.events.emit('dialogo-abrir', { id: 'inicio' }); passa(2); const aberto = op('dialogo-caixa') === 1 && /Olá/.test(tx('dialogo-fala')) && tx('dialogo-op1') === 'Sim, por favor' && op('dialogo-op3') === 0;
+      passa(2); const oculto = op('dialogo') === 0;
+      e.events.emit('dialogo-abrir', { id: 'inicio' }); passa(2); const aberto = op('dialogo') === 1 && /Olá/.test(tx('dialogo-fala')) && tx('dialogo-op1') === 'Sim, por favor' && op('dialogo-op3') === 0;
       e.events.emit('dialogo-op1', {}); passa(2); const ramo = /poção/.test(tx('dialogo-fala'));
-      e.events.emit('dialogo-op1', {}); passa(3); const fechou = op('dialogo-caixa') === 0 && e.vars.ler('ajudou') === true && e.vars.ler('inv_pocao') === 1 && tx('inv-slot1') === 'Poção';
+      e.events.emit('dialogo-op1', {}); passa(3); const fechou = op('dialogo') === 0 && e.vars.ler('ajudou') === true && e.vars.ler('inv_pocao') === 1 && tx('inv-slot1') === 'Poção';
       e.events.emit('inv-adicionar', { item: 'pocao', qtd: 20 }); passa(2); const teto = e.vars.ler('inv_pocao') === 9 && tx('inv-slot1') === 'Poção x9';
       e.events.emit('dano', { qtd: 2 }); e.events.emit('dano', { qtd: 2 }); passa(3); const inv1 = e.vars.ler('vida') === 3;
       passa(70); e.events.emit('dano', { qtd: 1 }); passa(2); const inv2 = e.vars.ler('vida') === 2;
@@ -671,7 +671,7 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const rpg = await pm.evaluate(() => {
       const j = EditorExemplos.miniRpg(), e = new Core.Engine(); Core.Serializer.deJSON(e.scene, j); const er = e.compilarScripts().length;
       for (let i = 0; i < 3; i++) e.passo(); const jg = e.scene.find('jogador'); const al = e.scene.find('aldeao'); jg.Transform.x = al.Transform.x; jg.Transform.y = al.Transform.y;
-      for (let i = 0; i < 4; i++) e.passo(); const dialogo = e.scene.find('dialogo-caixa').Sprite.opacidade === 1;
+      for (let i = 0; i < 4; i++) e.passo(); const dialogo = e.scene.find('dialogo').Sprite.opacidade === 1;
       const po = e.scene.find('pocao 1'); jg.Transform.x = po.Transform.x; jg.Transform.y = po.Transform.y; for (let i = 0; i < 4; i++) e.passo();
       return { er, dialogo, pocao: e.vars.ler('inv_pocao'), vida: e.vars.ler('vida'), sumiu: !e.scene.find('pocao 1') };
     });
@@ -693,6 +693,8 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       return { n: camadas.length, grupo: f.grupo, fixo: f.fixo, vis, oculto, trava, ordem, salvo: JSON.parse(ed.cena && document.getElementById('json').value).estado.camadas.length };
     });
     ok(cp.n === 2 && cp.grupo && cp.fixo === true && cp.vis !== cp.oculto && cp.trava && cp.ordem === 'interface,mundo' && cp.salvo === 2, 'camadas: painel cria, move o selecionado (UI vira fixo), oculta, trava, reordena e salva (' + JSON.stringify(cp) + ')');
+    const hi = await pm.evaluate(() => { const c = editor.cena, d = c.find('dialogo'), filhos = [...c.entities.values()].filter(x => x.Pai && x.Pai.id === d.id).map(x => x.nome).sort().join(), inv = c.find('inventario'), slots = [...c.entities.values()].filter(x => x.Pai && x.Pai.id === inv.id).length, v = c.find('vida'); return { filhos, slots, vidaUnica: !!(v.Barra && v.Script && v.Sprite) && !c.find('vida-barra'), semPai: !d.Pai }; });
+    ok(hi.filhos === 'dialogo-fala,dialogo-nome,dialogo-op1,dialogo-op2,dialogo-op3' && hi.slots === 6 && hi.vidaUnica && hi.semPai, 'modelos: partes viram filhas da raiz (diálogo, inventário) e a barra de vida é um objeto só (' + JSON.stringify(hi) + ')');
     const ui = await pm.evaluate(async () => {
       for (const k of ['barra', 'slider', 'alternar', 'painel']) document.getElementById('u-' + k).click();
       const c = editor.cena, v = c.estado.vars || {}, j = JSON.stringify(Core.Serializer.paraJSON(c)); const e2 = new Core.Engine(); Core.Serializer.deJSON(e2.scene, JSON.parse(j)); for (let i = 0; i < 3; i++) e2.passo();

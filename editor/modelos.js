@@ -21,7 +21,7 @@
     '  ajuda: { quem: "Aldeão", fala: "Leve esta poção. Boa sorte!", opcoes: [',
     '    { texto: "Obrigado!", vai: null, evento: "inv-adicionar", dados: { item: "pocao", qtd: 1 }, vars: { ajudou: true } } ] }',
     '};',
-    'var ops = ["dialogo-op1", "dialogo-op2", "dialogo-op3"], fixos = ["dialogo-caixa", "dialogo-nome", "dialogo-fala"], aberto = null, ligado = false;',
+    'var ops = ["dialogo-op1", "dialogo-op2", "dialogo-op3"], fixos = ["dialogo", "dialogo-nome", "dialogo-fala"], aberto = null, ligado = false;',
     'function cena(ctx) { return ctx.engine.scene; }',
     'function opac(ctx, nome, v) { var x = cena(ctx).find(nome); if (x && x.Sprite) x.Sprite.opacidade = v; return x; }',
     'function texto(ctx, nome, t) { var x = cena(ctx).find(nome); if (x && x.Sprite) x.Sprite.rotulo = t; }',
@@ -99,14 +99,12 @@
     '// VIDA E DANO. Edite VIDA_MAX, INVUL (segundos de invulnerabilidade após o golpe) e ALVO (nome do objeto que pisca).',
     '// Entrada: dano {qtd} · curar {qtd}. Saída: vida-mudou {vida} · morreu {}. Variáveis: vida e vida_max (use em blocos/condições).',
     '// Inimigo que machuca: no script dele, em eventos = { colisao(e, d, ctx) { ctx.events.emit("dano", { qtd: 1 }); } }.',
-    'var VIDA_MAX = 5, INVUL = 1, ALVO = "jogador", BARRA = 200;',
+    'var VIDA_MAX = 5, INVUL = 1, ALVO = "jogador";',
     'var inv = 0, morto = false, ligado = false;',
     'function cena(ctx) { return ctx.engine.scene; }',
     'function def(ctx, k, v) { if (ctx.vars.existe(k)) ctx.vars.definir(k, v); else ctx.vars.declarar(k, v); }',
-    'function hud(ctx) {',
-    '  var v = ctx.vars.ler("vida"), f = cena(ctx).find("vida-barra"), t = cena(ctx).find("vida-texto");',
-    '  if (f) { var w = Math.max(0, Math.round(BARRA * v / VIDA_MAX)); f.Sprite.w = Math.max(w, 1); f.Sprite.opacidade = w ? 1 : 0; f.Transform.x = 20 + w / 2; }',
-    '  if (t) t.Sprite.rotulo = v + " / " + VIDA_MAX;',
+    'function hud(ctx) {  // a Barra (componente) enche sozinha pela variável vida; aqui só o texto',
+    '  var b = cena(ctx).find("vida"); if (b && b.Sprite) b.Sprite.rotulo = ctx.vars.ler("vida") + " / " + VIDA_MAX;',
     '}',
     'function mudar(ctx, delta) {',
     '  var v = Math.max(0, Math.min(VIDA_MAX, ctx.vars.ler("vida") + delta));',
@@ -132,26 +130,28 @@
     '}', ''
   ].join('\n');
 
+  // Cada modelo: [raiz, ...filhos]. A raiz é o objeto principal (visível, com o script); filhos têm rel:[dx,dy] e viram Pai:{id,dx,dy}.
+  // O que é uma coisa só fica um objeto só (a barra de vida); o que tem partes (caixa de diálogo, inventário) fica como filhos da raiz.
   const MODELOS = {
     dialogo: { rotulo: '💬 Diálogo com escolhas', ctl: 'dialogo', script: DIALOGO, objetos: () => [
-      P('dialogo-caixa', 400, 385, 740, 110, 'rgba(15,23,42,.88)'), T('dialogo-nome', 60, 345, 'Nome', 18, '#fbbf24', 'left'), T('dialogo-fala', 400, 390, 'Fala do personagem', 20),
-      B('dialogo-op1', 400, 250, 320, 38, 'Opção 1', 'dialogo-op1'), B('dialogo-op2', 400, 295, 320, 38, 'Opção 2', 'dialogo-op2'), B('dialogo-op3', 400, 205, 320, 38, 'Opção 3', 'dialogo-op3')] },
-    inventario: { rotulo: '🎒 Inventário (slots)', ctl: 'inventario', script: INVENTARIO, objetos: () => [0, 1, 2, 3, 4, 5].map(i => B('inv-slot' + (i + 1), 52 + i * 68, 415, 62, 56, '', 'inv-slot' + (i + 1), 12))
-      .map(o => { o.Sprite.cor = 'rgba(15,23,42,.6)'; o.Sprite.corSobre = '#475569'; o.Sprite.corApertado = '#1e293b'; o.Sprite.borda = '#94a3b8'; return o; }) },
-    vida: { rotulo: '❤ Vida e dano', ctl: 'vida', script: VIDA, objetos: () => [
-      P('vida-fundo', 120, 24, 208, 22, 'rgba(15,23,42,.8)'), Object.assign(P('vida-barra', 120, 24, 200, 14, '#ef4444', 2), {}), T('vida-texto', 120, 24, '5 / 5', 12, '#ffffff')] }
+      Object.assign(P('dialogo', 400, 385, 740, 110, 'rgba(15,23,42,.88)'), { Script: { nome: 'dialogo' } }),
+      Object.assign(T('dialogo-nome', 60, 345, 'Nome', 18, '#fbbf24', 'left'), { rel: [-340, -40] }), Object.assign(T('dialogo-fala', 400, 390, 'Fala do personagem', 20), { rel: [0, 5] }),
+      Object.assign(B('dialogo-op1', 400, 250, 320, 38, 'Opção 1', 'dialogo-op1'), { rel: [0, -135] }), Object.assign(B('dialogo-op2', 400, 295, 320, 38, 'Opção 2', 'dialogo-op2'), { rel: [0, -90] }), Object.assign(B('dialogo-op3', 400, 205, 320, 38, 'Opção 3', 'dialogo-op3'), { rel: [0, -180] })] },
+    inventario: { rotulo: '🎒 Inventário (slots)', ctl: 'inventario', script: INVENTARIO, objetos: () => [Object.assign(P('inventario', 222, 415, 424, 66, 'rgba(15,23,42,.55)'), { Script: { nome: 'inventario' } })]
+      .concat([0, 1, 2, 3, 4, 5].map(i => { const o = B('inv-slot' + (i + 1), 52 + i * 68, 415, 62, 56, '', 'inv-slot' + (i + 1), 12); o.Sprite.cor = 'rgba(15,23,42,.6)'; o.Sprite.corSobre = '#475569'; o.Sprite.corApertado = '#1e293b'; o.Sprite.borda = '#94a3b8'; o.Sprite.camada = 4; o.rel = [-170 + i * 68, 0]; return o; })) },
+    vida: { rotulo: '❤ Vida e dano', ctl: 'vida', script: VIDA, objetos: () => [{ nome: 'vida', Transform: { x: 130, y: 26 }, Sprite: { fixo: true, forma: 'retangulo', w: 220, h: 22, cor: '#1e293b', borda: '#94a3b8', larguraBorda: 2, arredondar: 8, rotulo: '5 / 5', corTexto: '#ffffff', tamanhoTexto: 12, fonte: 'system-ui', camada: 3 }, Barra: { var: 'vida', max: 'vida_max', cor: '#ef4444' }, Script: { nome: 'vida' } }] }
   };
-  MODELOS.vida.objetos = (f => () => { const l = f(); l[1].Sprite.borda = undefined; delete l[1].Sprite.borda; delete l[1].Sprite.larguraBorda; l[2].Sprite.camada = 4; return l; })(MODELOS.vida.objetos);
-
+  // Lista de entidades JSON (com ids e Pai) para montar o modelo fora do editor (ex.: exemplo Mini-RPG). `id0` = primeiro id livre.
+  function entidades(k, id0) { const l = MODELOS[k].objetos(); let id = id0; const raiz = l[0]; raiz.id = id++; return l.map((o, i) => { if (i === 0) return o; o.id = id++; if (o.rel) { o.Pai = { id: raiz.id, dx: o.rel[0], dy: o.rel[1] }; delete o.rel; } return o; }); }
   function instalar(m) {
     if (ed.engine.rodando) return msg('Pare o jogo antes de adicionar um modelo.', 'erro');
     if (cena.find(m.ctl) || (cena.estado.scripts || {})[m.ctl]) return msg('Esse modelo já está na cena (' + m.ctl + ').', 'erro');
     const lista = m.objetos(); if (lista.some(o => cena.find(o.nome))) return msg('Já existe um objeto com o nome de um item do modelo.', 'erro');
     (cena.estado.scripts || (cena.estado.scripts = {}))[m.ctl] = { fonte: m.script };
-    const c = cena.create({ nome: m.ctl, Transform: { x: 0, y: 0 }, Script: { nome: m.ctl } });
-    for (const o of lista) cena.create(o);
-    cena.flush(); ed.selecionar(c.id); ed.json(); ed.redesenhar();
-    msg('Modelo "' + m.rotulo + '" adicionado. Veja o código na aba Scripts; dê Play para testar.', 'ok');
+    const rel = new Map(); let raiz = null;
+    for (const o of lista) { const r = o.rel; delete o.rel; const e = cena.create(o); if (!raiz) raiz = e; else if (r) e.Pai = { id: raiz.id, dx: r[0], dy: r[1] }; }
+    cena.flush(); ed.selecionar(raiz.id); ed.json(); ed.redesenhar();
+    msg('Modelo "' + m.rotulo + '" adicionado' + (lista.length > 1 ? ' (as partes são filhas de "' + raiz.nome + '": mova o pai e o grupo anda junto)' : '') + '. Veja o código na aba Scripts; dê Play.', 'ok');
   }
   const painel = $('mais-painel');
   const t = document.createElement('p'); t.className = 't'; t.textContent = 'Modelos de RPG:'; painel.append(t);
@@ -187,5 +187,5 @@
       cena.flush(); ed.selecionar(ult.id); ed.json(); ed.redesenhar(); msg('Adicionado. Ajuste a variável no inspetor (Barra/Alternar → var).', 'ok'); });
     painel.append(b);
   }
-  root.EditorModelos = { definicao: k => MODELOS[k], instalar: k => instalar(MODELOS[k]), nomes: () => Object.keys(MODELOS) };
+  root.EditorModelos = { definicao: k => MODELOS[k], entidades, instalar: k => instalar(MODELOS[k]), nomes: () => Object.keys(MODELOS) };
 })(window);
