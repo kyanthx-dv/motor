@@ -522,4 +522,19 @@ const nova=()=>new C.Engine();
   const e2=new C.Engine();C.Serializer.deJSON(e2.scene,{formato:C.Serializer.FORMATO,estado:{matter:{gravidadeY:0}},entidades:[{nome:'a',Transform:{x:10,y:10},Corpo:{tipo:'dinamico',w:10,h:10}}]});for(let i=0;i<30;i++)e2.passo();ok(Math.abs(e2.scene.find('a').Transform.y-10)<0.01,'matter: gravidadeY 0 não derruba');
   let n=0;for(const x of [{Corpo:{tipo:'x'}},{Corpo:{w:-1}},{Corpo:{rotacaoFixa:1}},{Junta:{com:'a'}},{Corpo:{},Junta:{com:''}},{Corpo:{},Junta:{com:'a',rigidez:2}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0}},x)]});}catch(er){n++;}}ok(n===6,'matter: Corpo/Junta inválidos são recusados');
 }
+{ // componentes de UI: Barra, slider e Alternar
+  const mk=()=>{const e=new C.Engine();C.Serializer.deJSON(e.scene,{formato:C.Serializer.FORMATO,estado:{vars:{vida:3,vida_max:6,vol:0,som:false}},entidades:[
+    {nome:'barra',Transform:{x:100,y:20},Sprite:{fixo:true,w:200,h:20},Barra:{var:'vida',max:'vida_max'}},
+    {nome:'slider',Transform:{x:400,y:50},Sprite:{fixo:true,w:200,h:16},Barra:{var:'vol',min:0,max:10,arrastavel:true}},
+    {nome:'alt',Transform:{x:400,y:150},Sprite:{fixo:true,w:100,h:40},Alternar:{var:'som',textoLigado:'ON',textoDesligado:'OFF'}}]});return e;};
+  const ptr=(x,y,pr,dn)=>({poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x,y,tx:x,ty:y,down:!!dn,pressed:!!pr}})});
+  const e=mk();e.passo();ok(Math.abs(e.scene.find('barra').Barra._r-0.5)<1e-9,'barra: preenche vida/vida_max (50%)');
+  e.vars.definir('vida',6);e.passo();ok(e.scene.find('barra').Barra._r===1,'barra: acompanha a variável');
+  e.input=ptr(450,50,true,true);e.passo();ok(Math.abs(e.vars.ler('vol')-7.5)<1e-6,'slider: clicar a 75% grava 7.5 (min 0, max 10)');
+  e.input=ptr(500,300,false,true);e.passo();ok(Math.abs(e.vars.ler('vol')-10)<1e-6,'slider: continua arrastando mesmo fora da barra e trava em 100%');
+  e.input=ptr(0,0,false,false);e.passo();e.input=ptr(450,50,false,true);e.passo();ok(Math.abs(e.vars.ler('vol')-10)<1e-6,'slider: sem apertar dentro não arrasta');
+  e.input=ptr(400,150,true,true);e.passo();const a=e.scene.find('alt');ok(e.vars.ler('som')===true&&a.Sprite.rotulo==='ON','alternar: clique liga e troca o rótulo');
+  e.input=ptr(0,0,false,false);e.passo();e.input=ptr(400,150,true,true);e.passo();ok(e.vars.ler('som')===false&&a.Sprite.rotulo==='OFF','alternar: clique de novo desliga');
+  let n=0;for(const x of [{Barra:{}},{Barra:{var:'a',max:true}},{Barra:{var:'a',arrastavel:1}},{Alternar:{var:5}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0},Sprite:{}},x)]});}catch(er){n++;}}ok(n===4,'barra/alternar inválidos são recusados');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
