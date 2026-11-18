@@ -3,6 +3,15 @@
    Sprite.fixo:true = posição na janela (não anda com a câmera). Marca Botao.sobre para o desenho mudar de cor. */
 (function (root) {
   const C = root.Core = root.Core || {}; C.Systems = C.Systems || {};
+  // Campo sob o ponteiro p (x,y mundo; tx,ty janela): { id, valor, max, senha } do de maior camada, ou null. Usado pelo adaptador de entrada (thread principal)
+  C.campoEm = function (scene, p) {
+    let topo = null;
+    for (const e of scene.query('Campo', 'Transform', 'Sprite')) {
+      const K = e.Campo, S = e.Sprite; if (K.desativado) continue; const w = S.w ?? 200, h = S.h ?? 36, px = S.fixo ? p.tx : p.x, py = S.fixo ? p.ty : p.y;
+      if (px !== undefined && Math.abs(px - e.Transform.x) <= w / 2 && Math.abs(py - e.Transform.y) <= h / 2 && (!topo || (S.camada || 0) >= (topo.e.Sprite.camada || 0))) topo = { e };
+    }
+    return topo ? { id: topo.e.id, valor: topo.e.Campo._v || '', max: topo.e.Campo.max || 0, senha: !!topo.e.Campo.senha } : null;
+  };
   C.Systems.ui = function (scene, dt, ctx) {
     const p = ctx.input.pointer;
     if (p.pressed) {   // o clique vai só para o objeto do topo (maior camada; empate: o criado por último). Scripts: eventos.clique(e, d, ctx)
@@ -39,6 +48,35 @@
       const w = S.w ?? 100, h = S.h ?? 40, px = S.fixo ? p.tx : p.x, py = S.fixo ? p.ty : p.y;
       if (!A.desativado && p.pressed && p.ativo !== false && px !== undefined && Math.abs(px - e.Transform.x) <= w / 2 && Math.abs(py - e.Transform.y) <= h / 2) { gravaV(A.var, !lerV(A.var, false)); ctx.events.emit('alternou', { para: e.id, valor: !!lerV(A.var, false) }); }
       const on = !!lerV(A.var, false); S.rotulo = on ? (A.textoLigado || 'Ligado') : (A.textoDesligado || 'Desligado'); S.cor = on ? (A.corLigado || '#16a34a') : (A.corDesligado || '#64748b');
+    }
+    // Campo { var, dica, max, senha }: toque abre o teclado; o texto digitado vai para a variável (texto). Enter dispara o evento 'campo-enviado'
+    const tx = ctx.input.texto || {};
+    for (const e of scene.query('Campo', 'Transform', 'Sprite')) {
+      const K = e.Campo, S = e.Sprite; if (typeof K.var !== 'string') continue; K._n = (K._n || 0) + 1;
+      const foc = !!(tx.foco && tx.id === e.id), lim = K.max > 0 ? K.max : 200;
+      if (foc && typeof tx.valor === 'string' && tx.valor !== K._ult) { K._ult = tx.valor; gravaV(K.var, tx.valor.slice(0, lim)); ctx.events.emit('campo-mudou', { para: e.id, valor: tx.valor.slice(0, lim) }); }
+      if (!foc) K._ult = undefined;
+      if (typeof tx.envios === 'number') { if (K._env === undefined) K._env = tx.envios; if (tx.envios !== K._env) { if (K._foi) ctx.events.emit('campo-enviado', { para: e.id, valor: String(lerV(K.var, '')) }); K._env = tx.envios; } }
+      K._foi = foc;
+      const v = String(lerV(K.var, '')); K._v = v; K._f = foc; const cur = foc && ((K._n >> 4) & 1) ? '|' : '';
+      S.rotulo = v ? (K.senha ? '•'.repeat(v.length) : v) + cur : (foc ? '|' : (K.dica || ''));
+    }
+    // Lista { lista, var, itemAltura, corSel }: mostra os itens de uma lista do jogo, arrasta para rolar, toque escolhe (grava o índice em var e emite 'lista-escolheu')
+    const LI = ctx.engine && ctx.engine.listas;
+    for (const e of scene.query('Lista', 'Transform', 'Sprite')) {
+      const L = e.Lista, S = e.Sprite; if (typeof L.lista !== 'string' || !LI) continue;
+      const itens = LI.todos(L.lista), ih = L.itemAltura > 4 ? L.itemAltura : 28, w = S.w ?? 200, h = S.h ?? 150, px = S.fixo ? p.tx : p.x, py = S.fixo ? p.ty : p.y, max = Math.max(0, itens.length * ih - h);
+      const dentro = p.ativo !== false && px !== undefined && Math.abs(px - e.Transform.x) <= w / 2 && Math.abs(py - e.Transform.y) <= h / 2;
+      if (!L.desativado) {
+        if (p.pressed && dentro) L._a = { y0: py, s0: L._s || 0, mov: false };
+        if (L._a && p.down && py !== undefined) { const dy = py - L._a.y0; if (Math.abs(dy) > 6) L._a.mov = true; if (L._a.mov) L._s = Math.max(0, Math.min(max, L._a.s0 - dy)); }
+        if (L._a && !p.down) {
+          if (!L._a.mov) { const i = Math.floor((L._a.y0 - (e.Transform.y - h / 2) + L._a.s0) / ih); if (i >= 0 && i < itens.length) { L._sel = i; if (L.var) gravaV(L.var, i); ctx.events.emit('lista-escolheu', { para: e.id, indice: i, valor: itens[i] }); } }
+          L._a = null;
+        }
+      }
+      L._s = Math.max(0, Math.min(max, L._s || 0)); const sel = L.var && ctx.vars.existe(L.var) ? Number(ctx.vars.ler(L.var)) : (L._sel === undefined ? -1 : L._sel);
+      const a = Math.floor(L._s / ih), n = Math.ceil(h / ih) + 1; L._p = a; L._off = a * ih - L._s; L._vis = itens.slice(a, a + n).map(String); L._sel = sel; L._tot = itens.length; L._max = max;
     }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

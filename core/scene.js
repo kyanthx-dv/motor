@@ -40,6 +40,15 @@
       if (P.girar !== undefined && typeof P.girar !== 'boolean') throw new Error('entidade "' + n + '": Pai.girar precisa ser verdadeiro/falso');
       for (const k of ['dx', 'dy', 'rot']) if (P[k] !== undefined && !(typeof P[k] === 'number' && isFinite(P[k]))) throw new Error('entidade "' + n + '": Pai.' + k + ' precisa ser número');
     }
+    for (const nm of ['Campo', 'Lista']) {
+      const K = e[nm]; if (!K) continue; if (!e.Transform || !e.Sprite) throw new Error('entidade "' + n + '": ' + nm + ' precisa de Transform e Sprite');
+      if (K === null || typeof K !== 'object' || Array.isArray(K)) throw new Error('entidade "' + n + '": ' + nm + ' precisa ser um objeto');
+      if (nm === 'Campo' && (typeof K.var !== 'string' || !K.var)) throw new Error('entidade "' + n + '": Campo.var precisa ser o nome de uma variável');
+      if (nm === 'Lista' && (typeof K.lista !== 'string' || !K.lista)) throw new Error('entidade "' + n + '": Lista.lista precisa ser o nome de uma lista');
+      for (const k of ['var', 'dica', 'lista', 'corSel']) if (K[k] !== undefined && typeof K[k] !== 'string') throw new Error('entidade "' + n + '": ' + nm + '.' + k + ' precisa ser texto');
+      for (const k of ['max', 'itemAltura']) if (K[k] !== undefined && !(typeof K[k] === 'number' && isFinite(K[k]) && K[k] >= 0)) throw new Error('entidade "' + n + '": ' + nm + '.' + k + ' precisa ser um número maior ou igual a 0');
+      for (const k of ['senha', 'desativado']) if (K[k] !== undefined && typeof K[k] !== 'boolean') throw new Error('entidade "' + n + '": ' + nm + '.' + k + ' precisa ser verdadeiro/falso');
+    }
     if (e.Modelo !== undefined && (e.Modelo === null || typeof e.Modelo !== 'object')) throw new Error('entidade "' + n + '": Modelo precisa ser um objeto');
     for (const [nm, ext] of [['Barra', ['min', 'max', 'cor', 'arrastavel', 'desativado']], ['Alternar', ['textoLigado', 'textoDesligado', 'corLigado', 'corDesligado', 'desativado']]]) {
       const K = e[nm]; if (!K) continue; if (!e.Transform || !e.Sprite) throw new Error('entidade "' + n + '": ' + nm + ' precisa de Transform e Sprite');

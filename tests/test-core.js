@@ -537,4 +537,20 @@ const nova=()=>new C.Engine();
   e.input=ptr(0,0,false,false);e.passo();e.input=ptr(400,150,true,true);e.passo();ok(e.vars.ler('som')===false&&a.Sprite.rotulo==='OFF','alternar: clique de novo desliga');
   let n=0;for(const x of [{Barra:{}},{Barra:{var:'a',max:true}},{Barra:{var:'a',arrastavel:1}},{Alternar:{var:5}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0},Sprite:{}},x)]});}catch(er){n++;}}ok(n===4,'barra/alternar inválidos são recusados');
 }
+{ // Campo (texto) e Lista (rolável)
+  const e=new C.Engine();C.Serializer.deJSON(e.scene,{formato:C.Serializer.FORMATO,estado:{vars:{nome:'',sel:-1},listas:{it:['a','b','c','d','e','f','g','h']}},entidades:[
+    {nome:'campo',Transform:{x:200,y:50},Sprite:{fixo:true,w:200,h:36},Campo:{var:'nome',dica:'Nome',max:5}},
+    {nome:'lista',Transform:{x:200,y:200},Sprite:{fixo:true,w:200,h:100},Lista:{lista:'it',var:'sel',itemAltura:25}}]});
+  const inp=(x,y,pr,dn,tx)=>({texto:tx||{},poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},texto:tx||{},pointer:{x,y,tx:x,ty:y,down:!!dn,pressed:!!pr}})});
+  const cf=e.scene.find('campo'),id=cf.id;
+  e.input=inp(0,0,false,false);e.passo();ok(cf.Sprite.rotulo==='Nome'&&C.campoEm(e.scene,{tx:200,ty:50,x:200,y:50}).id===id&&C.campoEm(e.scene,{tx:0,ty:0,x:0,y:0})===null,'campo: mostra a dica e o toque acha o campo');
+  e.input=inp(0,0,false,false,{foco:true,id,valor:'abcdefgh',envios:0});e.passo();ok(e.vars.ler('nome')==='abcde'&&cf.Sprite.rotulo.startsWith('abcde'),'campo: texto digitado vai para a variável (limite max=5)');
+  let env=0;e.events.on('campo-enviado',()=>env++);e.input=inp(0,0,false,false,{foco:true,id,valor:'abcdefgh',envios:1});e.passo();e.events.despachar?e.events.despachar():0;ok(e.vars.ler('nome')==='abcde','campo: Enter não altera o texto');
+  e.input=inp(0,0,false,false,{foco:false,id:-1,valor:'abcdefgh',envios:1});e.passo();ok(cf.Campo._f===false,'campo: sem foco para de digitar');
+  const li=e.scene.find('lista').Lista;
+  e.input=inp(200,200,true,true);e.passo();e.input=inp(200,150,false,true);e.passo();e.input=inp(200,150,false,false);e.passo();ok(li._s===50&&e.vars.ler('sel')===-1&&li._max===100,'lista: arrastar rola (50px) e não escolhe');
+  e.input=inp(200,200,true,true);e.passo();e.input=inp(200,200,false,false);e.passo();ok(e.vars.ler('sel')===4,'lista: toque escolhe o item sob o dedo considerando a rolagem (índice 4)');
+  e.input=inp(0,0,false,false);e.passo();ok(li._vis[0]==='c'&&li._vis.length<=6,'lista: só os itens visíveis vão para o desenho');
+  let n=0;for(const x of [{Campo:{}},{Campo:{var:'a',max:-1}},{Lista:{}},{Lista:{lista:'a',itemAltura:'x'}},{Campo:{var:'a',senha:1}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0},Sprite:{}},x)]});}catch(er){n++;}}ok(n===5,'campo/lista inválidos são recusados');
+}
 console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
