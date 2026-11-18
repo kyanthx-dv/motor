@@ -696,11 +696,20 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
     const hi = await pm.evaluate(() => { const c = editor.cena, d = c.find('dialogo'), filhos = [...c.entities.values()].filter(x => x.Pai && x.Pai.id === d.id).map(x => x.nome).sort().join(), inv = c.find('inventario'), slots = [...c.entities.values()].filter(x => x.Pai && x.Pai.id === inv.id).length, v = c.find('vida'); return { filhos, slots, vidaUnica: !!(v.Barra && v.Script && v.Sprite) && !c.find('vida-barra'), semPai: !d.Pai }; });
     ok(hi.filhos === 'dialogo-fala,dialogo-nome,dialogo-op1,dialogo-op2,dialogo-op3' && hi.slots === 6 && hi.vidaUnica && hi.semPai, 'modelos: partes viram filhas da raiz (diálogo, inventário) e a barra de vida é um objeto só (' + JSON.stringify(hi) + ')');
     const ui = await pm.evaluate(async () => {
-      for (const k of ['barra', 'slider', 'alternar', 'painel']) document.getElementById('u-' + k).click();
+      for (const k of ['barra', 'slider', 'alternar', 'campo', 'lista', 'painel']) document.getElementById('u-' + k).click();
       const c = editor.cena, v = c.estado.vars || {}, j = JSON.stringify(Core.Serializer.paraJSON(c)); const e2 = new Core.Engine(); Core.Serializer.deJSON(e2.scene, JSON.parse(j)); for (let i = 0; i < 3; i++) e2.passo();
-      return { ok: !!c.find('barra').Barra && !!c.find('slider').Barra.arrastavel && !!c.find('alternar').Alternar && !!c.find('painel'), vars: [v.vida, v.vida_max, v.volume, v.som].join(), r: e2.scene.find('barra').Barra._r, rot: e2.scene.find('alternar').Sprite.rotulo };
+      return { ok: !!c.find('barra').Barra && !!c.find('slider').Barra.arrastavel && !!c.find('alternar').Alternar && !!c.find('painel'), vars: [v.vida, v.vida_max, v.volume, v.som].join(), r: e2.scene.find('barra').Barra._r, rot: e2.scene.find('alternar').Sprite.rotulo, cl: !!c.find('campo').Campo && !!c.find('lista').Lista && (c.estado.listas.itens || []).length === 8 && c.estado.vars.nome === '' && e2.scene.find('lista').Lista._vis.length > 0 };
     });
-    ok(ui.ok && ui.vars === '5,5,0.7,true' && ui.r === 1 && ui.rot === 'Som: ligado', 'menu de componentes de UI cria barra, slider, alternar e painel já ligados às variáveis (' + JSON.stringify(ui) + ')');
+    ok(ui.ok && ui.vars === '5,5,0.7,true' && ui.cl && ui.r === 1 && ui.rot === 'Som: ligado', 'menu de componentes de UI cria barra, slider, alternar e painel já ligados às variáveis (' + JSON.stringify(ui) + ')');
+    const tc = await pm.evaluate(() => {
+      const cv = document.createElement('canvas'); cv.width = 200; cv.height = 100; cv.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:100px'; document.body.append(cv);
+      const inp = new Core.Input(cv, null); inp.campoEm = p => (p.x < 100 ? { id: 7, valor: 'oi', max: 3, senha: false } : null);
+      const up = (x, y) => cv.dispatchEvent(new PointerEvent('pointerup', { clientX: x, clientY: y, pointerId: 1, pointerType: 'touch', bubbles: true }));
+      up(20, 20); const el = inp._el, a = !!el && document.activeElement === el && el.value === 'oi' && el.maxLength === 3 && inp.poll().texto.foco === true && inp.poll().texto.id === 7;
+      el.value = 'oxi'; el.dispatchEvent(new Event('input')); const t = inp.poll().texto.valor; up(150, 20); const fora = inp.poll().texto.foco === false;
+      inp.destruir(); cv.remove(); return { a, t, fora, limpo: !inp._el };
+    });
+    ok(tc.a && tc.t === 'oxi' && tc.fora && tc.limpo, 'campo: toque abre o teclado (input escondido), repassa o texto e fecha ao tocar fora (' + JSON.stringify(tc) + ')');
     await pm.close();
   }
   ok(erros.length === 0, 'nenhum erro de console' + (erros.length ? ': ' + erros[0] : ''));

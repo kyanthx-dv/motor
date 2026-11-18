@@ -15,7 +15,7 @@
       this.down = new Set(); this.edge = new Set(); this.soltou = new Set(); this.keys = new Set(); this.keysEdge = new Set();
       this.joystick = { ativo: false, x0: 0, y0: 0, x: 0, y: 0, dx: 0, dy: 0, raio: 56, id: null, modo: 'flutuante', visivel: true, fixo: false, zonaMorta: 0.12, zona: 'base', fx: 0.14, fy: 0.78 };
       this.pointer = { x: 0, y: 0, tx: 0, ty: 0, down: false, ativo: false }; this.pEdge = false; this.ptId = null;   // um ponteiro principal no canvas; botões HTML são independentes
-      this.mapa = new Map();
+      this.foco = null; this.txt = ''; this.envios = 0; this.campoEm = null; this.mapa = new Map();
       for (const a in this.teclas) for (const k of this.teclas[a]) this.mapa.set(k, a);
       const ouvir = (alvo, tipo, fn) => { alvo.addEventListener(tipo, fn); this.listeners.push({ alvo, tipo, fn }); };
       const digitando = e => { const t = e.target && e.target.tagName; return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT'; };
@@ -41,7 +41,24 @@
         this._mover(p);
       });
       const fim = e => { if (e.pointerId !== this.ptId) return; const j = this.joystick; j.ativo = false; j.dx = j.dy = 0; j.id = null; this.ptId = null; this.pointer.down = false; if (e.pointerType !== 'mouse') this._deixar = true; };   // dedo levantou: o 'sobre' dos botões some depois do quadro que viu o toque
+      ouvir(canvas, 'pointerup', e => { if (e.pointerType === 'mouse' || e.pointerId === this.ptId || this.ptId === null) this._tocou(e); });   // toque num Campo: abre o teclado (precisa ser dentro do gesto do usuário)
       ouvir(canvas, 'pointerup', fim); ouvir(canvas, 'pointercancel', fim);
+    }
+    // Campo de texto: um <input> escondido recebe o teclado (celular inclusive); o texto vai para o jogo em poll().texto
+    _campoEl() {
+      if (this._el) return this._el; if (typeof document === 'undefined') return null;
+      const el = document.createElement('input'); el.type = 'text'; el.setAttribute('autocomplete', 'off'); el.setAttribute('autocapitalize', 'off'); el.setAttribute('aria-label', 'campo de texto do jogo');
+      Object.assign(el.style, { position: 'fixed', left: '0', top: '0', width: '1px', height: '1px', opacity: '0', border: '0', padding: '0', fontSize: '16px' });
+      el.addEventListener('input', () => { this.txt = el.value; });
+      el.addEventListener('keydown', ev => { if (ev.key === 'Enter') { this.envios++; el.blur(); } });
+      el.addEventListener('blur', () => { this.foco = null; });
+      document.body.appendChild(el); this._el = el; return el;
+    }
+    _tocou(e) {
+      if (!this.campoEm) return; const p = this.local(e), w = this.renderer ? this.renderer.telaParaMundo(p.x, p.y) : p, j = this.renderer && this.renderer.telaParaJanela ? this.renderer.telaParaJanela(p.x, p.y) : p, h = this.campoEm({ x: w.x, y: w.y, tx: j.x, ty: j.y }), el = this._campoEl(); if (!el) return;
+      if (!h) { if (this.foco) el.blur(); return; }
+      el.type = h.senha ? 'password' : 'text'; el.maxLength = h.max > 0 ? h.max : 524288; el.value = h.valor || ''; this.txt = el.value; this.foco = { id: h.id };
+      try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); }
     }
     // zona 'base' (padrão): só pega o toque dentro do raio do joystick (base parada); fora disso é um clique normal.
     // Configuração do joystick virtual (vem da cena: estado.joystick). modo: 'flutuante' (nasce onde o dedo toca), 'fixo' (sempre na mesma posição) ou 'desligado'.
@@ -81,12 +98,13 @@
       return { ativo: j.ativo && v, dx: v ? j.dx : 0, dy: v ? j.dy : 0, forca: v ? f : 0, angulo: v ? Math.atan2(j.dy, j.dx) * 180 / Math.PI : 0, modo: j.modo };
     }
     poll() {
-      const s = { keys: new Set(this.keys), keysPressed: new Set(this.keysEdge), down: new Set(this.down), pressed: new Set(this.edge), released: new Set(this.soltou), axes: this.eixos(), joystick: this.dadosJoystick(), pointer: { ...this.pointer, pressed: this.pEdge } };
+      const s = { keys: new Set(this.keys), keysPressed: new Set(this.keysEdge), down: new Set(this.down), pressed: new Set(this.edge), released: new Set(this.soltou), axes: this.eixos(), joystick: this.dadosJoystick(), texto: { foco: !!this.foco, id: this.foco ? this.foco.id : -1, valor: this.txt, envios: this.envios }, pointer: { ...this.pointer, pressed: this.pEdge } };
       this.pEdge = false; if (this._deixar) { this.pointer.ativo = false; this._deixar = false; } this.edge.clear(); this.soltou.clear(); this.keysEdge.clear(); return s;
     }
     destruir() {
       for (const { alvo, tipo, fn } of this.listeners) alvo.removeEventListener(tipo, fn);
       this.listeners.length = 0;
+      if (this._el) { try { this._el.remove(); } catch (x) {} this._el = null; } this.foco = null;
       this.down.clear(); this.edge.clear(); this.soltou.clear(); this.keys.clear(); this.keysEdge.clear();
       this.joystick.ativo = false; this.joystick.id = null; this.joystick.dx = this.joystick.dy = 0;
       this.ptId = null; this.pointer.down = false;

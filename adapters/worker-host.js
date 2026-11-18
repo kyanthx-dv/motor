@@ -27,7 +27,7 @@
     const SEM = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false } });
     const input = {
       joystick: { ativo: false }, poll() {
-        const s = cur ? { keys: new Set(cur.keys), keysPressed: pend.keysPressed, down: new Set(cur.down), pressed: pend.pressed, released: pend.released, axes: cur.axes, joystick: cur.joystick, pointer: Object.assign({}, cur.pointer, { pressed: pend.ptr }) } : SEM();
+        const s = cur ? { keys: new Set(cur.keys), keysPressed: pend.keysPressed, down: new Set(cur.down), pressed: pend.pressed, released: pend.released, axes: cur.axes, joystick: cur.joystick, texto: cur.texto || {}, pointer: Object.assign({}, cur.pointer, { pressed: pend.ptr }) } : SEM();
         pend = novoPend(); return s;
       }
     };
@@ -53,7 +53,7 @@
 
   class WorkerHost {
     constructor(o) { Object.assign(this, o); this.limite = o.limite || 3000; this.worker = null; this.ultimo = 0; this.pronto = false; this.travado = false; this.snap = null; this.vars = {}; this.erros = []; this.saidas = [];
-      this.scene = new C.Scene(); this.fake = { fps: 60, passos: 0, input: this.input, debug: false };
+      this.scene = new C.Scene(); if (this.input) this.input.campoEm = p => C.campoEm(this.scene, p); this.fake = { fps: 60, passos: 0, input: this.input, debug: false };
       const self = this;
       this.engine = { get rodando() { return !!self.pronto && !self.travado; }, scene: this.scene, vars: { ler: n => self.vars[n], existe: n => n in self.vars }, get errosScripts() { return self.erros; }, events: new C.Events() };
     }
@@ -80,7 +80,7 @@
       this._criar();
       const quadro = () => {
         this._raf = requestAnimationFrame(quadro); if (this.travado) return;
-        if (this.worker) { if (this.input.configurar) this.input.configurar(C.joystickDe(this.scene)); const s = this.input.poll(); this.worker.postMessage({ t: 'input', s: { keys: [...s.keys], keysPressed: [...s.keysPressed], down: [...s.down], pressed: [...s.pressed], released: [...s.released], axes: s.axes, joystick: s.joystick, pointer: s.pointer } }); }
+        if (this.worker) { if (this.input.configurar) this.input.configurar(C.joystickDe(this.scene)); const s = this.input.poll(); this.worker.postMessage({ t: 'input', s: { keys: [...s.keys], keysPressed: [...s.keysPressed], down: [...s.down], pressed: [...s.pressed], released: [...s.released], axes: s.axes, joystick: s.joystick, texto: s.texto, pointer: s.pointer } }); }
         if (this.pronto) this.renderer.desenhar(this.scene, 1, this.fake);
       };
       this._raf = requestAnimationFrame(quadro);

@@ -40,7 +40,7 @@
           b.addEventListener('click', () => { av.remove(); host.travado = false; host.reiniciar(); }); av.append(t, b); corpo.appendChild(av); };
         engine = host.engine;
       } else {
-        engine = new C.Engine({ renderer }); if (armazem) engine.armazem = armazem;
+        engine = new C.Engine({ renderer }); input.campoEm = p => C.campoEm(engine.scene, p); if (armazem) engine.armazem = armazem;
         C.Serializer.deJSON(engine.scene, JSON.parse(JSON.stringify(cenaAtual)));
         engine.cenas = {}; for (const n in jogo.cenas) engine.registrarCenaJSON(n, JSON.parse(JSON.stringify(jogo.cenas[n])));
         engine.input = input; engine.dispositivo = C.Dispositivo || null; engine.audio = audio;
