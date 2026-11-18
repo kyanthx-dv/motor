@@ -470,6 +470,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
         return { cfg, html: { titulo: /<title>Super Jogo<\/title>/.test(html), cor: html.includes('background:#102030'), dados: html.includes('"orientacao":"paisagem"') }, man: [man.name, man.orientation, man.background_color].join() };
       });
       ok(ax.cfg.nomeApp === 'Super Jogo' && ax.cfg.orientacao === 'paisagem' && ax.cfg.encaixe === 'inteiro' && ax.cfg.corFundo === '#102030' && ax.html.titulo && ax.html.cor && ax.html.dados && ax.man === 'Super Jogo,landscape,#102030', 'exportar: painel de ajustes grava e o .html usa nome, cor e orientação (' + JSON.stringify(ax) + ')');
+      const ic = await p.evaluate(async () => {
+        const c = document.createElement('canvas'); c.width = 300; c.height = 200; const g = c.getContext('2d'); g.fillStyle = '#e11'; g.fillRect(0, 0, 300, 200);
+        const b = await EditorExportarIcone.redimensionar(c.toDataURL('image/png'), 512); let s = ''; for (const x of b) s += String.fromCharCode(x);
+        editor.cena.estado.exportar = Object.assign({}, editor.cena.estado.exportar, { icone: 'data:image/png;base64,' + btoa(s) }); editor.json();
+        const zip = await EditorExportar.gerarPasta(), html = await EditorExportar.gerar(), w = a => (a[16] << 24) | (a[17] << 16) | (a[18] << 8) | a[19], ok512 = Core.ExportarCfg.limpar(editor.cena.estado.exportar).icone;
+        let rej = false; try { Core.ExportarCfg.validar({ icone: 'http://x/y.png' }); } catch (e) { rej = true; }
+        return { w192: w(zip['icones/icone-192.png']), w512: w(zip['icones/icone-512.png']), fav: /<link rel="icon" href="data:image\/png;base64,/.test(html), pasta: new TextDecoder().decode(zip['index.html']).includes('apple-touch-icon'), guarda: !!ok512, rej };
+      });
+      ok(ic.w192 === 192 && ic.w512 === 512 && ic.fav && ic.pasta && ic.guarda && ic.rej, 'exportar: ícone próprio vira 192/512 no manifesto e favicon no .html; endereço externo é recusado (' + JSON.stringify(ic) + ')');
       await p.evaluate(() => { document.getElementById('ex-ajustes').click(); delete editor.cena.estado.exportar; editor.json(); });
     }
     // exportar jogo: um .html que roda sozinho (nova página, sem o editor)

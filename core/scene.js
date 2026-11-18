@@ -187,12 +187,13 @@
   };
   // Ajustes de exportação (estado.exportar): nomeApp, orientacao (qualquer|paisagem|retrato), encaixe (conter|inteiro), corFundo (#rgb/#rrggbb).
   C.ExportarCfg = {
-    ORIENT: ['qualquer', 'paisagem', 'retrato'], ENCAIXE: ['conter', 'inteiro'], COR: /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/,
+    ORIENT: ['qualquer', 'paisagem', 'retrato'], ENCAIXE: ['conter', 'inteiro'], COR: /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/, ICONE: /^data:image\/png;base64,[A-Za-z0-9+\/]+=*$/,
     validar(x) {
       if (x === null || typeof x !== 'object' || Array.isArray(x)) throw new Error('save inválido: estado.exportar precisa ser um objeto');
       if (x.nomeApp !== undefined && (typeof x.nomeApp !== 'string' || x.nomeApp.length > 30)) throw new Error('save inválido: exportar.nomeApp precisa ser texto de até 30 letras');
       if (x.orientacao !== undefined && !C.ExportarCfg.ORIENT.includes(x.orientacao)) throw new Error('save inválido: exportar.orientacao precisa ser qualquer, paisagem ou retrato');
       if (x.encaixe !== undefined && !C.ExportarCfg.ENCAIXE.includes(x.encaixe)) throw new Error('save inválido: exportar.encaixe precisa ser conter ou inteiro');
+      if (x.icone !== undefined && !(typeof x.icone === 'string' && C.ExportarCfg.ICONE.test(x.icone) && x.icone.length <= 600000)) throw new Error('save inválido: exportar.icone precisa ser uma imagem PNG (data URL) de até ~400 KB');
       if (x.corFundo !== undefined && !(typeof x.corFundo === 'string' && C.ExportarCfg.COR.test(x.corFundo))) throw new Error('save inválido: exportar.corFundo precisa ser uma cor #rgb ou #rrggbb');
     },
     // Versão limpa e segura (ignora o que for inválido) para quem consome: player e exportadores.
@@ -202,6 +203,7 @@
       if (C.ExportarCfg.ORIENT.includes(x.orientacao)) o.orientacao = x.orientacao;
       if (C.ExportarCfg.ENCAIXE.includes(x.encaixe)) o.encaixe = x.encaixe;
       if (typeof x.corFundo === 'string' && C.ExportarCfg.COR.test(x.corFundo)) o.corFundo = x.corFundo;
+      if (typeof x.icone === 'string' && x.icone.length <= 600000 && C.ExportarCfg.ICONE.test(x.icone)) o.icone = x.icone;
       return o;
     }
   };
