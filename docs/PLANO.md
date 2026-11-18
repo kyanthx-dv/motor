@@ -45,7 +45,7 @@
 Objetivo: um lugar onde as pessoas criam no editor, publicam jogos, postam, compartilham assets e têm perfil com foto e avatar 2D (referências: Buildaa/Julian's Editor). A engine continua independente: a rede é uma camada em cima.
 
 *Etapas (cada uma entrega algo usável sozinho):*
-1. **Contas e perfil** — cadastro/login (e-mail + Google), nome de usuário único, foto, bio. Sem isso nada mais existe.
+1. **Contas e perfil** ✅ (código pronto: e-mail + senha, usuário único, nome, bio; falta só rodar `supabase/0001_perfis.sql` no projeto e testar no aparelho). Depois: login com GitHub/Google e foto. Sem isso nada mais existe.
 2. **Publicar e jogar** — botão "Publicar" no editor envia o pacote do jogo (o mesmo da exportação em pasta) + capa + título + descrição; página do jogo; jogar no navegador e no app.
 3. **Descoberta** — página inicial com recentes/populares, busca, curtidas, contagem de jogadas, "remixar" (copiar o projeto de quem permitiu para o editor).
 4. **Posts e comentários** — feed de quem se segue, comentários em jogos, seguir/deixar de seguir.

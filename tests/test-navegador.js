@@ -462,6 +462,23 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       ok(semMt && f.y > y0 + 100 && f.y < 440 && Math.abs(f.d - 120) < 4 && errf.length === 0, 'matter no editor: sem Corpo o arquivo não leva a biblioteca; no Play a caixa cai e o pêndulo segura (' + JSON.stringify(f) + ' y0=' + y0 + ' ' + errf.join('|') + ')');
       ok(html.includes('matter-js 0.20.0') && pz && jy > y0 + 100, 'matter na exportação: .html e pasta levam a biblioteca e o jogo exportado simula (y=' + jy + ')'); await pf.close();
     }
+    { // conta (rede social) com servidor simulado
+      const cr = await p.evaluate(async () => {
+        const db = []; EditorConta.f = async (u, o) => { const b = o.body ? JSON.parse(o.body) : null, r = (st, j) => ({ ok: st < 400, status: st, text: async () => JSON.stringify(j) });
+          if (u.includes('grant_type=password')) return r(200, { access_token: 't', refresh_token: 'r', expires_in: 3600, user: { id: 'u1', email: b.email } });
+          if (u.includes('/rest/v1/perfis') && o.method === 'POST') { db.length = 0; db.push(b); return r(201, [b]); } if (u.includes('/rest/v1/perfis')) return r(200, u.includes('usuario=eq.') ? [] : db); return r(404, {}); };
+        const q = id => document.getElementById(id), esp = () => new Promise(f => setTimeout(f, 60)), res = {};
+        q('conta-abrir').click(); await esp(); res.abre = !q('conta-painel').hidden && !!q('conta-entrar') && !!q('conta-idade');
+        q('conta-email').value = 'a@b.com'; q('conta-senha').value = '12345678'; q('conta-criar').click(); await esp(); res.idade = /13 anos/.test(q('conta-msg').textContent);
+        q('conta-entrar').click(); await esp(); await esp(); res.logou = !!q('conta-salvar') && /a@b.com/.test(q('conta-painel').textContent);
+        q('conta-usuario').value = 'A!'; q('conta-salvar').click(); await esp(); res.invalido = /3 a 20/.test(q('conta-msg').textContent);
+        q('conta-usuario').value = 'ana_01'; q('conta-nome').value = 'Ana'; q('conta-salvar').click(); await esp(); await esp(); res.salvou = /@ana_01/.test(q('conta-msg').textContent) && db[0] && db[0].usuario === 'ana_01';
+        q('conta-sair').click(); await esp(); await esp(); res.saiu = !!q('conta-entrar'); localStorage.removeItem('motor.social.sessao'); q('conta-painel').hidden = true; return res;
+      });
+      ok(cr.abre && cr.idade && cr.logou && cr.invalido && cr.salvou && cr.saiu, 'conta: painel entrar/criar (exige 13+), perfil (valida usuário) e sair (' + JSON.stringify(cr) + ')');
+      const sem = await p.evaluate(async () => { const t = await (await fetch('../adapters/social.js')).text(); return typeof EditorExportar.gerar === 'function' && !(await EditorExportar.gerar()).includes('Core.Social'); });
+      ok(sem, 'jogo exportado não leva o código da conta/rede social');
+    }
     { // ajustes finos de exportação
       const ax = await p.evaluate(async () => {
         document.getElementById('ex-ajustes').click(); const q = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('change')); };

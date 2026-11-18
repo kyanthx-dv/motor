@@ -101,7 +101,7 @@
   let codigoMotor = null;
   async function obterCodigo() {   // fonte do motor (núcleo + adaptadores) para o Worker; null = rodar direto na página
     if (codigoMotor) return codigoMotor; if (typeof Worker !== 'function' || typeof Blob !== 'function' || !C.WorkerHost || window.__semWorker || location.protocol === 'file:') return null;
-    try { const urls = [...document.scripts].map(x => x.getAttribute('src') || '').filter(x => /^\.\.\/(core|adapters)\//.test(x) && !/pixi|debug|vendor|worker-host|player/.test(x)); urls.unshift('../adapters/vendor/matter.min.js'); urls.push('../adapters/worker-host.js'); const t = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) return null; t.push(await r.text()); } codigoMotor = t.join('\n;\n'); return codigoMotor; } catch (x) { return null; }
+    try { const urls = [...document.scripts].map(x => x.getAttribute('src') || '').filter(x => /^\.\.\/(core|adapters)\//.test(x) && !/pixi|debug|vendor|worker-host|player|social/.test(x)); urls.unshift('../adapters/vendor/matter.min.js'); urls.push('../adapters/worker-host.js'); const t = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) return null; t.push(await r.text()); } codigoMotor = t.join('\n;\n'); return codigoMotor; } catch (x) { return null; }
   }
   let host = null;
   function jogoAtual() { const pac = window.EditorArquivos.exportar(), cenas = Object.assign({}, pac.cenas.cenas); cenas[pac.cenas.atual] = pac.cena; return { nome: projetoAtual || 'jogo', atual: pac.cenas.atual, cenas, versao: C.VERSAO }; }
