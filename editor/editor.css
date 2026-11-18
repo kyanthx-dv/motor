@@ -204,3 +204,11 @@ select.add{background:transparent;color:var(--acento);border:2px dashed var(--ac
 .cod-ta{cursor:text;touch-action:auto;-webkit-user-select:text;user-select:text}
 .cod-hl,.cod-n{touch-action:auto}
 .cod-pop{min-width:220px;max-width:min(420px,90%)}.cod-it{display:flex;gap:10px;justify-content:space-between;align-items:baseline}.cod-it b{font-weight:600}.cod-sig{color:var(--mudo);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== Blocos em linha única: os parâmetros crescem para a direita (sem quebrar linha); a área rola na horizontal e os botões ficam sempre visíveis à direita ===== */
+.blocos{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.blocos .pilha{width:max-content;min-width:100%}
+.bloco>.topo{flex-wrap:nowrap;white-space:nowrap;position:static}
+.bloco .val{flex-wrap:nowrap}
+.bloco>.topo .bt{position:sticky;top:auto;right:4px;margin-left:auto;padding-left:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--cat,var(--campo)) 40%,var(--campo)) 40%)}
+.bloco .val.com-nome>select:first-child{order:0;width:auto;min-width:0;max-width:210px;padding:2px 4px;color:var(--pil-fg);background-image:none;appearance:auto;-webkit-appearance:auto}

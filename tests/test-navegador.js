@@ -331,6 +331,13 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       return { grupos: g(nVal), txtB: ks(cmpB.querySelector('select')), numSemTxt: !ks(nVal).includes('plataforma'), outroEmColisao: ks(colisao).includes('outro'), outroForaDeColisao: ks(nVal).includes('outro'), prof: aninhado && aninhado.style.getPropertyValue('--esc'), cor: !!nVal.parentElement.style.getPropertyValue('--vg') };
     });
     ok(r.grupos >= 4 && r.numSemTxt && r.outroEmColisao && !r.outroForaDeColisao && r.txtB.includes('plataforma') && !r.txtB.includes('x') && r.prof === '12%' && r.cor, 'seletor de valores: grupos coloridos, filtra pelo tipo (texto/número) e pelo contexto (' + JSON.stringify(r) + ')'); }
+  { const r = await p.evaluate(() => {
+      const d = document.createElement('div'); d.className = 'blocos'; d.style.cssText = 'position:fixed;left:0;top:0;width:360px;z-index:9999'; const n = v => ({ k: 'num', v });
+      const op = { k: 'op', o: '+', a: { k: 'op', o: '*', a: n(1), b: { k: 'op', o: '-', a: n(2), b: n(3) } }, b: { k: 'op', o: '/', a: n(4), b: n(5) } };
+      EditorBlocos.montar(d, { blocos: [{ t: 'evento_quadro', f: [Object.assign(EditorBlocos.novo('var_somar'), { v: op, var: 'v' })] }] }, { vars: () => ['v'], scripts: () => [], objetos: () => [], etiquetas: () => [], atributos: () => [], aoMudar() {} }); document.body.append(d);
+      const topo = d.querySelector('.bloco:not(.hat) > .topo'), res = { alto: topo.getBoundingClientRect().height, rola: d.scrollWidth > d.clientWidth, nome: !!d.querySelector('.val.com-nome') }; d.remove(); return res;
+    });
+    ok(r.alto < 60 && r.rola && r.nome, 'blocos: parâmetros ficam numa linha só (crescem para a direita e a área rola) (' + JSON.stringify(r) + ')'); }
   await p.evaluate(() => { editor.cena.estado.scripts.quebra = { fonte: 'function atualizar(e, dt, ctx) { ctx.engine.naoExiste(); }' }; editor.cena.find('jogador').Script = { nome: 'quebra' }; });
   await p.evaluate(() => editor.play()); await p.waitForTimeout(300);
   ok(await p.evaluate(() => /Erro no script "quebra"/.test(document.getElementById('msg').textContent)), 'erro de script aparece na mensagem do editor');
