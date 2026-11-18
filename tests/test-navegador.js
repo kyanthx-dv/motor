@@ -338,6 +338,15 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
       const topo = d.querySelector('.bloco:not(.hat) > .topo'), res = { alto: topo.getBoundingClientRect().height, rola: d.scrollWidth > d.clientWidth, nome: !!d.querySelector('.val.com-nome') }; d.remove(); return res;
     });
     ok(r.alto < 60 && r.rola && r.nome, 'blocos: parâmetros ficam numa linha só (crescem para a direita e a área rola) (' + JSON.stringify(r) + ')'); }
+  { const r = await p.evaluate(() => {
+      const d = document.createElement('div'); d.className = 'blocos'; d.style.cssText = 'position:fixed;left:0;top:0;width:360px;z-index:9999'; document.body.append(d);
+      EditorBlocos.montar(d, { blocos: [{ t: 'evento_quadro', f: [EditorBlocos.novo('repetir')] }] }, { vars: () => [], scripts: () => [], objetos: () => [], etiquetas: () => [], atributos: () => [], aoMudar() {} });
+      const pil = () => d.querySelector(':scope > .pilha'), btn = t => [...d.querySelectorAll('.bl-barra button')].find(b => b.textContent === t), r0 = pil().getBoundingClientRect().width;
+      btn('+').click(); const z = pil().style.zoom; const w1 = pil().getBoundingClientRect().width; d.querySelector('.bl-barra button:last-of-type').click();
+      const antes = d.textContent.includes('repetir'), sl = d.querySelector('.bl-idioma'); sl.value = 'en'; sl.dispatchEvent(new Event('change')); const dep = d.textContent.includes('repeat') && d.textContent.includes('every frame');
+      EditorI18n.definir('pt-BR'); EditorI18n.guardar(); localStorage.removeItem('motor.blocos.zoom'); d.remove(); return { z, antes, dep };
+    });
+    ok(r.z === '1.1' && r.antes && r.dep, 'editor de blocos: zoom (+/100%) e troca de idioma para inglês (' + JSON.stringify(r) + ')'); }
   await p.evaluate(() => { editor.cena.estado.scripts.quebra = { fonte: 'function atualizar(e, dt, ctx) { ctx.engine.naoExiste(); }' }; editor.cena.find('jogador').Script = { nome: 'quebra' }; });
   await p.evaluate(() => editor.play()); await p.waitForTimeout(300);
   ok(await p.evaluate(() => /Erro no script "quebra"/.test(document.getElementById('msg').textContent)), 'erro de script aparece na mensagem do editor');

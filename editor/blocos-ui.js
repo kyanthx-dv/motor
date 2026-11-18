@@ -1,7 +1,7 @@
 /* Editor · interface dos blocos. Lista indentada com arraste por Pointer Events: funciona igual com mouse e dedo.
    Cada linha é um bloco com campos; botões ↑ ↓ ✕; menu "+ bloco" no fim de cada pilha. Só edita DADOS (script.blocos). */
 (function () {
-  const B = EditorBlocos, el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
+  const B = EditorBlocos, tr = s => (window.EditorI18n ? EditorI18n.tr(s) : s), tops = ops => ops.map(o => (Array.isArray(o) ? [o[0], tr(o[1])] : [o, tr(o)])), el = (t, c, x) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; };
   function sel(ops, atual, aoMudar, rotulo) {
     const s = el('select'); s.setAttribute('aria-label', rotulo || 'opção');
     for (const o of ops) { const [v, t] = Array.isArray(o) ? o : [o, o]; const x = el('option', null, t); x.value = v; s.append(x); }
@@ -77,7 +77,7 @@
     let cx = { evento: null, cada: false };
     function selValor(esp, atual, aoMudar, rotulo) {
       const s = el('select'); s.setAttribute('aria-label', rotulo || 'valor');
-      for (const g of B.valoresPara(esp, cx, atual)) { const og = el('optgroup'); og.label = g.grupo; for (const [v, t] of g.itens) { const o = el('option', null, t); o.value = v; og.append(o); } s.append(og); }
+      for (const g of B.valoresPara(esp, cx, atual)) { const og = el('optgroup'); og.label = tr(g.grupo); for (const [v, t] of g.itens) { const o = el('option', null, tr(t)); o.value = v; og.append(o); } s.append(og); }
       s.value = atual; s.addEventListener('change', () => aoMudar(s.value)); return s;
     }
     function campoValor(obj, nome, rotulo, esp, prof) {
@@ -94,7 +94,7 @@
       if (v.k === 'tam' || v.k === 'itemrand') w.append(entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
       if (v.k === 'local') w.append(entrada('text', v.n || '', x => { v.n = x; mudou(); }, 'nome da local'));
       if (v.k === 'contar') w.append(entrada('text', v.tag || '', x => { v.tag = x; mudou(); }, 'etiqueta'));
-      if (v.k === 'op') w.append(el('span', null, '('), campoValor(v, 'a', 'A', 'num', prof + 1), sel(B.CONTAS, v.o, x => { v.o = x; mudou(); }, 'conta'), campoValor(v, 'b', 'B', 'num', prof + 1), el('span', null, ')'));
+      if (v.k === 'op') w.append(el('span', null, '('), campoValor(v, 'a', 'A', 'num', prof + 1), sel(tops(B.CONTAS), v.o, x => { v.o = x; mudou(); }, 'conta'), campoValor(v, 'b', 'B', 'num', prof + 1), el('span', null, ')'));
       if (v.k === 'rand') w.append(entrada('number', v.min, x => { v.min = +x; mudou(); }, rotulo + ' mínimo'), el('span', null, 'e'), entrada('number', v.max, x => { v.max = +x; mudou(); }, rotulo + ' máximo'));
       return w;
     }
@@ -104,7 +104,7 @@
       return sel(ops, h[n] === undefined ? 'proprio' : h[n], x => { h[n] = x; mudou(); }, 'objeto');
     }
     function campoAttr(h, n) {
-      const ex = opc.atributos ? opc.atributos() : [], ops = [...B.ATTR_NOMES, ...ex.map(a => ['a:' + a, a + ' (do objeto)']), ['__novo', '+ novo atributo…']];
+      const ex = opc.atributos ? opc.atributos() : [], ops = [...tops(B.ATTR_NOMES), ...ex.map(a => ['a:' + a, a + ' (do objeto)']), ['__novo', '+ novo atributo…']];
       if (!ops.some(o => o[0] === h[n])) ops.push([h[n], String(h[n]).replace(/^a:/, '')]);
       return sel(ops, h[n], x => {
         if (x !== '__novo') { h[n] = x; mudou(); return; }
@@ -120,16 +120,16 @@
     }
     function campoCond(h, n) {
       const c = h[n], w = el('span', 'val'), cmp0 = () => ({ k: 'cmp', a: { k: 'x' }, op: '>', b: { k: 'num', v: 0 } });
-      w.append(sel(B.LOGICOS, c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : k === 'contem' ? { k, l: 'inventario', v: { k: 'txt', v: 'chave' } } : k === 'partida' ? { k, n: 'slot1' } : k === 'mouse' ? { k, modo: 'pressed' } : k === 'sobre' ? { k, o: 'proprio' } : cmp0(); redesenhar(); }, 'tipo de condição'));
+      w.append(sel(tops(B.LOGICOS), c.k, k => { h[n] = k === 'tecla' ? { k, acao: 'acao', modo: 'down' } : k === 'e' || k === 'ou' ? { k, a: cmp0(), b: cmp0() } : k === 'nao' ? { k, a: cmp0() } : k === 'etiq' ? { k, o: 'proprio', tag: 'inimigo' } : k === 'contem' ? { k, l: 'inventario', v: { k: 'txt', v: 'chave' } } : k === 'partida' ? { k, n: 'slot1' } : k === 'mouse' ? { k, modo: 'pressed' } : k === 'sobre' ? { k, o: 'proprio' } : cmp0(); redesenhar(); }, 'tipo de condição'));
       if (c.k === 'e' || c.k === 'ou') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, c.k === 'e' ? 'E' : 'OU'), campoCond(c, 'b'), el('span', null, ')'));
-      if (c.k === 'mouse') w.append(sel([['pressed', 'clicou agora'], ['down', 'está apertado']], c.modo || 'pressed', x => { c.modo = x; mudou(); }, 'modo do mouse'));
+      if (c.k === 'mouse') w.append(sel(tops([['pressed', 'clicou agora'], ['down', 'está apertado']]), c.modo || 'pressed', x => { c.modo = x; mudou(); }, 'modo do mouse'));
       if (c.k === 'sobre') w.append(el('span', null, 'está sobre'), campoObj(c, 'o'));
       if (c.k === 'partida') w.append(entrada('text', c.n || '', x => { c.n = x; mudou(); }, 'espaço'));
       if (c.k === 'contem') w.append(entrada('text', c.l || '', x => { c.l = x; mudou(); }, 'lista'), el('span', null, 'contém'), campoValor(c, 'v', 'valor', 'any'));
       if (c.k === 'etiq') w.append(campoObj(c, 'o'), el('span', null, 'tem a etiqueta'), entrada('text', c.tag || '', x => { c.tag = x; mudou(); }, 'etiqueta'));
       if (c.k === 'nao') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, ')'));
       if (c.k === 'tecla') {
-        w.append(sel([['acao', 'direção/ação'], ['livre', 'qualquer tecla']], c.tecla !== undefined ? 'livre' : 'acao', t => { if (t === 'livre') { delete c.acao; c.tecla = 'z'; } else { delete c.tecla; c.acao = 'acao'; } redesenhar(); }, 'tipo de tecla'));
+        w.append(sel(tops([['acao', 'direção/ação'], ['livre', 'qualquer tecla']]), c.tecla !== undefined ? 'livre' : 'acao', t => { if (t === 'livre') { delete c.acao; c.tecla = 'z'; } else { delete c.tecla; c.acao = 'acao'; } redesenhar(); }, 'tipo de tecla'));
         if (c.tecla !== undefined) {
           const bt = el('button', 'tecla', 'Tecla: ' + B.nomeTecla(c.tecla)); bt.type = 'button'; bt.title = 'Clique e aperte a tecla desejada';
           bt.addEventListener('click', () => {
@@ -137,19 +137,19 @@
             const ouvir = ev => { ev.preventDefault(); ev.stopPropagation(); window.removeEventListener('keydown', ouvir, true); if (ev.key !== 'Escape') c.tecla = ev.key.toLowerCase(); redesenhar(); };
             window.addEventListener('keydown', ouvir, true);
           }); w.append(bt);
-        } else w.append(sel(B.ACOES, c.acao, x => { c.acao = x; mudou(); }, 'tecla'));
-        w.append(sel([['down', 'segurada'], ['pressed', 'apertada agora']], c.modo || 'down', x => { c.modo = x; mudou(); }, 'modo'));
+        } else w.append(sel(tops(B.ACOES), c.acao, x => { c.acao = x; mudou(); }, 'tecla'));
+        w.append(sel(tops([['down', 'segurada'], ['pressed', 'apertada agora']]), c.modo || 'down', x => { c.modo = x; mudou(); }, 'modo'));
       }
       else if (c.k === 'cmp') { w.append(campoValor(c, 'a', 'valor A', 'any'), sel(B.OPS, c.op, x => { c.op = x; mudou(); }, 'comparação'), campoValor(c, 'b', 'valor B', B.tipoDe(c.a))); }
       return w;
     }
     function menu(arr, hat) {
-      const s = el('select', 'add'), o0 = el('option', null, hat ? '+ evento…' : '+ bloco…'); o0.value = ''; s.append(o0); s.setAttribute('aria-label', hat ? 'Adicionar evento' : 'Adicionar bloco');
-      if (hat) for (const [t, d] of Object.entries(B.HATS)) { const o = el('option', null, d.rotulo); o.value = t; s.append(o); }
+      const s = el('select', 'add'), o0 = el('option', null, tr(hat ? '+ evento…' : '+ bloco…')); o0.value = ''; s.append(o0); s.setAttribute('aria-label', hat ? 'Adicionar evento' : 'Adicionar bloco');
+      if (hat) for (const [t, d] of Object.entries(B.HATS)) { const o = el('option', null, tr(d.rotulo)); o.value = t; s.append(o); }
       else { const grupos = {}; for (const [t, d] of Object.entries(B.BLOCOS)) { (grupos[d.cat] = grupos[d.cat] || []).push([t, d]); }
-        for (const g in grupos) { const og = el('optgroup'); og.label = g; for (const [t, d] of grupos[g]) { const o = el('option', null, d.menu || d.campos.map(c => c.t || '…').join(' ').replace(/\s+/g, ' ')); o.value = t; og.append(o); } s.append(og); } }
+        for (const g in grupos) { const og = el('optgroup'); og.label = tr(g); for (const [t, d] of grupos[g]) { const o = el('option', null, tr(d.menu) || d.campos.map(c => (c.t ? tr(c.t) : '…')).join(' ').replace(/\s+/g, ' ')); o.value = t; og.append(o); } s.append(og); } }
       s.addEventListener('change', () => { if (s.value) { arr.push(B.novo(s.value)); redesenhar(); } });
-      const btn = el('button', 'add-btn', hat ? '＋ evento' : '＋ bloco'); btn.type = 'button'; btn.setAttribute('aria-haspopup', 'dialog');
+      const btn = el('button', 'add-btn', tr(hat ? '＋ evento' : '＋ bloco')); btn.type = 'button'; btn.setAttribute('aria-haspopup', 'dialog');
       btn.addEventListener('click', () => abrirPicker(btn, hat, t => { s.value = t; s.dispatchEvent(new Event('change')); }));
       const f = document.createDocumentFragment(); f.append(btn, s); return f;   // o <select> continua no DOM (acessível e usado pelos testes); o botão abre a busca
     }
@@ -160,16 +160,16 @@
     function abrirPicker(ancora, hat, escolher) {
       fecharPicker();
       const box = el('div', 'picker'), busca = el('input', 'p-busca'), chips = el('div', 'p-chips'), lista = el('div', 'p-lista');
-      busca.type = 'search'; busca.placeholder = hat ? 'Buscar evento…' : 'Buscar bloco… (ex.: mover, lista, som)'; busca.setAttribute('aria-label', 'Buscar bloco'); box.setAttribute('role', 'dialog');
-      const itens = hat ? Object.entries(B.HATS).map(([t, d]) => ({ t, cat: 'Eventos', txt: d.rotulo })) : Object.entries(B.BLOCOS).map(([t, d]) => ({ t, cat: d.cat, txt: d.menu || d.campos.map(c => c.t || '…').join(' ').replace(/\s+/g, ' ') }));
+      busca.type = 'search'; busca.placeholder = tr(hat ? 'Buscar evento…' : 'Buscar bloco… (ex.: mover, lista, som)'); busca.setAttribute('aria-label', 'Buscar bloco'); box.setAttribute('role', 'dialog');
+      const itens = hat ? Object.entries(B.HATS).map(([t, d]) => ({ t, cat: 'Eventos', txt: tr(d.rotulo) })) : Object.entries(B.BLOCOS).map(([t, d]) => ({ t, cat: d.cat, txt: tr(d.menu) || d.campos.map(c => (c.t ? tr(c.t) : '…')).join(' ').replace(/\s+/g, ' ') }));
       const cats = [...new Set(itens.map(i => i.cat))]; let cat = '', vis = [];
       const norm = x => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       function pintar() {
         const q = norm(busca.value.trim()); vis = itens.filter(i => (!cat || i.cat === cat) && (!q || norm(i.txt + ' ' + i.cat + ' ' + i.t).includes(q)));
         lista.innerHTML = ''; chips.innerHTML = '';
-        for (const c of ['', ...cats]) { const b = el('button', 'p-chip' + (c === cat ? ' on' : ''), c || 'Todos'); b.type = 'button'; if (c) b.classList.add('cat-' + c); b.addEventListener('click', () => { cat = c; pintar(); busca.focus(); }); chips.append(b); }
-        if (!vis.length) lista.append(el('div', 'p-vazio', 'Nenhum bloco encontrado.'));
-        vis.forEach((i, k) => { const b = el('button', 'p-item cat-' + i.cat + (k === 0 && q ? ' first' : ''), i.txt); b.type = 'button'; b.title = i.cat; b.addEventListener('click', () => { fecharPicker(); escolher(i.t); }); lista.append(b); });
+        for (const c of ['', ...cats]) { const b = el('button', 'p-chip' + (c === cat ? ' on' : ''), tr(c || 'Todos')); b.type = 'button'; if (c) b.classList.add('cat-' + c); b.addEventListener('click', () => { cat = c; pintar(); busca.focus(); }); chips.append(b); }
+        if (!vis.length) lista.append(el('div', 'p-vazio', tr('Nenhum bloco encontrado.')));
+        vis.forEach((i, k) => { const b = el('button', 'p-item cat-' + i.cat + (k === 0 && q ? ' first' : ''), i.txt); b.type = 'button'; b.title = tr(i.cat); b.addEventListener('click', () => { fecharPicker(); escolher(i.t); }); lista.append(b); });
       }
       busca.addEventListener('input', pintar);
       busca.addEventListener('keydown', ev => { if (ev.key === 'Escape') { fecharPicker(); ancora.focus(); } else if (ev.key === 'Enter' && vis.length) { ev.preventDefault(); const t = vis[0].t; fecharPicker(); escolher(t); } });
@@ -194,14 +194,14 @@
         const linha = el('div', (hat ? 'bloco hat' : 'bloco cat-' + def.cat) + (b.recolhido ? ' recolhido' : ''));
         linha.__arr = arr; linha.__bloco = b; linha.style.touchAction = 'none';
         const topo = el('div', 'topo');
-        if (hat) topo.append(el('b', null, def.rotulo));
+        if (hat) topo.append(el('b', null, tr(def.rotulo)));
         else for (const c of def.campos) {
-          if (c.t) topo.append(el('span', null, c.t));
+          if (c.t) topo.append(el('span', null, tr(c.t)));
           else if (c.tipo === 'valor') topo.append(campoValor(b, c.n, c.n, c.esp || 'num'));
           else if (c.tipo === 'var') topo.append(campoVar(b, c.n));
           else if (c.tipo === 'txt') topo.append(entrada('text', b[c.n] == null ? '' : b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
           else if (c.tipo === 'script') { const nomes = opc.scripts ? opc.scripts() : [], s = sel([['', '(nenhum)'], ...nomes], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'script do objeto criado'), existe = !b[c.n] || nomes.includes(b[c.n]); s.style.borderColor = existe ? '' : 'red'; s.title = existe ? '' : 'script não existe'; topo.append(s); }
-          else if (c.tipo === 'sel') topo.append(sel(c.ops, b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
+          else if (c.tipo === 'sel') topo.append(sel(tops(c.ops), b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
           else if (c.tipo === 'cond') topo.append(campoCond(b, 'c'));
           else if (c.tipo === 'obj') topo.append(campoObj(b, c.n));
           else if (c.tipo === 'attr') topo.append(campoAttr(b, c.n));
@@ -211,12 +211,24 @@
         }
         topo.append(botoes(arr, i)); linha.append(topo); linha.addEventListener('pointerdown', ev => iniciarArraste(ev, linha, arr, b, i));
         if (hat) { const salvo = cx; cx = { evento: def.sec, cada: false }; linha.append(pilha(b.f, false), menu(b.f, false)); cx = salvo; }
-        else if (def.filhos) { const salvo = cx; if (b.t === 'para_cada') cx = Object.assign({}, cx, { cada: true }); const dois = def.filhos.length > 1; linha.append(el('div', 'rot', dois ? 'então' : 'faça'), pilha(b.f, false), menu(b.f, false)); if (dois) linha.append(el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); cx = salvo; }
+        else if (def.filhos) { const salvo = cx; if (b.t === 'para_cada') cx = Object.assign({}, cx, { cada: true }); const dois = def.filhos.length > 1; linha.append(el('div', 'rot', tr(dois ? 'então' : 'faça')), pilha(b.f, false), menu(b.f, false)); if (dois) linha.append(el('div', 'rot', tr('senão')), pilha(b.s, false), menu(b.s, false)); cx = salvo; }
         p.append(linha);
       });
       return p;
     }
-    function render() { cont.innerHTML = ''; cont.append(pilha(script.blocos, true), menu(script.blocos, true)); }
+    // Zoom do editor de blocos (botões − / + e Ctrl + roda do mouse) e escolha de idioma
+    const lerZoom = () => { try { const z = parseFloat(localStorage.getItem('motor.blocos.zoom')); return z >= 0.5 && z <= 1.6 ? z : 1; } catch (x) { return 1; } };
+    let zoom = lerZoom();
+    function mudarZoom(z) { zoom = Math.round(Math.max(0.5, Math.min(1.6, z)) * 10) / 10; try { localStorage.setItem('motor.blocos.zoom', String(zoom)); } catch (x) {} render(); }
+    function barra() {
+      const w = el('div', 'bl-barra'), mk = (t, r, fn) => { const b = el('button', null, t); b.type = 'button'; b.title = r; b.setAttribute('aria-label', r); b.addEventListener('click', fn); return b; };
+      w.append(mk('−', 'Zoom −', () => mudarZoom(zoom - 0.1)), el('span', 'bl-pct', Math.round(zoom * 100) + '%'), mk('+', 'Zoom +', () => mudarZoom(zoom + 0.1)), mk('100%', 'Zoom 100%', () => mudarZoom(1)));
+      if (window.EditorI18n) { const s = sel(EditorI18n.idiomas, EditorI18n.atual(), l => { EditorI18n.definir(l); EditorI18n.guardar(); window.dispatchEvent(new Event('idioma-editor')); }, 'Idioma / Language'); s.classList.add('bl-idioma'); w.append(s); }
+      return w;
+    }
+    function render() { cont.innerHTML = ''; const raiz = pilha(script.blocos, true); raiz.style.zoom = zoom === 1 ? '' : String(zoom); cont.append(barra(), raiz, menu(script.blocos, true)); }
+    if (!cont.__zoomRoda) { cont.__zoomRoda = true; cont.addEventListener('wheel', ev => { if (ev.ctrlKey) { ev.preventDefault(); mudarZoom(zoom + (ev.deltaY < 0 ? 0.1 : -0.1)); } }, { passive: false }); }
+    if (cont.__oi) window.removeEventListener('idioma-editor', cont.__oi); cont.__oi = () => render(); window.addEventListener('idioma-editor', cont.__oi);
     render();
   };
 })();

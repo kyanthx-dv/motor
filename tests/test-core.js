@@ -537,6 +537,15 @@ const nova=()=>new C.Engine();
   e.input=ptr(0,0,false,false);e.passo();e.input=ptr(400,150,true,true);e.passo();ok(e.vars.ler('som')===false&&a.Sprite.rotulo==='OFF','alternar: clique de novo desliga');
   let n=0;for(const x of [{Barra:{}},{Barra:{var:'a',max:true}},{Barra:{var:'a',arrastavel:1}},{Alternar:{var:5}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0},Sprite:{}},x)]});}catch(er){n++;}}ok(n===4,'barra/alternar inválidos são recusados');
 }
+{ // idiomas do editor
+  vm.runInThisContext(fs.readFileSync(__dirname+'/../editor/i18n.js','utf8'));const T=EditorI18n,G=EditorBlocos;
+  ok(T.atual()==='pt-BR'&&T.tr('repetir')==='repetir','i18n: padrão pt-BR devolve o texto original');
+  T.definir('en');ok(T.tr('repetir')==='repeat'&&T.tr('nome inventado')==='nome inventado'&&T.tr(undefined)===undefined,'i18n: en traduz e o que não tem tradução fica em português');
+  const chaves=[...Object.values(G.VALORES),...G.GRUPOS.map(g=>g.nome),...G.CONTAS.map(c=>c[1]),...G.LOGICOS.map(c=>c[1]),...Object.values(G.HATS).map(h=>h.rotulo),...Object.values(G.BLOCOS).map(b=>b.cat)];
+  ok(chaves.filter(k=>/[a-zà-ú]{3}/i.test(k)&&k!=='mouse'&&T.tr(k)===k).length===0,'i18n: en cobre valores, grupos, eventos e categorias');
+  T.definir('es');ok(T.tr('então')==='entonces'&&T.definir('xx')===false&&T.atual()==='es','i18n: es e idioma desconhecido é recusado');
+  T.definir('pt-BR');ok(T.tr('repetir')==='repetir'&&!Object.prototype.hasOwnProperty.call(T.dicionario('en')||{},'__proto__'),'i18n: volta ao português');
+}
 { // catálogo de valores: grupos, tipos e contexto
   const G=EditorBlocos,tem=(l,k)=>l.some(g=>g.itens.some(i=>i[0]===k)),todos=Object.keys(G.VALORES);
   ok(todos.every(k=>G.CATALOGO[k]),'catálogo: todo valor do seletor tem grupo e tipo');
