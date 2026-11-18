@@ -41,6 +41,28 @@
 - Plugin de física Matter.js (corpos rotativos, juntas), carregado por projeto.
 - Rede/multiplayer só depois, e só se houver um jogo que precise.
 
+**v3.0 — Rede social + engine** (plano; nada disso está construído)
+Objetivo: um lugar onde as pessoas criam no editor, publicam jogos, postam, compartilham assets e têm perfil com foto e avatar 2D (referências: Buildaa/Julian's Editor). A engine continua independente: a rede é uma camada em cima.
+
+*Etapas (cada uma entrega algo usável sozinho):*
+1. **Contas e perfil** — cadastro/login (e-mail + Google), nome de usuário único, foto, bio. Sem isso nada mais existe.
+2. **Publicar e jogar** — botão "Publicar" no editor envia o pacote do jogo (o mesmo da exportação em pasta) + capa + título + descrição; página do jogo; jogar no navegador e no app.
+3. **Descoberta** — página inicial com recentes/populares, busca, curtidas, contagem de jogadas, "remixar" (copiar o projeto de quem permitiu para o editor).
+4. **Posts e comentários** — feed de quem se segue, comentários em jogos, seguir/deixar de seguir.
+5. **Assets compartilhados** — imagens, sons e modelos (RPG, física) publicados com licença; importar com um toque no editor.
+6. **Avatar 2D** — editor de avatar (partes em camadas: corpo, cabelo, roupa) guardado no perfil; vira um objeto/imagem usável nos jogos.
+Fora até segunda ordem: multiplayer em tempo real, chat privado, loja/pagamentos.
+
+*Backend (proposta, decisão do dono):* **Supabase** (banco Postgres + login + armazenamento de arquivos + regras de acesso por linha, plano grátis para começar, sem servidor para manter). Alternativa: Firebase (mais conhecido, regras mais difíceis de auditar). O editor continua funcionando 100% offline; só publicar/entrar exige internet. Cuidado fixo: nunca guardar chaves secretas no código do editor (só a chave pública do Supabase; o acesso é limitado por regras no banco).
+
+*Segurança dos jogos de terceiros (bloqueia a etapa 2):* um jogo publicado roda código JavaScript de desconhecidos. Regras: (a) o jogo roda em `iframe sandbox` sem `allow-same-origin` e de **outro domínio** do que o editor/login, para não alcançar sessão nem dados do dono; (b) o motor já roda dentro de Worker com travamento detectado; (c) sem acesso a câmera/microfone/localização por padrão; (d) o salvamento do jogo fica separado por jogo; (e) tamanho máximo do pacote e das imagens/sons no envio.
+
+*Moderação e abuso:* denunciar jogo/post/comentário/perfil; fila de revisão para o dono; remoção e banimento; filtro básico de palavras e limite de publicações por hora; checagem de tipo e tamanho dos arquivos; termos de uso e política de privacidade escritos antes de abrir ao público.
+
+*Menores e leis (precisa ser definido antes do lançamento):* é provável que muitos usuários sejam menores. Decidir idade mínima (13+ costuma ser o padrão; LGPD/GDPR e COPPA exigem cuidado e consentimento dos responsáveis abaixo de certas idades), coletar o mínimo de dados, perfil sem localização/contato público por padrão, sem anúncios personalizados, e como apagar a conta e os dados a pedido. Isso é jurídico: buscar orientação de um profissional antes de publicar o serviço.
+
+*Ordem de trabalho:* (1) escrever termos/privacidade e decidir idade mínima; (2) protótipo de etapas 1–2 só com o dono como usuário; (3) beta fechado com poucos amigos; (4) abrir aos poucos. O app (Flutter) ganha abrir/salvar arquivos no celular depois da etapa 2.
+
 ## Linguagens de script (decisão)
 Blocos + JavaScript continuam sendo a única opção até a v2.0. **Linguagem própria: não** (custo enorme, sem ganho sobre JS). **Lua** pode entrar depois, como linguagem opcional de script via **Fengari** (VM Lua em JS, ~200 KB), rodando no mesmo Worker; **pré-requisitos:** API de scripts (`ctx`) congelada e documentada, Play do editor no Worker (v1.1) e mapeamento de erros com linha. **Luau** (Roblox) não tem porta madura para JS (só WASM pesado): fora.
 
