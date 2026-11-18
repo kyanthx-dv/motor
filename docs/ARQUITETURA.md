@@ -313,3 +313,8 @@ Modelos prontos (editor/modelos.js): o que é uma coisa só fica um objeto só (
 - Os parâmetros não quebram mais de linha: `.topo` e `.val` são `nowrap`, o bloco cresce para a direita e a área `.blocos` rola na horizontal (dedo ou mouse). Os botões ↑ ↓ ⧉ ✕ ficam `sticky` na borda direita visível.
 - Valores sem campo de digitar (x, variável, atributo, conta…) mostram o nome em vez de só a setinha (`.val.com-nome`).
 - Os parênteses `( )` de contas aparecem em cada `conta` aninhada; o código gerado já agrupa cada operação, então a precedência é a que se vê.
+
+## 58. Zoom e idiomas no editor de blocos
+- Barra no topo do editor de blocos: `−` `+` `100%` (zoom 50%–160%, também Ctrl + roda do mouse; guardado em `motor.blocos.zoom`) e seletor de idioma.
+- `editor/i18n.js` (`EditorI18n`): o texto em português é a chave; `tr(texto)` devolve a tradução ou o próprio português. Idiomas: pt-BR (padrão), en (completo para blocos, eventos, valores, grupos), es (vocabulário principal). O projeto guarda só ids técnicos, então trocar o idioma não altera jogos salvos.
+- Hoje o idioma vale para o editor de blocos; o resto da interface (painéis, botões) e o es completo ficam como próximos passos.
