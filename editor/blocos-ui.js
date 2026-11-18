@@ -73,18 +73,27 @@
       arrastando = { linha, arr, bloco: b, index: i, pointerId: ev.pointerId, alvo: null };
       window.addEventListener('pointermove', moverArraste, true); window.addEventListener('pointerup', terminarArraste, true); window.addEventListener('pointercancel', cancelarArraste, true); window.addEventListener('keydown', teclaArraste, true);
     }
-    function campoValor(obj, nome, rotulo) {
-      const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val');
-      w.append(sel(Object.entries(B.VALORES), v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : k === 'local' ? { k, n: 'tmp' } : k === 'item' ? { k, l: 'inventario', i: { k: 'num', v: 1 } } : k === 'tam' || k === 'itemrand' ? { k, l: 'inventario' } : { k }; redesenhar(); }, rotulo));
+    // contexto de onde o bloco está (define quais valores aparecem: "outro objeto" só em colisão/gatilho, "item atual" só em "para cada")
+    let cx = { evento: null, cada: false };
+    function selValor(esp, atual, aoMudar, rotulo) {
+      const s = el('select'); s.setAttribute('aria-label', rotulo || 'valor');
+      for (const g of B.valoresPara(esp, cx, atual)) { const og = el('optgroup'); og.label = g.grupo; for (const [v, t] of g.itens) { const o = el('option', null, t); o.value = v; og.append(o); } s.append(og); }
+      s.value = atual; s.addEventListener('change', () => aoMudar(s.value)); return s;
+    }
+    function campoValor(obj, nome, rotulo, esp, prof) {
+      esp = esp || 'num'; prof = prof || 0;
+      const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val'), cat = B.CATALOGO[v.k], gr = cat && B.GRUPOS.find(g => g.nome === cat.g);
+      if (gr) { w.style.setProperty('--vg', 'hsl(' + gr.hue + ' 62% 52%)'); w.dataset.grupo = gr.id; } w.style.setProperty('--esc', Math.min(prof * 12, 40) + '%');
+      w.append(selValor(esp, v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : k === 'local' ? { k, n: 'tmp' } : k === 'item' ? { k, l: 'inventario', i: { k: 'num', v: 1 } } : k === 'tam' || k === 'itemrand' ? { k, l: 'inventario' } : { k }; redesenhar(); }, rotulo));
       if (v.k === 'num') w.append(entrada('number', v.v, x => { v.v = x === '' ? 0 : +x; mudou(); }, rotulo + ' (número)'));
       if (v.k === 'txt') w.append(entrada('text', v.v, x => { v.v = x; mudou(); }, rotulo + ' (texto)'));
       if (v.k === 'var') w.append(campoVar(v, 'n'));
       if (v.k === 'attr') w.append(campoObj(v, 'o'), campoAttr(v, 'a'));
-      if (v.k === 'item') w.append(campoValor(v, 'i', 'posição'), el('span', null, 'da lista'), entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
+      if (v.k === 'item') w.append(campoValor(v, 'i', 'posição', 'num', prof + 1), el('span', null, 'da lista'), entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
       if (v.k === 'tam' || v.k === 'itemrand') w.append(entrada('text', v.l || '', x => { v.l = x; mudou(); }, 'lista'));
       if (v.k === 'local') w.append(entrada('text', v.n || '', x => { v.n = x; mudou(); }, 'nome da local'));
       if (v.k === 'contar') w.append(entrada('text', v.tag || '', x => { v.tag = x; mudou(); }, 'etiqueta'));
-      if (v.k === 'op') w.append(el('span', null, '('), campoValor(v, 'a', 'A'), sel(B.CONTAS, v.o, x => { v.o = x; mudou(); }, 'conta'), campoValor(v, 'b', 'B'), el('span', null, ')'));
+      if (v.k === 'op') w.append(el('span', null, '('), campoValor(v, 'a', 'A', 'num', prof + 1), sel(B.CONTAS, v.o, x => { v.o = x; mudou(); }, 'conta'), campoValor(v, 'b', 'B', 'num', prof + 1), el('span', null, ')'));
       if (v.k === 'rand') w.append(entrada('number', v.min, x => { v.min = +x; mudou(); }, rotulo + ' mínimo'), el('span', null, 'e'), entrada('number', v.max, x => { v.max = +x; mudou(); }, rotulo + ' máximo'));
       return w;
     }
@@ -115,7 +124,7 @@
       if (c.k === 'mouse') w.append(sel([['pressed', 'clicou agora'], ['down', 'está apertado']], c.modo || 'pressed', x => { c.modo = x; mudou(); }, 'modo do mouse'));
       if (c.k === 'sobre') w.append(el('span', null, 'está sobre'), campoObj(c, 'o'));
       if (c.k === 'partida') w.append(entrada('text', c.n || '', x => { c.n = x; mudou(); }, 'espaço'));
-      if (c.k === 'contem') w.append(entrada('text', c.l || '', x => { c.l = x; mudou(); }, 'lista'), el('span', null, 'contém'), campoValor(c, 'v', 'valor'));
+      if (c.k === 'contem') w.append(entrada('text', c.l || '', x => { c.l = x; mudou(); }, 'lista'), el('span', null, 'contém'), campoValor(c, 'v', 'valor', 'any'));
       if (c.k === 'etiq') w.append(campoObj(c, 'o'), el('span', null, 'tem a etiqueta'), entrada('text', c.tag || '', x => { c.tag = x; mudou(); }, 'etiqueta'));
       if (c.k === 'nao') w.append(el('span', null, '('), campoCond(c, 'a'), el('span', null, ')'));
       if (c.k === 'tecla') {
@@ -130,7 +139,7 @@
         } else w.append(sel(B.ACOES, c.acao, x => { c.acao = x; mudou(); }, 'tecla'));
         w.append(sel([['down', 'segurada'], ['pressed', 'apertada agora']], c.modo || 'down', x => { c.modo = x; mudou(); }, 'modo'));
       }
-      else if (c.k === 'cmp') { w.append(campoValor(c, 'a', 'valor A'), sel(B.OPS, c.op, x => { c.op = x; mudou(); }, 'comparação'), campoValor(c, 'b', 'valor B')); }
+      else if (c.k === 'cmp') { w.append(campoValor(c, 'a', 'valor A', 'any'), sel(B.OPS, c.op, x => { c.op = x; mudou(); }, 'comparação'), campoValor(c, 'b', 'valor B', B.tipoDe(c.a))); }
       return w;
     }
     function menu(arr, hat) {
@@ -187,7 +196,7 @@
         if (hat) topo.append(el('b', null, def.rotulo));
         else for (const c of def.campos) {
           if (c.t) topo.append(el('span', null, c.t));
-          else if (c.tipo === 'valor') topo.append(campoValor(b, c.n, c.n));
+          else if (c.tipo === 'valor') topo.append(campoValor(b, c.n, c.n, c.esp || 'num'));
           else if (c.tipo === 'var') topo.append(campoVar(b, c.n));
           else if (c.tipo === 'txt') topo.append(entrada('text', b[c.n] == null ? '' : b[c.n], x => { b[c.n] = x; mudou(); }, c.n));
           else if (c.tipo === 'script') { const nomes = opc.scripts ? opc.scripts() : [], s = sel([['', '(nenhum)'], ...nomes], b[c.n] || '', x => { b[c.n] = x; mudou(); }, 'script do objeto criado'), existe = !b[c.n] || nomes.includes(b[c.n]); s.style.borderColor = existe ? '' : 'red'; s.title = existe ? '' : 'script não existe'; topo.append(s); }
@@ -200,8 +209,8 @@
           else if (c.tipo === 'cor') topo.append(entrada('color', /^#[0-9a-f]{6}$/i.test(b.cor) ? b.cor : '#ff5555', x => { b.cor = x; mudou(); }, 'cor'));
         }
         topo.append(botoes(arr, i)); linha.append(topo); linha.addEventListener('pointerdown', ev => iniciarArraste(ev, linha, arr, b, i));
-        if (hat) { linha.append(pilha(b.f, false), menu(b.f, false)); }
-        else if (def.filhos) { const dois = def.filhos.length > 1; linha.append(el('div', 'rot', dois ? 'então' : 'faça'), pilha(b.f, false), menu(b.f, false)); if (dois) linha.append(el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); }
+        if (hat) { const salvo = cx; cx = { evento: def.sec, cada: false }; linha.append(pilha(b.f, false), menu(b.f, false)); cx = salvo; }
+        else if (def.filhos) { const salvo = cx; if (b.t === 'para_cada') cx = Object.assign({}, cx, { cada: true }); const dois = def.filhos.length > 1; linha.append(el('div', 'rot', dois ? 'então' : 'faça'), pilha(b.f, false), menu(b.f, false)); if (dois) linha.append(el('div', 'rot', 'senão'), pilha(b.s, false), menu(b.s, false)); cx = salvo; }
         p.append(linha);
       });
       return p;

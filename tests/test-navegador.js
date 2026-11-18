@@ -320,6 +320,17 @@ let falhas = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m)
   await p.fill('input[placeholder="inimigo, moeda"]', 'heroi, rapido'); await p.press('input[placeholder="inimigo, moeda"]', 'Tab'); await p.fill('input[placeholder="vida=3, nome=Zé"]', 'vida=3, nome=Zé'); await p.press('input[placeholder="vida=3, nome=Zé"]', 'Tab'); await p.waitForTimeout(100);
   ok(await p.evaluate(() => { const e = editor.cena.find('jogador'); return e.Etiquetas.join() === 'heroi,rapido' && e.Attr.vida === 3 && e.Attr.nome === 'Zé'; }), 'painel Marcas: etiquetas e atributos próprios');
   ok(await p.evaluate(() => { const d = document.createElement('div'); const bl = Object.keys(EditorBlocos.BLOCOS).map(t => { const b = EditorBlocos.novo(t); if (t === 'clonar') b.nome = ''; return b; }); EditorBlocos.montar(d, { blocos: [{ t: 'evento_quadro', f: bl }] }, { vars: () => [], scripts: () => [], objetos: () => ['jogador'], etiquetas: () => ['heroi'], atributos: () => ['vida'], aoMudar() {} }); return d.querySelectorAll('.bloco:not(.hat)').length >= bl.length; }), 'interface desenha todos os blocos, inclusive os da Fase A');
+  { const r = await p.evaluate(() => {
+      const d = document.createElement('div'), n = v => ({ k: 'num', v }), op = { k: 'op', o: '+', a: n(1), b: n(2) };
+      const sc = { blocos: [{ t: 'evento_colisao', f: [Object.assign(EditorBlocos.novo('se'), { c: { k: 'cmp', a: { k: 'txt', v: 'a' }, op: '=', b: { k: 'txt', v: 'b' } }, f: [], s: [] }), EditorBlocos.novo('texto')] }, { t: 'evento_quadro', f: [Object.assign(EditorBlocos.novo('var_somar'), { v: op })] }] };
+      EditorBlocos.montar(d, sc, { vars: () => ['v'], scripts: () => [], objetos: () => [], etiquetas: () => [], atributos: () => [], aoMudar() {} });
+      const ks = sel => [...sel.options].map(o => o.value), vals = [...d.querySelectorAll('.val')], g = sel => sel.querySelectorAll('optgroup').length;
+      const cmpB = vals.find(v => v.querySelector(':scope > input[aria-label="valor B (texto)"]')), nVal = d.querySelectorAll('.bloco.hat')[1].querySelector('.val > select');
+      const colisao = d.querySelectorAll('.bloco.hat')[0].querySelector('.bloco.cat-Aparência .val > select');
+      const aninhado = nVal.parentElement.querySelector('.val');
+      return { grupos: g(nVal), txtB: ks(cmpB.querySelector('select')), numSemTxt: !ks(nVal).includes('plataforma'), outroEmColisao: ks(colisao).includes('outro'), outroForaDeColisao: ks(nVal).includes('outro'), prof: aninhado && aninhado.style.getPropertyValue('--esc'), cor: !!nVal.parentElement.style.getPropertyValue('--vg') };
+    });
+    ok(r.grupos >= 4 && r.numSemTxt && r.outroEmColisao && !r.outroForaDeColisao && r.txtB.includes('plataforma') && !r.txtB.includes('x') && r.prof === '12%' && r.cor, 'seletor de valores: grupos coloridos, filtra pelo tipo (texto/número) e pelo contexto (' + JSON.stringify(r) + ')'); }
   await p.evaluate(() => { editor.cena.estado.scripts.quebra = { fonte: 'function atualizar(e, dt, ctx) { ctx.engine.naoExiste(); }' }; editor.cena.find('jogador').Script = { nome: 'quebra' }; });
   await p.evaluate(() => editor.play()); await p.waitForTimeout(300);
   ok(await p.evaluate(() => /Erro no script "quebra"/.test(document.getElementById('msg').textContent)), 'erro de script aparece na mensagem do editor');

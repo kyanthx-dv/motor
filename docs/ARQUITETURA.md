@@ -301,3 +301,10 @@ Modelos prontos (editor/modelos.js): o que é uma coisa só fica um objeto só (
 - Como funciona: o adaptador `Input` cria um `<input>` escondido e o foca no `pointerup` (necessário para abrir o teclado do celular). Ele acha o campo com `input.campoEm(p)` (`Core.campoEm(scene,p)`, na thread principal — no modo Worker usa a cena espelhada). O texto vai em `poll().texto = {foco,id,valor,envios}`.
 - `Lista { lista, var, itemAltura, corSel, desativado }`: mostra os itens da lista do jogo `lista`; arrastar rola, tocar escolhe (grava o índice em `var`, evento `lista-escolheu {indice, valor}`). Só os itens visíveis (`_vis`) vão para o desenho.
 - Menu "Componentes de interface" do editor: ⌨ Campo de texto e ☰ Lista (já criam a variável/lista necessária).
+
+## 56. Catálogo de valores dos blocos (seletor inteligente)
+- `EditorBlocos.CATALOGO`: cada tipo de valor (`num`, `x`, `op`, `item`…) tem **grupo** (Valores, Este objeto, Contas, Entrada, Listas, Cena, Relógio e data, Aparelho), **tipo** que produz (`num`/`txt`/`any`) e, às vezes, **onde** pode aparecer.
+- `EditorBlocos.valoresPara(esperado, cx, atual)` devolve os grupos/itens do seletor: campo numérico esconde valores de texto; campo de texto esconde contas e números; `outro objeto` só em colisão/gatilho; `item atual` só dentro de "para cada". O valor já escolhido nunca some (projetos antigos continuam abrindo).
+- Campo `esp` nos blocos (`'num'` por padrão, `'any'` quando aceita tudo, como "mudar o texto" e "definir variável"). Em `comparar`, o lado B segue o tipo do lado A.
+- Visual: a pílula do valor usa a cor do grupo (`--vg`) e escurece conforme o aninhamento (`--esc`).
+- Próximos passos (PLANO): B = layout horizontal sem quebra de linha; C = zoom/arrastar no editor de blocos e idiomas (pt-BR/en/es).
