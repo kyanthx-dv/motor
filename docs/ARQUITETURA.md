@@ -322,3 +322,9 @@ Modelos prontos (editor/modelos.js): o que é uma coisa só fica um objeto só (
 ## 59. Ícone próprio e imagens sob demanda
 - `estado.exportar.icone`: PNG em data URL (até ~400 KB), validado em `ExportarCfg` (só `data:image/png;base64,`). No ⚙ Exportação o usuário escolhe uma imagem; ela é recortada no centro e vira 512×512. Na exportação: `icones/icone-192.png` e `-512.png` (manifesto), `<link rel=icon>` e `apple-touch-icon`; o `.html` único leva um favicon 192 embutido.
 - Player: as imagens da cena inicial são carregadas antes de abrir; as das outras cenas carregam em segundo plano logo depois (o desenho usa a imagem assim que ela chega).
+
+## 60. Rede social · etapa 1 (conta e perfil)
+- `supabase/0001_perfis.sql`: tabela `perfis` (usuario único `^[a-z0-9_]{3,20}$`, nome ≤ 40, bio ≤ 280) com RLS: todos leem; só o dono cria/edita o próprio perfil; sem apagar pela API. Rodar no Supabase → SQL Editor (idempotente).
+- `adapters/social.js` (`Core.Social`): cliente Supabase por `fetch` (sem biblioteca): cadastrar, entrar, sair, renovar sessão sozinho, perfil, nome de usuário livre, salvar perfil. Usa só a chave **pública** (`sb_publishable_…`); sessão em `localStorage`. Tudo injetável para testes sem internet. Fora do jogo exportado e do Worker (`social` nos filtros).
+- `editor/social-config.js`: URL e chave pública do projeto. **Nunca** colocar `service_role` nem a senha do banco.
+- `editor/conta.js`: botão 👤 Conta (entrar, criar conta com "tenho 13+", perfil, sair). Conta é opcional.

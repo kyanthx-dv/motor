@@ -2,7 +2,7 @@
    navegador, inclusive no celular. Só Canvas 2D (o WebGL/PixiJS não vai junto, para o arquivo ficar pequeno). */
 (function (root) {
   const ed = root.editor, $ = id => document.getElementById(id);
-  const EXCLUIR = /pixi|debug|vendor|worker-host|player/;
+  const EXCLUIR = /pixi|debug|vendor|worker-host|player|social/;
   const seguro = t => t.replace(/<\/script/gi, '<\\/script');
   // Ajustes de exportação: vêm de estado.exportar da cena aberta (ou da primeira cena que tiver).
   const cfgDe = pac => { const L = C => C.ExportarCfg.limpar, c = root.Core; const cs = [pac.cena, ...Object.values((pac.cenas && pac.cenas.cenas) || {})].map(x => x && x.estado && x.estado.exportar).filter(Boolean); return c.ExportarCfg.limpar(cs[0]); };

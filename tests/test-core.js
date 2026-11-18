@@ -2,7 +2,7 @@
 const fs=require('fs'),vm=require('vm'),path=require('path');
 vm.runInThisContext(fs.readFileSync(path.join(__dirname,'..','adapters','vendor','matter.min.js'),'utf8'));
 for(const f of ['events','scene','variaveis','listas','serializer','systems/controles','systems/ui','systems/scripts','systems/fisica','systems/animacao','systems/camera','systems/hierarquia','systems/tempo','systems/tiles','systems/caminho','systems/efeitos','systems/matter','engine'])vm.runInThisContext(fs.readFileSync(__dirname+'/../core/'+f+'.js','utf8'));
-const C=globalThis.Core;let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
+const C=globalThis.Core;const __async=[];let falhas=0;const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m);if(!c)falhas++;};
 const nova=()=>new C.Engine();
 // 1) bola quica no chão e fica em repouso
 {const e=nova();e.scene.estado.gravidade={x:0,y:900};
@@ -537,6 +537,38 @@ const nova=()=>new C.Engine();
   e.input=ptr(0,0,false,false);e.passo();e.input=ptr(400,150,true,true);e.passo();ok(e.vars.ler('som')===false&&a.Sprite.rotulo==='OFF','alternar: clique de novo desliga');
   let n=0;for(const x of [{Barra:{}},{Barra:{var:'a',max:true}},{Barra:{var:'a',arrastavel:1}},{Alternar:{var:5}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0},Sprite:{}},x)]});}catch(er){n++;}}ok(n===4,'barra/alternar inválidos são recusados');
 }
+{ // rede social (Supabase) com servidor simulado
+  vm.runInThisContext(fs.readFileSync(__dirname+'/../adapters/social.js','utf8'));const S=Core.Social;
+  const log=[],db={perfis:[]},mem={};let agora=1000,confirmar=false;
+  const resp=(st,j)=>({ok:st<400,status:st,text:async()=>j===undefined?'':JSON.stringify(j)});
+  const fake=async(u,o)=>{log.push({u,m:o.method,h:o.headers,b:o.body?JSON.parse(o.body):null});const b=o.body?JSON.parse(o.body):null;
+    if(u.endsWith('/auth/v1/signup'))return confirmar?resp(200,{id:'u1',email:b.email}):resp(200,{access_token:'t1',refresh_token:'r1',expires_in:3600,user:{id:'u1',email:b.email}});
+    if(u.includes('grant_type=password'))return b.password==='certa123'?resp(200,{access_token:'t1',refresh_token:'r1',expires_in:3600,user:{id:'u1',email:b.email}}):resp(400,{error_description:'Invalid login credentials'});
+    if(u.includes('grant_type=refresh_token'))return resp(200,{access_token:'t2',refresh_token:'r2',expires_in:3600,user:{id:'u1',email:'a@b.com'}});
+    if(u.endsWith('/auth/v1/logout'))return resp(204);
+    if(u.includes('/rest/v1/perfis')&&o.method==='POST'){if(db.perfis.some(p=>p.usuario===b.usuario&&p.id!==b.id))return resp(409,{code:'23505',message:'duplicate key'});db.perfis=db.perfis.filter(p=>p.id!==b.id);db.perfis.push(b);return resp(201,[b]);}
+    if(u.includes('/rest/v1/perfis')){const m=/usuario=eq\.([^&]+)/.exec(u),i=/id=eq\.([^&]+)/.exec(u);return resp(200,db.perfis.filter(p=>m?p.usuario===decodeURIComponent(m[1]):i?p.id===decodeURIComponent(i[1]):true));}
+    return resp(404,{});};
+  const novo=()=>new S({url:'https://abc.supabase.co/',chave:'sb_publishable_x',fetch:fake,agora:()=>agora,armazem:{get:k=>mem[k]||null,set:(k,v)=>{mem[k]=v;},del:k=>{delete mem[k];}}});
+  const s=novo();
+  ok(s.configurado&&!new S({url:'http://x.com',chave:'k'}).configurado&&!new S({url:'https://abc.supabase.co',chave:''}).configurado,'social: só configura com https://…supabase.co e chave');
+  __async.push((async()=>{
+    let e='';try{await s.cadastrar('a@b.com','curta');}catch(x){e=x.message;}ok(/8 caracteres/.test(e)&&!log.length,'social: senha curta é recusada antes de ir à rede');
+    ok((await s.cadastrar('a@b.com','certa123')).logado&&s.logado&&s.usuarioId==='u1'&&JSON.parse(mem['motor.social.sessao']).access_token==='t1','social: cadastro sem confirmação já entra e guarda a sessão');
+    confirmar=true;const s2=novo();await s2.sair();ok((await s2.cadastrar('c@d.com','certa123')).confirmar===true&&!s2.logado,'social: cadastro com confirmação por e-mail não entra ainda');
+    e='';try{await s2.entrar('c@d.com','errada');}catch(x){e=x.message;}ok(e==='e-mail ou senha incorretos','social: erro de login traduzido');
+    await s2.entrar('a@b.com','certa123');ok(s2.logado&&log[log.length-1].h.Authorization==='Bearer sb_publishable_x'&&log[log.length-1].h.apikey==='sb_publishable_x','social: login usa só a chave pública');
+    ok(!log.some(l=>JSON.stringify(l).includes('service_role')),'social: nunca usa service_role');
+    ok(Core.Social.usuarioValido('ana_01')&&!Core.Social.usuarioValido('Ana')&&!Core.Social.usuarioValido('ab')&&!Core.Social.usuarioValido('a b c')&&!Core.Social.usuarioValido('x'.repeat(21)),'social: nome de usuário válido (3–20, minúsculas/números/_)');
+    const p=await s2.salvarPerfil({usuario:' Ana_01 ',nome:'Ana',bio:''});ok(p.usuario==='ana_01'&&p.nome==='Ana'&&p.bio===null&&p.id==='u1'&&log[log.length-1].h.Authorization==='Bearer t1','social: salvar perfil (minúsculas, id do dono, token do usuário)');
+    ok((await s2.perfil()).usuario==='ana_01'&&(await s2.usuarioLivre('outro_nome'))&&!(await s2.usuarioLivre('ana_01'))&&!(await s2.usuarioLivre('A!')),'social: ler perfil e checar nome livre');
+    db.perfis.push({id:'u9',usuario:'bob'});e='';try{await s2.salvarPerfil({usuario:'bob'});}catch(x){e=x.message;}ok(e==='esse nome de usuário já existe','social: nome repetido (23505) traduzido');
+    agora+=4000*1000;await s2.perfil();ok(log.some(l=>l.u.includes('grant_type=refresh_token'))&&s2.s.access_token==='t2','social: renova a sessão vencida sozinho');
+    await s2.sair();ok(!s2.logado&&!mem['motor.social.sessao'],'social: sair apaga a sessão');
+    e='';try{await s2.salvarPerfil({usuario:'abc'});}catch(x){e=x.message;}ok(/entre na sua conta/.test(e),'social: salvar sem login é recusado');
+    const off=new S({url:'https://abc.supabase.co',chave:'k',fetch:async()=>{throw new Error('x');}});e='';try{await off.entrar('a@b.com','12345678');}catch(x){e=x.message;}ok(e==='sem conexão com a internet','social: sem internet dá mensagem clara');
+  })());
+}
 { // idiomas do editor
   vm.runInThisContext(fs.readFileSync(__dirname+'/../editor/i18n.js','utf8'));const T=EditorI18n,G=EditorBlocos;
   ok(T.atual()==='pt-BR'&&T.tr('repetir')==='repetir','i18n: padrão pt-BR devolve o texto original');
@@ -573,4 +605,4 @@ const nova=()=>new C.Engine();
   e.input=inp(0,0,false,false);e.passo();ok(li._vis[0]==='c'&&li._vis.length<=6,'lista: só os itens visíveis vão para o desenho');
   let n=0;for(const x of [{Campo:{}},{Campo:{var:'a',max:-1}},{Lista:{}},{Lista:{lista:'a',itemAltura:'x'}},{Campo:{var:'a',senha:1}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0},Sprite:{}},x)]});}catch(er){n++;}}ok(n===5,'campo/lista inválidos são recusados');
 }
-console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);
+Promise.all(__async).catch(e=>{console.log('FALHA teste assíncrono: '+e.message);falhas++;}).then(()=>{console.log(falhas?falhas+' falha(s)':'todos os testes passaram');process.exit(falhas?1:0);});
