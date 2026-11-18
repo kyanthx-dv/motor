@@ -165,7 +165,8 @@ select.add{background:transparent;color:var(--acento);border:2px dashed var(--ac
 .bloco select.add,.bloco .add-btn{color:#fff;border-color:rgba(255,255,255,.75);background:rgba(255,255,255,.12)}
 
 /* ===== Blocos compactos: cada valor é uma pílula [valor ⌄]; o tipo vira só uma setinha; botões do bloco aparecem ao passar o mouse ===== */
-.bloco .val{display:inline-flex;align-items:center;background:#fff;border-radius:999px;padding:0 2px 0 8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14);max-width:100%}
+.bloco .val{display:inline-flex;align-items:center;background:color-mix(in srgb,color-mix(in srgb,var(--vg,transparent) 20%,var(--pil-bg,#fff)),#000 var(--esc,0%));border-left:3px solid var(--vg,transparent);border-radius:999px;padding:0 2px 0 8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14);max-width:100%}
+.bloco .val[data-grupo] select optgroup{font-style:normal;font-weight:700}
 .bloco .val input,.bloco .val select{box-shadow:none;border-radius:999px;background:transparent}
 .bloco .val input{border:0;width:72px;padding:2px 4px;min-width:40px}
 .bloco .val>select:first-child{order:2;width:22px;min-width:22px;padding:0;border:0;color:transparent;cursor:pointer;appearance:none;-webkit-appearance:none;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23667' stroke-width='1.6'/%3E%3C/svg%3E") center/10px no-repeat}
@@ -184,9 +185,7 @@ select.add{background:transparent;color:var(--acento);border:2px dashed var(--ac
 :root{--pil-bg:#fff;--pil-fg:#1f2933;--pil-linha:rgba(0,0,0,.18);--pil-seta:%23667}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pil-bg:#10151c;--pil-fg:#eef1f6;--pil-linha:rgba(255,255,255,.28)}}
 :root[data-theme="dark"]{--pil-bg:#10151c;--pil-fg:#eef1f6;--pil-linha:rgba(255,255,255,.28)}
-.bloco .val{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px 4px;vertical-align:middle;max-width:100%;box-sizing:border-box;background:var(--pil-bg);color:var(--pil-fg);border-radius:10px;padding:2px 4px 2px 8px;box-shadow:inset 0 0 0 1px var(--pil-linha);line-height:1.25}
-.bloco .val .val{background:color-mix(in srgb,var(--pil-bg) 90%,var(--cat));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pil-linha) 70%,var(--cat))}
-.bloco .val .val .val{background:color-mix(in srgb,var(--pil-bg) 80%,var(--cat))}
+.bloco .val{display:inline-flex;flex-wrap:wrap;align-items:center;gap:3px 4px;vertical-align:middle;max-width:100%;box-sizing:border-box;background:color-mix(in srgb,color-mix(in srgb,var(--vg,var(--pil-bg)) 22%,var(--pil-bg)),#000 var(--esc,0%));border-left:4px solid var(--vg,var(--pil-linha));color:var(--pil-fg);border-radius:10px;padding:2px 4px 2px 8px;box-shadow:inset 0 0 0 1px var(--pil-linha);line-height:1.25}
 .bloco .val input,.bloco .val select{color:var(--pil-fg);background:transparent;font:inherit;font-weight:600}
 .bloco .val select option,.bloco .topo select option{background:var(--pil-bg);color:var(--pil-fg)}
 .bloco .val input{width:64px;min-width:36px;padding:1px 3px}

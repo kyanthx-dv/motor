@@ -537,6 +537,17 @@ const nova=()=>new C.Engine();
   e.input=ptr(0,0,false,false);e.passo();e.input=ptr(400,150,true,true);e.passo();ok(e.vars.ler('som')===false&&a.Sprite.rotulo==='OFF','alternar: clique de novo desliga');
   let n=0;for(const x of [{Barra:{}},{Barra:{var:'a',max:true}},{Barra:{var:'a',arrastavel:1}},{Alternar:{var:5}}]){try{C.Serializer.deJSON(new C.Scene(),{formato:C.Serializer.FORMATO,estado:{},entidades:[Object.assign({nome:'q',Transform:{x:0,y:0},Sprite:{}},x)]});}catch(er){n++;}}ok(n===4,'barra/alternar inválidos são recusados');
 }
+{ // catálogo de valores: grupos, tipos e contexto
+  const G=EditorBlocos,tem=(l,k)=>l.some(g=>g.itens.some(i=>i[0]===k)),todos=Object.keys(G.VALORES);
+  ok(todos.every(k=>G.CATALOGO[k]),'catálogo: todo valor do seletor tem grupo e tipo');
+  const n=G.valoresPara('num',{evento:'quadro'},'num'),t=G.valoresPara('txt',{evento:'quadro'},'txt'),a=G.valoresPara('any',{evento:'colisao',cada:true},'num');
+  ok(tem(n,'x')&&tem(n,'var')&&tem(n,'op')&&!tem(n,'plataforma')&&!tem(n,'outro'),'número: mostra contas/atributos/variáveis e esconde textos');
+  ok(tem(t,'txt')&&tem(t,'var')&&tem(t,'plataforma')&&!tem(t,'x')&&!tem(t,'op')&&!tem(t,'rand'),'texto: só textos e valores de qualquer tipo (sem x, contas, aleatório)');
+  ok(!tem(n,'it')&&tem(a,'it')&&tem(a,'outro')&&!tem(G.valoresPara('any',{evento:'inicio'},'num'),'outro'),'"item atual" só dentro de "para cada" e "outro objeto" só em colisão/gatilho');
+  ok(tem(G.valoresPara('num',{},'plataforma'),'plataforma'),'o valor já escolhido nunca some da lista');
+  ok(G.tipoDe({k:'txt'})==='txt'&&G.tipoDe({k:'x'})==='num'&&G.tipoDe({k:'var'})==='any'&&G.tipoDe(undefined)==='any','tipoDe dos valores');
+  ok(n.map(g=>g.grupo).join()===[...new Set(n.map(g=>g.grupo))].join()&&n.every(g=>g.itens.length),'grupos sem repetição nem vazios');
+}
 { // Campo (texto) e Lista (rolável)
   const e=new C.Engine();C.Serializer.deJSON(e.scene,{formato:C.Serializer.FORMATO,estado:{vars:{nome:'',sel:-1},listas:{it:['a','b','c','d','e','f','g','h']}},entidades:[
     {nome:'campo',Transform:{x:200,y:50},Sprite:{fixo:true,w:200,h:36},Campo:{var:'nome',dica:'Nome',max:5}},

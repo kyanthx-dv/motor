@@ -9,6 +9,31 @@
   const erro = m => new Error(m);
   E.ACOES = ACOES; E.OPS = OPS;
   E.VALORES = { num: 'número', txt: 'texto', var: 'variável', x: 'x deste objeto', y: 'y deste objeto', vx: 'velocidade x', vy: 'velocidade y', eixoX: 'setas: eixo x', eixoY: 'setas: eixo y', tempo: 'tempo de jogo (s)', rand: 'aleatório entre…', outro: 'nome do outro objeto', attr: 'atributo de um objeto', op: 'conta (+ − × ÷ …)', contar: 'quantos objetos com etiqueta', local: 'variável local', item: 'item N da lista', tam: 'tamanho da lista', itemrand: 'item aleatório da lista', it: 'item atual (dentro de "para cada item")', hora: 'relógio: hora', minuto: 'relógio: minuto', segundo: 'relógio: segundo', dia: 'data: dia do mês', mes: 'data: mês', ano: 'data: ano', diaSemana: 'data: dia da semana (0=domingo)', plataforma: 'aparelho: sistema (android, ios, windows…)', tipo: 'aparelho: tipo (celular, tablet, computador)', toque: 'aparelho: tem toque?', idioma: 'aparelho: idioma', online: 'aparelho: está online?', largura: 'aparelho: largura da janela', altura: 'aparelho: altura da janela', orientacao: 'aparelho: orientação (retrato, paisagem)', escuro: 'aparelho: modo escuro?', mx: 'mouse: posição x (mundo)', my: 'mouse: posição y (mundo)' };
+  // Catálogo dos valores: grupo (cor/seção no seletor), tipo que produz ('num' | 'txt' | 'any') e onde faz sentido aparecer.
+  const G = [['Valores', 'valores', 210], ['Este objeto', 'objeto', 150], ['Contas', 'contas', 35], ['Entrada', 'entrada', 275], ['Listas', 'listas', 190], ['Cena', 'cena', 0], ['Relógio e data', 'relogio', 55], ['Aparelho', 'aparelho', 320]];
+  const CAT = E.CATALOGO = {};
+  const reg = (g, t, ks, onde) => { for (const k of ks.split(' ')) CAT[k] = { g, t, onde: onde || null }; };
+  reg('Valores', 'num', 'num'); reg('Valores', 'txt', 'txt'); reg('Valores', 'any', 'var local');
+  reg('Este objeto', 'num', 'x y vx vy'); reg('Este objeto', 'any', 'attr'); reg('Este objeto', 'txt', 'outro', 'colisao');
+  reg('Contas', 'num', 'op rand tempo'); reg('Entrada', 'num', 'eixoX eixoY mx my');
+  reg('Listas', 'any', 'item itemrand'); reg('Listas', 'num', 'tam'); reg('Listas', 'any', 'it', 'cada');
+  reg('Cena', 'num', 'contar'); reg('Relógio e data', 'num', 'hora minuto segundo dia mes ano diaSemana');
+  reg('Aparelho', 'txt', 'plataforma tipo idioma orientacao'); reg('Aparelho', 'any', 'toque online escuro'); reg('Aparelho', 'num', 'largura altura');
+  E.GRUPOS = G.map(([nome, id, hue]) => ({ nome, id, hue }));
+  E.tipoDe = v => (v && CAT[v.k] ? CAT[v.k].t : 'any');
+  // Valores que o seletor deve mostrar: esperado = 'num' | 'txt' | 'any'; cx = { evento: 'colisao'|'gatilho'|…, cada: dentro de "para cada" }; atual = tipo já escolhido (sempre mantido).
+  E.valoresPara = (esperado, cx, atual) => {
+    cx = cx || {}; const out = [];
+    for (const g of G) {
+      const itens = Object.keys(E.VALORES).filter(k => {
+        const c = CAT[k]; if (!c || c.g !== g[0]) return false; if (k === atual) return true;
+        if (esperado === 'num' && c.t === 'txt') return false; if (esperado === 'txt' && c.t === 'num') return false;
+        if (c.onde === 'colisao' && cx.evento !== 'colisao' && cx.evento !== 'gatilho') return false; if (c.onde === 'cada' && !cx.cada) return false; return true;
+      }).map(k => [k, E.VALORES[k]]);
+      if (itens.length) out.push({ grupo: g[0], id: g[1], hue: g[2], itens });
+    }
+    return out;
+  };
   E.CONTAS = [['+', '+'], ['-', '−'], ['*', '×'], ['/', '÷'], ['%', 'resto'], ['min', 'menor de'], ['max', 'maior de']];
   E.LOGICOS = [['cmp', 'comparar'], ['tecla', 'tecla'], ['e', 'e (ambas)'], ['ou', 'ou (uma delas)'], ['nao', 'não'], ['etiq', 'tem etiqueta'], ['mouse', 'mouse'], ['sobre', 'mouse sobre objeto'], ['contem', 'lista contém'], ['partida', 'existe partida salva']];
   // Atributos que os blocos genéricos sabem ler/mudar: componente, propriedade e tipo
@@ -151,7 +176,7 @@
     camera_seguir: { cat: 'Cena', menu: 'câmera: seguir objeto', campos: [{ t: 'câmera segue' }, { n: 'nome', tipo: 'objn', padrao: '' }], ger: b => ['{', '  const cam = ctx.scene.estado.camera || (ctx.scene.estado.camera = { x: ctx.tela.largura / 2, y: ctx.tela.altura / 2, zoom: 1, suavizar: 8 });', '  cam.seguir = ' + JSON.stringify(typeof b.nome === 'string' ? b.nome : '') + ';', '}'] },
     camera_zoom: { cat: 'Cena', menu: 'câmera: zoom', campos: [{ t: 'câmera: zoom' }, { n: 'v', tipo: 'valor', padrao: N(1) }], ger: b => ['{', '  const cam = ctx.scene.estado.camera || (ctx.scene.estado.camera = { x: ctx.tela.largura / 2, y: ctx.tela.altura / 2, zoom: 1, suavizar: 8 });', '  const z = Number(' + valor(b.v) + ');', '  if (isFinite(z) && z > 0.05 && z < 20) cam.zoom = z;', '}'] },
     camera_pos: { cat: 'Cena', menu: 'câmera: ir para x, y', campos: [{ t: 'câmera vai para x' }, { n: 'vx', tipo: 'valor', padrao: N(400) }, { t: 'y' }, { n: 'vy', tipo: 'valor', padrao: N(225) }], ger: b => ['{', '  const cam = ctx.scene.estado.camera || (ctx.scene.estado.camera = { x: ctx.tela.largura / 2, y: ctx.tela.altura / 2, zoom: 1, suavizar: 8 });', '  const cx = Number(' + valor(b.vx) + '), cy = Number(' + valor(b.vy) + ');', '  if (isFinite(cx) && isFinite(cy)) { cam.seguir = ""; cam.x = cx; cam.y = cy; }', '}'] },
-    var_definir: { cat: 'Variáveis', campos: [{ t: 'definir' }, { n: 'var', tipo: 'var' }, { t: 'para' }, { n: 'v', tipo: 'valor', padrao: N(0) }], ger: b => ['ctx.vars.definir(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
+    var_definir: { cat: 'Variáveis', campos: [{ t: 'definir' }, { n: 'var', tipo: 'var' }, { t: 'para' }, { n: 'v', tipo: 'valor', esp: 'any', padrao: N(0) }], ger: b => ['ctx.vars.definir(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
     var_somar: { cat: 'Variáveis', campos: [{ t: 'somar' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'em' }, { n: 'var', tipo: 'var' }], ger: b => ['ctx.vars.somar(' + nomeVar(b.var) + ', ' + valor(b.v) + ');'] },
     se: { cat: 'Controle', campos: [{ t: 'se' }, { n: 'c', tipo: 'cond' }], filhos: ['f', 's'], ger: (b, g) => ['if (' + cond(b.c) + ') {', ...g.lista(b.f), ...(b.s && b.s.length ? ['} else {', ...g.lista(b.s)] : []), '}'] },
     cor: { cat: 'Aparência', campos: [{ t: 'mudar a cor para' }, { n: 'cor', tipo: 'cor', padrao: '#ff5555' }], ger: b => ['if (e.Sprite) e.Sprite.cor = ' + JSON.stringify(String(b.cor || '#ffffff')) + ';'] },
@@ -164,7 +189,7 @@
         const corpo = tipo === 'sem' ? [] : ['  Body: { forma: ' + JSON.stringify(forma) + ', ' + dim + ', massa: ' + (tipo === 'dinamico' ? 1 : 0) + (tipo === 'sensor' ? ', sensor: true' : ', elasticidade: 0.5') + ' },'];
         return ['{', '  const t = ' + valor(b.tam) + ';', '  ctx.scene.create({', '  nome: ' + nome + ',', '  Transform: { x: ' + valor(b.vx) + ', y: ' + valor(b.vy) + ' },', ...corpo, ...(b.script ? ['  Script: { nome: ' + JSON.stringify(b.script) + ' },'] : []), '  Sprite: { ' + (forma === 'circulo' ? 'forma: "circulo", raio: t' : 'w: 2 * t, h: 2 * t') + ', cor: ' + cor + ' }', '  });', '}'];
       } },
-    texto: { cat: 'Aparência', menu: 'mudar o texto', campos: [{ t: 'mudar o texto para' }, { n: 'a', tipo: 'valor', padrao: { k: 'txt', v: 'Pontos: ' } }, { n: 'b', tipo: 'valor', padrao: { k: 'num', v: 0 } }], ger: b => ['if (e.Sprite) e.Sprite.rotulo = String(' + valor(b.a) + ') + String(' + valor(b.b) + ');'] },
+    texto: { cat: 'Aparência', menu: 'mudar o texto', campos: [{ t: 'mudar o texto para' }, { n: 'a', tipo: 'valor', esp: 'any', padrao: { k: 'txt', v: 'Pontos: ' } }, { n: 'b', tipo: 'valor', esp: 'any', padrao: { k: 'num', v: 0 } }], ger: b => ['if (e.Sprite) e.Sprite.rotulo = String(' + valor(b.a) + ') + String(' + valor(b.b) + ');'] },
     temporizador: { cat: 'Controle', menu: 'a cada … segundos', campos: [{ t: 'a cada' }, { n: 'v', tipo: 'valor', padrao: N(1) }, { t: 'segundos faça' }], filhos: ['f'],
       ger: (b, g) => { const k = JSON.stringify('t' + g.id()); return ['{', '  const st = e.Script.estado, iv = ' + valor(b.v) + ';', '  st[' + k + '] = (st[' + k + '] || 0) + dt;', '  if (iv > 0 && st[' + k + '] >= iv) {', '    st[' + k + '] = 0;', ...g.lista(b.f).map(l => '  ' + l), '  }', '}']; } },
     bipe: { cat: 'Som', menu: 'tocar bipe', campos: [{ t: 'tocar bipe de' }, { n: 'hz', tipo: 'valor', padrao: N(440) }, { t: 'Hz por' }, { n: 's', tipo: 'valor', padrao: N(0.15) }, { t: 's' }], ger: b => ['if (ctx.audio) ctx.audio.bipe(' + valor(b.hz) + ', ' + valor(b.s) + ');'] },
