@@ -10,8 +10,10 @@
       const caixa = doc.createElement('div'); caixa.style.cssText = 'position:fixed;inset:0;background:#000';
       const tela = doc.createElement('canvas'); tela.id = 'tela'; tela.style.cssText = 'width:100%;height:100%;background:#000;display:block';
       caixa.appendChild(tela); corpo.appendChild(caixa);
-      const assets = new C.Assets(), imagens = {}; for (const n in jogo.cenas) Object.assign(imagens, (jogo.cenas[n].estado || {}).imagens || {});
-      await Promise.all(Object.entries(imagens).map(([n, src]) => new Promise(ok => { const i = new Image(); i.onload = () => { assets.registrar(n, i); ok(); }; i.onerror = ok; i.src = src; })));
+      // Imagens sob demanda: só as da cena inicial seguram a abertura do jogo; as das outras cenas carregam em segundo plano (o desenho pega assim que chegam)
+      const assets = new C.Assets(), pegar = ([n, src]) => new Promise(ok => { if (assets.get(n)) return ok(); const i = new Image(); i.onload = () => { assets.registrar(n, i); ok(); }; i.onerror = ok; i.src = src; });
+      const imgsDe = c => Object.entries((c && c.estado && c.estado.imagens) || {}), inicio = imgsDe(cenaAtual), resto = []; for (const n in jogo.cenas) if (jogo.cenas[n] !== cenaAtual) resto.push(...imgsDe(jogo.cenas[n]));
+      await Promise.all(inicio.map(pegar)); const jaVai = new Set(inicio.map(x => x[0])); setTimeout(() => { for (const par of resto) if (!jaVai.has(par[0])) pegar(par); }, 0);
       const t = (cenaAtual.estado && cenaAtual.estado.tamanho) || { largura: 800, altura: 450 };
       let renderer = new C.CanvasRenderer(tela, { largura: t.largura, altura: t.altura, fundo: '#000', assets });
       this.render = '2d';

@@ -318,3 +318,7 @@ Modelos prontos (editor/modelos.js): o que é uma coisa só fica um objeto só (
 - Barra no topo do editor de blocos: `−` `+` `100%` (zoom 50%–160%, também Ctrl + roda do mouse; guardado em `motor.blocos.zoom`) e seletor de idioma.
 - `editor/i18n.js` (`EditorI18n`): o texto em português é a chave; `tr(texto)` devolve a tradução ou o próprio português. Idiomas: pt-BR (padrão), en (completo para blocos, eventos, valores, grupos), es (vocabulário principal). O projeto guarda só ids técnicos, então trocar o idioma não altera jogos salvos.
 - Hoje o idioma vale para o editor de blocos; o resto da interface (painéis, botões) e o es completo ficam como próximos passos.
+
+## 59. Ícone próprio e imagens sob demanda
+- `estado.exportar.icone`: PNG em data URL (até ~400 KB), validado em `ExportarCfg` (só `data:image/png;base64,`). No ⚙ Exportação o usuário escolhe uma imagem; ela é recortada no centro e vira 512×512. Na exportação: `icones/icone-192.png` e `-512.png` (manifesto), `<link rel=icon>` e `apple-touch-icon`; o `.html` único leva um favicon 192 embutido.
+- Player: as imagens da cena inicial são carregadas antes de abrir; as das outras cenas carregam em segundo plano logo depois (o desenho usa a imagem assim que ela chega).
