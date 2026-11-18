@@ -84,6 +84,7 @@
       esp = esp || 'num'; prof = prof || 0;
       const v = obj[nome] || (obj[nome] = { k: 'num', v: 0 }), w = el('span', 'val'), cat = B.CATALOGO[v.k], gr = cat && B.GRUPOS.find(g => g.nome === cat.g);
       if (gr) { w.style.setProperty('--vg', 'hsl(' + gr.hue + ' 62% 52%)'); w.dataset.grupo = gr.id; } w.style.setProperty('--esc', Math.min(prof * 12, 40) + '%');
+      if (v.k !== 'num' && v.k !== 'txt') w.classList.add('com-nome');   // valores sem campo de digitar mostram o nome (x, variável, atributo…) em vez de só a setinha
       w.append(selValor(esp, v.k, k => { obj[nome] = k === 'var' ? { k, n: vars()[0] || '' } : k === 'rand' ? { k, min: 0, max: 100 } : k === 'num' ? { k, v: 0 } : k === 'txt' ? { k, v: '' } : k === 'attr' ? { k, o: 'proprio', a: 'x' } : k === 'op' ? { k, a: { k: 'num', v: 0 }, o: '+', b: { k: 'num', v: 1 } } : k === 'contar' ? { k, tag: 'inimigo' } : k === 'local' ? { k, n: 'tmp' } : k === 'item' ? { k, l: 'inventario', i: { k: 'num', v: 1 } } : k === 'tam' || k === 'itemrand' ? { k, l: 'inventario' } : { k }; redesenhar(); }, rotulo));
       if (v.k === 'num') w.append(entrada('number', v.v, x => { v.v = x === '' ? 0 : +x; mudou(); }, rotulo + ' (número)'));
       if (v.k === 'txt') w.append(entrada('text', v.v, x => { v.v = x; mudou(); }, rotulo + ' (texto)'));

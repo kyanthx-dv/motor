@@ -308,3 +308,8 @@ Modelos prontos (editor/modelos.js): o que é uma coisa só fica um objeto só (
 - Campo `esp` nos blocos (`'num'` por padrão, `'any'` quando aceita tudo, como "mudar o texto" e "definir variável"). Em `comparar`, o lado B segue o tipo do lado A.
 - Visual: a pílula do valor usa a cor do grupo (`--vg`) e escurece conforme o aninhamento (`--esc`).
 - Próximos passos (PLANO): B = layout horizontal sem quebra de linha; C = zoom/arrastar no editor de blocos e idiomas (pt-BR/en/es).
+
+## 57. Blocos em linha única
+- Os parâmetros não quebram mais de linha: `.topo` e `.val` são `nowrap`, o bloco cresce para a direita e a área `.blocos` rola na horizontal (dedo ou mouse). Os botões ↑ ↓ ⧉ ✕ ficam `sticky` na borda direita visível.
+- Valores sem campo de digitar (x, variável, atributo, conta…) mostram o nome em vez de só a setinha (`.val.com-nome`).
+- Os parênteses `( )` de contas aparecem em cada `conta` aninhada; o código gerado já agrupa cada operação, então a precedência é a que se vê.
