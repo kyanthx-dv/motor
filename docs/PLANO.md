@@ -63,6 +63,25 @@ Fora até segunda ordem: multiplayer em tempo real, chat privado, loja/pagamento
 
 *Ordem de trabalho:* (1) escrever termos/privacidade e decidir idade mínima; (2) protótipo de etapas 1–2 só com o dono como usuário; (3) beta fechado com poucos amigos; (4) abrir aos poucos. O app (Flutter) ganha abrir/salvar arquivos no celular depois da etapa 2.
 
+**v2.5 — Editor mobile nativo (Flutter)** (decisão do dono: o editor do celular é outro produto; só a engine é reaproveitada)
+Hoje o app (`motor-app`) é só uma casca que abre o editor web do PC dentro de uma WebView — isso é **provisório** (serve para testar a engine no aparelho). O editor do celular terá interface própria em Flutter.
+
+*Arquitetura:* Flutter desenha **toda a interface** (projetos, lista de objetos, inspetor, paleta e editor de blocos, console, menus). A WebView vira só a **janela do jogo** (um canvas com a engine). Contrato único entre os dois: o **JSON da cena** + a **ponte** `MotorAPI`.
+- Flutter → engine: `carregar(json)`, `json()`, `play()`, `parar()`, `selecionar(id)`, `criar(def)`, `definir(id, componente, campo, valor)`, `mover(id, x, y)`, `excluir(id)`, `camera(x, y, zoom)`, `gerarCodigo(blocos)`, `desfazer()/refazer()`.
+- Engine → Flutter (eventos): `selecionou`, `moveu` (arrastar no canvas), `mudou(json)`, `console`, `erro`, `jogando`.
+- Gestos na janela do jogo: toque seleciona, arrastar move o objeto, dois dedos fazem pan/zoom.
+- Fonte única de verdade: catálogos em JSON gerados pelo motor (componentes e campos para o inspetor, blocos e valores para o editor de blocos), para o Flutter não duplicar regras.
+
+*Fases (cada uma testável sozinha):*
+1. **Ponte + janela do jogo (repo `motor`)**: `MotorAPI` e uma página só com o canvas; testada em navegador automatizado, sem precisar de Flutter.
+2. **Casca Flutter**: tela de projetos, janela do jogo, barra Play/Parar/Desfazer, lista de objetos, inspetor nativo (campos gerados do catálogo), abrir/salvar arquivo no celular.
+3. **Editor de blocos nativo**: blocos desenhados em Flutter a partir do catálogo; o código gerado continua vindo do gerador do motor.
+4. **Código, imagens, sons, camadas, interface e exportação** em telas nativas.
+5. **Conta e publicar** (Supabase) integrados ao app.
+O editor web do PC continua existindo, separado; o app **não** reutiliza o código dele.
+
+*Riscos:* muito trabalho em Dart (inspetor, blocos) — por isso os catálogos em JSON; a ponte precisa ser estável (versionada) para o app e o motor evoluírem separados; testes: a ponte no navegador automatizado e `flutter test` no CI do `motor-app`.
+
 ## Linguagens de script (decisão)
 Blocos + JavaScript continuam sendo a única opção até a v2.0. **Linguagem própria: não** (custo enorme, sem ganho sobre JS). **Lua** pode entrar depois, como linguagem opcional de script via **Fengari** (VM Lua em JS, ~200 KB), rodando no mesmo Worker; **pré-requisitos:** API de scripts (`ctx`) congelada e documentada, Play do editor no Worker (v1.1) e mapeamento de erros com linha. **Luau** (Roblox) não tem porta madura para JS (só WASM pesado): fora.
 
