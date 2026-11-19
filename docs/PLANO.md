@@ -63,6 +63,18 @@ Fora até segunda ordem: multiplayer em tempo real, chat privado, loja/pagamento
 
 *Ordem de trabalho:* (1) escrever termos/privacidade e decidir idade mínima; (2) protótipo de etapas 1–2 só com o dono como usuário; (3) beta fechado com poucos amigos; (4) abrir aos poucos. O app (Flutter) ganha abrir/salvar arquivos no celular depois da etapa 2.
 
+**Blocky — desenho do app (decisão do dono; nome provisório "Blocky Editor"/"Blocky", a engine continua "Motor")**
+Regra: **primeiro as telas (interface com dados de exemplo), depois os sistemas por trás**, porque os sistemas (pagamento, anúncios, vídeo, mensagens) exigem segurança e moderação.
+- **Entrada:** login → tela de boas-vindas (painel customizável, usado também para avisos e erros).
+- **Barra de baixo:** Jogos · Assets/PFPs · **＋** · Posts · Perfil. No topo da aba Jogos: busca, notificações, mensagens e moedas.
+- **＋ (criar):** publicar asset ou PFP, criar jogo (abre o editor), criar post.
+- **Busca:** tela própria com campo de texto e abas Jogos / Assets / Pessoas / Posts.
+- **Posts:** imagem ou vídeo obrigatório, título, descrição; curtir, favoritar, comentar. Sem compartilhar nem chat por enquanto. Feed: Recomendados · Seguindo.
+- **Página do jogo:** capa e informações, ▶ Jogar, curtir, favoritar, comentários, visitas, criadores (Team Create no futuro), doações.
+- **Jogando:** tela de carregamento (estilo Roblox) → tela cheia → menu para sair (estilo Roblox).
+- **Moedas:** por enquanto vêm de anúncios; no futuro viram compra com dinheiro real (**BCoins**).
+*Sistemas que ficam para depois das telas (cada um precisa de segurança, moderação e termos): anúncios, BCoins/compra e doações com dinheiro real, venda de assets/PFPs, vídeo (limite de tamanho/duração e revisão), mensagens privadas, notificações. Ordem sugerida: imagens nos posts antes de vídeo; assets grátis antes de vendidos. Antes de publicar: verificar se o nome "Blocky" pode ser usado (há marcas parecidas, ex. Blockly do Google).*
+
 **v2.5 — Editor mobile nativo (Flutter)** (decisão do dono: o editor do celular é outro produto; só a engine é reaproveitada)
 Hoje o app (`motor-app`) é só uma casca que abre o editor web do PC dentro de uma WebView — isso é **provisório** (serve para testar a engine no aparelho). O editor do celular terá interface própria em Flutter.
 
@@ -73,6 +85,7 @@ Hoje o app (`motor-app`) é só uma casca que abre o editor web do PC dentro de 
 - Fonte única de verdade: catálogos em JSON gerados pelo motor (componentes e campos para o inspetor, blocos e valores para o editor de blocos), para o Flutter não duplicar regras.
 
 *Fases (cada uma testável sozinha):*
+0. **Telas sociais em Flutter com dados de exemplo** (login, boas-vindas, abas, busca, página do jogo, tela de carregamento/jogar, perfil) — dá para ver e tocar no celular logo no começo; depois ligam no Supabase.
 1. **Ponte + janela do jogo (repo `motor`)**: `MotorAPI` e uma página só com o canvas; testada em navegador automatizado, sem precisar de Flutter.
 2. **Casca Flutter**: tela de projetos, janela do jogo, barra Play/Parar/Desfazer, lista de objetos, inspetor nativo (campos gerados do catálogo), abrir/salvar arquivo no celular.
 3. **Editor de blocos nativo**: blocos desenhados em Flutter a partir do catálogo; o código gerado continua vindo do gerador do motor.
