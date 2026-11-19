@@ -217,3 +217,7 @@ select.add{background:transparent;color:var(--acento);border:2px dashed var(--ac
 .bloco{--pil-bg:#f4f6fa;--pil-fg:#1f2933;--pil-linha:rgba(0,0,0,.22);--pil-seta:%23667}
 .bloco .val{background:color-mix(in srgb,color-mix(in srgb,var(--vg,var(--cat,#888)) 26%,var(--pil-bg)),#000 var(--esc,0%));border-left-color:var(--vg,var(--cat,var(--pil-linha)))}
 .bloco .topo select,.bloco .topo input{background:var(--pil-bg)}
+/* Menus de seleção dos blocos: títulos de grupo e opções sempre legíveis (no tema escuro o título saía branco sobre branco) */
+.blocos select option{color:#1f2933;background:#fff}
+.blocos select optgroup{color:#0b3d6b;background:#dfe7f2;font-weight:700;font-style:normal}
+.blocos select optgroup option{color:#1f2933;background:#fff;font-weight:400}
