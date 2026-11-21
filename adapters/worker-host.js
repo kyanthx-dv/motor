@@ -10,7 +10,8 @@
   function trabalhador() {
     const C = self.Core; let engine = null, cur = null, pend = null, info = {}, arm = new Map();
     const post = (t, d) => { try { self.postMessage(Object.assign({ t }, d)); } catch (x) { self.postMessage({ t: 'erro', texto: 'não deu para enviar ' + t + ': ' + (x && x.message) }); } };
-    const novoPend = () => ({ pressed: new Set(), keysPressed: new Set(), released: new Set(), ptr: false });
+    const juntar = (lista, pend) => { const m = new Map(); for (const q of (lista || [])) m.set(q.id, Object.assign({}, q, { pressed: false })); for (const [id, q] of pend) m.set(id, Object.assign({}, m.get(id) || q, { pressed: true })); return [...m.values()]; };
+    const novoPend = () => ({ pressed: new Set(), keysPressed: new Set(), released: new Set(), ptr: false, ptrs: new Map() });
     const stub = {
       largura: 800, altura: 450,
       desenhar(scene, alpha, eng) {
@@ -24,10 +25,10 @@
     const audio = new Proxy({}, { get: (o, m) => (m === 'disponivel' ? true : m === 'then' ? undefined : (...a) => { post('audio', { m, a }); return true; }) });
     const HORA = ['hora', 'minuto', 'segundo', 'dia', 'mes', 'ano', 'diaSemana'];
     const dispositivo = { campos: [], ler: c => (HORA.includes(c) || !(c in info) ? C.Dispositivo.ler(c) : info[c]), info: () => Object.assign({}, info), vibrar: ms => { post('dev', { m: 'vibrar', a: [ms] }); return true; }, telaCheia: s => { post('dev', { m: 'telaCheia', a: [s] }); return true; } };
-    const SEM = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false } });
+    const SEM = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false }, pointers: [] });
     const input = {
       joystick: { ativo: false }, poll() {
-        const s = cur ? { keys: new Set(cur.keys), keysPressed: pend.keysPressed, down: new Set(cur.down), pressed: pend.pressed, released: pend.released, axes: cur.axes, joystick: cur.joystick, texto: cur.texto || {}, pointer: Object.assign({}, cur.pointer, { pressed: pend.ptr }) } : SEM();
+        const s = cur ? { keys: new Set(cur.keys), keysPressed: pend.keysPressed, down: new Set(cur.down), pressed: pend.pressed, released: pend.released, axes: cur.axes, joystick: cur.joystick, texto: cur.texto || {}, pointer: Object.assign({}, cur.pointer, { pressed: pend.ptr }), pointers: juntar(cur.pointers, pend.ptrs) } : SEM();
         pend = novoPend(); return s;
       }
     };
@@ -45,7 +46,7 @@
           engine.iniciar(); post('pronto', { erros: engine.errosScripts || [] });
         } catch (x) { post('erro', { texto: 'falha ao iniciar: ' + (x && x.message), fatal: true }); }
       } else if (m.t === 'input') {
-        cur = m.s; for (const k of ['pressed', 'keysPressed', 'released']) for (const x of m.s[k]) pend[k].add(x); if (m.s.pointer.pressed) pend.ptr = true;
+        cur = m.s; for (const k of ['pressed', 'keysPressed', 'released']) for (const x of m.s[k]) pend[k].add(x); if (m.s.pointer.pressed) pend.ptr = true; for (const q of (m.s.pointers || [])) if (q.pressed) pend.ptrs.set(q.id, q);   // toque curto não se perde entre dois quadros do worker
       } else if (m.t === 'info') info = m.info;
     };
     post('vivo', {});
@@ -80,7 +81,7 @@
       this._criar();
       const quadro = () => {
         this._raf = requestAnimationFrame(quadro); if (this.travado) return;
-        if (this.worker) { if (this.input.configurar) this.input.configurar(C.joystickDe(this.scene)); const s = this.input.poll(); this.worker.postMessage({ t: 'input', s: { keys: [...s.keys], keysPressed: [...s.keysPressed], down: [...s.down], pressed: [...s.pressed], released: [...s.released], axes: s.axes, joystick: s.joystick, texto: s.texto, pointer: s.pointer } }); }
+        if (this.worker) { if (this.input.configurar) this.input.configurar(C.joystickDe(this.scene)); const s = this.input.poll(); this.worker.postMessage({ t: 'input', s: { keys: [...s.keys], keysPressed: [...s.keysPressed], down: [...s.down], pressed: [...s.pressed], released: [...s.released], axes: s.axes, joystick: s.joystick, texto: s.texto, pointer: s.pointer, pointers: s.pointers } }); }
         if (this.pronto) this.renderer.desenhar(this.scene, 1, this.fake);
       };
       this._raf = requestAnimationFrame(quadro);

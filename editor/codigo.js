@@ -9,7 +9,7 @@
     ctx: ['vars', 'listas', 'input', 'scene', 'engine', 'dispositivo', 'audio', 'efeitos', 'caminho', 'events', 'tela', 'dt', 'matter', 'escrever|(texto)', 'sobre|(objeto, "tag")', 'depois|(segundos, fn)', 'tween|(objeto, "Comp.campo", alvo, seg)', 'salvarPartida|(nome)', 'carregarPartida|(nome)', 'existePartida|(nome)'],
     'ctx.vars': ['ler|("nome")', 'definir|("nome", valor)', 'somar|("nome", n)', 'existe|("nome")', 'declarar|("nome", valor)'],
     'ctx.listas': ['adicionar|("lista", valor)', 'remover|("lista", i)', 'item|("lista", i)', 'definir|("lista", i, valor)', 'tamanho|("lista")', 'contem|("lista", valor)', 'todos|("lista")', 'limpar|("lista")', 'aleatorio|("lista")'],
-    'ctx.input': ['axes|()', 'pointer', 'joystick', 'tecla|("nome")', 'apertou|("acao")', 'soltou|("acao")'],
+    'ctx.input': ['axes|()', 'pointer', 'pointers', 'joystick', 'tecla|("nome")', 'apertou|("acao")', 'soltou|("acao")'],
     'ctx.scene': ['create|({ nome, Transform })', 'find|("nome")', 'get|(id)', 'query|("Comp")', 'destroy|(id)', 'clonar|(objeto)', 'animar|(objeto, "clip")', 'adotar|(filho, pai)', 'soltar|(filho)', 'estado'],
     'ctx.engine': ['tempo', 'aleatorio|()', 'irPara|("cena")', 'reiniciar|()', 'observar|("nome", fn)'],
     'ctx.efeitos': ['tremer|(cena, forca, seg)', 'fade|(cena, ...)', 'particulas|(cena, x, y, {})'], 'ctx.dispositivo': ['vibrar|(ms)', 'telaCheia|(sim)', 'ler|("plataforma")'],

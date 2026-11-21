@@ -9,7 +9,7 @@
     const raf = typeof requestAnimationFrame === 'function', agora = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
     return { agora, pedir: fn => (raf ? requestAnimationFrame(fn) : setTimeout(() => fn(agora()), 16)), cancelar: id => (raf ? cancelAnimationFrame(id) : clearTimeout(id)) };
   };
-  const SEM_INPUT = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false }, joystick: { ativo: false, dx: 0, dy: 0, forca: 0, angulo: 0, modo: 'desligado' } });
+  const SEM_INPUT = () => ({ keys: new Set(), keysPressed: new Set(), down: new Set(), pressed: new Set(), released: new Set(), axes: { x: 0, y: 0 }, pointer: { x: 0, y: 0, tx: 0, ty: 0, down: false, pressed: false }, pointers: [], joystick: { ativo: false, dx: 0, dy: 0, forca: 0, angulo: 0, modo: 'desligado' } });
   C.VERSAO = '1.0.0';   // versão do motor (aparece no editor e em ctx.engine.versao)
   // Linha (1 = primeira do script) de um erro lançado dentro de um script, lida da pilha (sourceURL motor-script-NOME.js); null se não der.
   C.linhaScript = (x, nome) => { const m = x && typeof x.stack === 'string' && x.stack.match(new RegExp('motor-script-' + nome + '\\.js:(\\d+):(\\d+)')); return m ? Math.max(1, +m[1] - 2) : null; };

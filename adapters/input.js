@@ -1,6 +1,6 @@
 /* Adaptador · Input
    Teclado, mouse e toque viram o mesmo formato. O núcleo nunca vê teclas, só ações:
-   poll() -> { down, pressed, released, keys, keysPressed, axes:{x,y}, pointer:{x,y,down} }   (keys = teclas livres pelo nome)
+   poll() -> { down, pressed, released, keys, keysPressed, axes:{x,y}, pointer:{x,y,down}, pointers:[{id,x,y,tx,ty,down,pressed}] }   (pointers = todos os dedos na tela, multitoque)   (keys = teclas livres pelo nome)
    "pressed" vale só no passo em que a ação foi apertada (borda de subida). */
 (function (root) {
   const C = root.Core = root.Core || {};
@@ -15,7 +15,7 @@
       this.down = new Set(); this.edge = new Set(); this.soltou = new Set(); this.keys = new Set(); this.keysEdge = new Set();
       this.joystick = { ativo: false, x0: 0, y0: 0, x: 0, y: 0, dx: 0, dy: 0, raio: 56, id: null, modo: 'flutuante', visivel: true, fixo: false, zonaMorta: 0.12, zona: 'base', fx: 0.14, fy: 0.78 };
       this.pointer = { x: 0, y: 0, tx: 0, ty: 0, down: false, ativo: false }; this.pEdge = false; this.ptId = null;   // um ponteiro principal no canvas; botões HTML são independentes
-      this.foco = null; this.txt = ''; this.envios = 0; this.campoEm = null; this.mapa = new Map();
+      this.toques = new Map(); this.foco = null; this.txt = ''; this.envios = 0; this.campoEm = null; this.mapa = new Map();
       for (const a in this.teclas) for (const k of this.teclas[a]) this.mapa.set(k, a);
       const ouvir = (alvo, tipo, fn) => { alvo.addEventListener(tipo, fn); this.listeners.push({ alvo, tipo, fn }); };
       const digitando = e => { const t = e.target && e.target.tagName; return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT'; };
@@ -26,21 +26,26 @@
         e.preventDefault(); this.pressionar(a, true);
       });
       ouvir(window, 'keyup', e => { const k = e.key.toLowerCase(); this.keys.delete(k); const a = this.mapa.get(k); if (a) this.pressionar(a, false); });
-      ouvir(window, 'blur', () => { this.keys.clear(); [...this.down].forEach(a => this.pressionar(a, false)); });
+      ouvir(window, 'blur', () => { this.toques.clear(); this.keys.clear(); [...this.down].forEach(a => this.pressionar(a, false)); });
       if (canvas.style) { canvas.style.touchAction = 'none'; canvas.style.userSelect = 'none'; canvas.style.webkitUserSelect = 'none'; canvas.style.webkitTapHighlightColor = 'transparent'; }   // sem isso o navegador do celular rouba o gesto (rolagem) e o joystick morre
       ouvir(canvas, 'pointerdown', e => {
-        if (this.ptId !== null) { e.preventDefault(); return; }       // 2º dedo no canvas é ignorado: não corrompe o estado do 1º
-        this.ptId = e.pointerId; const p = this.local(e); this.atualizarPonteiro(p, true); this.pEdge = true;
-        if (!this.joystick.ativo && this.podeJoystick(p)) { const j = this.joystick; j.ativo = true; j.id = e.pointerId; if (!j.fixo) { j.x0 = p.x; j.y0 = p.y; } j.x = p.x; j.y = p.y; j.dx = j.dy = 0; if (j.fixo) this._mover(p); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }
+        const p = this.local(e), w = this._mundo(p), usados = new Set([...this.toques.values()].map(t => t.id)); let slot = 0; while (usados.has(slot)) slot++;
+        this.toques.set(e.pointerId, { id: slot, x: w.x, y: w.y, tx: w.tx, ty: w.ty, down: true, pressed: true, fim: false, tipo: e.pointerType });   // multitoque: cada dedo tem seu id (0, 1, 2...)
+        if (this.ptId === null) { this.ptId = e.pointerId; this.atualizarPonteiro(p, true); this.pEdge = true; }   // o 1º dedo é o ponteiro principal (compatível com tudo que já existe)
+        if (!this.joystick.ativo && this.podeJoystick(p)) { const j = this.joystick; j.ativo = true; j.id = e.pointerId; if (!j.fixo) { j.x0 = p.x; j.y0 = p.y; } j.x = p.x; j.y = p.y; j.dx = j.dy = 0; if (j.fixo) this._mover(p); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} }   // o joystick pega qualquer dedo dentro da zona, mesmo o 2º
         e.preventDefault();
       });
       ouvir(canvas, 'pointermove', e => {
-        if (this.ptId !== null && e.pointerId !== this.ptId) return;
-        const p = this.local(e); this.atualizarPonteiro(p, this.pointer.down);
+        const t = this.toques.get(e.pointerId), p = this.local(e); if (t) Object.assign(t, this._mundo(p));
+        if (this.ptId === null || e.pointerId === this.ptId) this.atualizarPonteiro(p, this.pointer.down);
         const j = this.joystick; if (!j.ativo || e.pointerId !== j.id) return;
         this._mover(p);
       });
-      const fim = e => { if (e.pointerId !== this.ptId) return; const j = this.joystick; j.ativo = false; j.dx = j.dy = 0; j.id = null; this.ptId = null; this.pointer.down = false; if (e.pointerType !== 'mouse') this._deixar = true; };   // dedo levantou: o 'sobre' dos botões some depois do quadro que viu o toque
+      const fim = e => {
+        const t = this.toques.get(e.pointerId); if (t) { t.down = false; t.fim = true; }   // fica mais um quadro na lista para o jogo ver o fim do toque
+        const j = this.joystick; if (e.pointerId === j.id) { j.ativo = false; j.dx = j.dy = 0; j.id = null; }
+        if (e.pointerId !== this.ptId) return; this.ptId = null; this.pointer.down = false; if (e.pointerType !== 'mouse') this._deixar = true;   // dedo levantou: o 'sobre' dos botões some depois do quadro que viu o toque
+      };
       ouvir(canvas, 'pointerup', e => { if (e.pointerType === 'mouse' || e.pointerId === this.ptId || this.ptId === null) this._tocou(e); });   // toque num Campo: abre o teclado (precisa ser dentro do gesto do usuário)
       ouvir(canvas, 'pointerup', fim); ouvir(canvas, 'pointercancel', fim);
     }
@@ -77,6 +82,7 @@
       const j = this.joystick; j.x = p.x; j.y = p.y; let dx = (p.x - j.x0) / j.raio, dy = (p.y - j.y0) / j.raio; const m = Math.hypot(dx, dy);
       if (m > 1) { dx /= m; dy /= m; } j.dx = dx; j.dy = dy;
     }
+    _mundo(p) { const w = this.renderer ? this.renderer.telaParaMundo(p.x, p.y) : p, j = this.renderer && this.renderer.telaParaJanela ? this.renderer.telaParaJanela(p.x, p.y) : p; return { x: w.x, y: w.y, tx: j.x, ty: j.y }; }
     local(e) { const r = this.canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
     atualizarPonteiro(p, down) { const w = this.renderer ? this.renderer.telaParaMundo(p.x, p.y) : p; this.pointer.x = w.x; this.pointer.y = w.y; this.pointer.down = down; this.pointer.ativo = true;
       const j = this.renderer && this.renderer.telaParaJanela ? this.renderer.telaParaJanela(p.x, p.y) : p; this.pointer.tx = j.x; this.pointer.ty = j.y; }
@@ -98,7 +104,8 @@
       return { ativo: j.ativo && v, dx: v ? j.dx : 0, dy: v ? j.dy : 0, forca: v ? f : 0, angulo: v ? Math.atan2(j.dy, j.dx) * 180 / Math.PI : 0, modo: j.modo };
     }
     poll() {
-      const s = { keys: new Set(this.keys), keysPressed: new Set(this.keysEdge), down: new Set(this.down), pressed: new Set(this.edge), released: new Set(this.soltou), axes: this.eixos(), joystick: this.dadosJoystick(), texto: { foco: !!this.foco, id: this.foco ? this.foco.id : -1, valor: this.txt, envios: this.envios }, pointer: { ...this.pointer, pressed: this.pEdge } };
+      const s = { keys: new Set(this.keys), keysPressed: new Set(this.keysEdge), down: new Set(this.down), pressed: new Set(this.edge), released: new Set(this.soltou), axes: this.eixos(), joystick: this.dadosJoystick(), texto: { foco: !!this.foco, id: this.foco ? this.foco.id : -1, valor: this.txt, envios: this.envios }, pointer: { ...this.pointer, pressed: this.pEdge }, pointers: [...this.toques.values()].map(t => ({ id: t.id, x: t.x, y: t.y, tx: t.tx, ty: t.ty, down: t.down, pressed: t.pressed, ativo: true })) };
+      for (const [k, t] of this.toques) { t.pressed = false; if (t.fim) this.toques.delete(k); }
       this.pEdge = false; if (this._deixar) { this.pointer.ativo = false; this._deixar = false; } this.edge.clear(); this.soltou.clear(); this.keysEdge.clear(); return s;
     }
     destruir() {
@@ -107,7 +114,7 @@
       if (this._el) { try { this._el.remove(); } catch (x) {} this._el = null; } this.foco = null;
       this.down.clear(); this.edge.clear(); this.soltou.clear(); this.keys.clear(); this.keysEdge.clear();
       this.joystick.ativo = false; this.joystick.id = null; this.joystick.dx = this.joystick.dy = 0;
-      this.ptId = null; this.pointer.down = false;
+      this.ptId = null; this.pointer.down = false; this.toques.clear();
     }
   }
   C.Input = Input;
