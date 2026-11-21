@@ -470,6 +470,11 @@ const nova=()=>new C.Engine();
  const b1=mk(true);e.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:100,y:100,tx:100,ty:100,down:true,pressed:true,ativo:true}})};
  e.passo();ok(cl===0&&b1.Botao.sobre===false&&b1.Botao.apertado===false,'botão desativado não reage a toque nem clique');
  b1.Botao.desativado=false;e.passo();ok(cl===1&&b1.Botao.sobre===true,'botão ativado volta a reagir');}
+{const e=nova();const cl=[];e.events.on('a',()=>cl.push('a'));e.events.on('b',()=>cl.push('b'));
+ const mk=(n,x)=>e.scene.create({nome:n,Transform:{x,y:100},Sprite:{w:60,h:40,fixo:false},Botao:{acao:{evento:n}}});
+ const A=mk('a',100),B=mk('b',300);
+ e.input={poll:()=>({keys:new Set(),keysPressed:new Set(),down:new Set(),pressed:new Set(),released:new Set(),axes:{x:0,y:0},pointer:{x:100,y:100,tx:100,ty:100,down:true,pressed:true,ativo:true},pointers:[{id:0,x:100,y:100,tx:100,ty:100,down:true,pressed:true,ativo:true},{id:1,x:300,y:100,tx:300,ty:100,down:true,pressed:true,ativo:true}]})};
+ e.passo();ok(cl.includes('a')&&cl.includes('b')&&A.Botao.apertado&&B.Botao.apertado,'multitoque: dois dedos apertam dois botões ao mesmo tempo');}
 { // erro de script informa a linha
   const E = new Core.Engine({ renderer: { desenhar() {}, largura: 100, altura: 100 }, agendador: { agora: () => 0, pedir: () => 0, cancelar() {} } });
   E.scene.estado.scripts = { lin: { fonte: 'function atualizar(e) {\n  var a = 1;\n  undefinida.x();\n}' }, topo: { fonte: 'var a = 1;\nnulo.y;' } };
