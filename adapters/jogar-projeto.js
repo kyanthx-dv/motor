@@ -28,13 +28,25 @@
       },
       eventos: { pular(e) { if (e.Script.params.plat && Math.abs(e.Velocity.vy) < 8) e.Velocity.vy = -520; } }
     });
-    engine.registrarScript('moeda', { eventos: { gatilho(e, d, ctx) { cena.destroy(e.id); cena.estado.pegas = (cena.estado.pegas || 0) + 1; } } });
-    engine.registrarScript('bandeira', { eventos: { gatilho(e, d, ctx) { ctx.engine.irPara('fim'); } } });
+    // comportamentos anexaveis (ids iguais aos do app); um objeto pode ter varios
+    const defs = {
+      coletavel: { eventos: { gatilho(e) { cena.destroy(e.id); cena.estado.pegas = (cena.estado.pegas || 0) + 1; } } },
+      vitoria: { eventos: { gatilho(e, d, ctx) { ctx.engine.irPara('fim'); } } },
+      perigo: { eventos: { gatilho() { reiniciar(); } } },
+      perseguir: { atualizar(e) { const h = cena.find('heroi'); if (!h || !e.Velocity) return; const dx = h.Transform.x - e.Transform.x, dy = h.Transform.y - e.Transform.y, d = Math.hypot(dx, dy) || 1; if (d > 260) { e.Velocity.vx = 0; e.Velocity.vy = 0; return; } e.Velocity.vx = dx / d * 60; e.Velocity.vy = e.Script.params.plat ? 0 : dy / d * 60; } },
+      patrulha: { atualizar(e) { const p = e.Script.params; e.Transform.x = p.x0 + Math.sin(performance.now() / 1000 * 1.5 + p.fase) * 48; } }
+    };
+    const combinar = lista => {
+      const nome = 's:' + lista.slice().sort().join('+');
+      if (!engine.scripts[nome]) {
+        const ats = lista.map(n => defs[n] && defs[n].atualizar).filter(Boolean), gs = lista.map(n => defs[n] && defs[n].eventos && defs[n].eventos.gatilho).filter(Boolean), def = {};
+        if (ats.length) def.atualizar = (e, dt, ctx) => ats.forEach(f => f(e, dt, ctx));
+        if (gs.length) def.eventos = { gatilho: (e, d, ctx) => gs.forEach(f => f(e, d, ctx)) };
+        engine.registrarScript(nome, def);
+      }
+      return nome;
+    };
     engine.registrarScript('hud', { atualizar(e) { e.Sprite.rotulo = 'Moedas ' + (cena.estado.pegas || 0); } });
-    engine.registrarScript('inimigo', {
-      atualizar(e) { const h = cena.find('heroi'); if (!h) return; const dx = h.Transform.x - e.Transform.x, dy = h.Transform.y - e.Transform.y, d = Math.hypot(dx, dy) || 1; if (d > 260) { e.Velocity.vx = 0; e.Velocity.vy = 0; return; } e.Velocity.vx = dx / d * 60; e.Velocity.vy = e.Script.params.plat ? 0 : dy / d * 60; },
-      eventos: { gatilho() { reiniciar(); } }
-    });
 
     const SOLIDOS = { Grama: 1, Terra: 1, Pedra: 1, Areia: 1 };
     for (const sc of proj.cenas) {
@@ -50,15 +62,20 @@
         for (const k of Object.keys(sc.cel)) {
           const [cx, cy] = k.split(',').map(Number), it = pal[sc.cel[k]]; if (!it) continue;
           const x = cx * U + U / 2, y = (sc.a - 1 - cy) * U + U / 2, cor = hex(it.cor);
-          if (it.aba === 'Tile') {
-            const e = { nome: it.nome.toLowerCase(), Transform: { x, y }, Sprite: { forma: 'retangulo', w: U, h: U, cor, camada: 0 } };
-            if (SOLIDOS[it.nome]) e.Body = { forma: 'retangulo', w: U, h: U, massa: 0 };
-            cena.create(e);
-          } else if (it.nome === 'Herói') heroi = { x, y };
-          else if (it.nome === 'Moeda') cena.create({ nome: 'moeda', Transform: { x, y }, Body: { forma: 'circulo', raio: 10, massa: 0, sensor: true, camada: 'item', colide: ['jogador'] }, Sprite: { forma: 'circulo', raio: 8, cor: '#F59E0B', camada: 1 }, Script: { nome: 'moeda' } });
-          else if (it.nome === 'Bandeira') cena.create({ nome: 'bandeira', Transform: { x, y }, Body: { forma: 'retangulo', w: 20, h: 28, massa: 0, sensor: true, camada: 'item', colide: ['jogador'] }, Sprite: { forma: 'retangulo', w: 14, h: 26, cor: '#F23F43', camada: 1 }, Script: { nome: 'bandeira' } });
-          else if (it.nome === 'Slime' || it.nome === 'Fantasma') cena.create({ nome: 'inimigo', Transform: { x, y }, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 10, massa: 1, sensor: true, camada: 'inimigo', colide: ['jogador'] }, Sprite: { forma: 'circulo', raio: 11, cor, camada: 2 }, Script: { nome: 'inimigo', params: { plat } } });
-          else cena.create({ nome: it.nome.toLowerCase(), Transform: { x, y }, Sprite: { forma: 'circulo', raio: 12, cor, camada: 1 } });
+          if (it.nome === 'Herói') { heroi = { x, y }; continue; }
+          const ob = (sc.obj && sc.obj[k]) || {};
+          if (ob.visivel === false && !(ob.scripts || []).length && !ob.solido) continue;
+          const tile = it.aba === 'Tile', solido = ob.solido !== undefined ? ob.solido : (tile && !!SOLIDOS[it.nome]);
+          const scripts = ob.scripts || [], camada = (tile ? 0 : 1) + (ob.camada || 0);
+          const forma = it.nome === 'Bandeira' ? { forma: 'retangulo', w: 14, h: 26 } : tile ? { forma: 'retangulo', w: U, h: U } : { forma: 'circulo', raio: it.nome === 'Moeda' ? 8 : 12 };
+          const e = { nome: (ob.nome || it.nome).toLowerCase(), Transform: { x, y }, Sprite: Object.assign({ cor: it.nome === 'Moeda' ? '#F59E0B' : it.nome === 'Bandeira' ? '#F23F43' : cor, camada }, forma) };
+          if (ob.visivel === false) e.Sprite.cor = 'rgba(0,0,0,0)';
+          const corpo = tile ? { forma: 'retangulo', w: U, h: U } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 20, h: 28 } : { forma: 'circulo', raio: 10 };
+          if (solido) e.Body = Object.assign({ massa: 0 }, corpo);
+          else if (scripts.length) e.Body = Object.assign({ massa: scripts.includes('perseguir') ? 1 : 0, sensor: true, camada: 'item', colide: ['jogador'] }, corpo);
+          if (scripts.includes('perseguir')) e.Velocity = { vx: 0, vy: 0 };
+          if (scripts.length) e.Script = { nome: combinar(scripts), params: { plat, x0: x, fase: (cx * 7 + cy * 13) % 6 } };
+          cena.create(e);
         }
         if (heroi) cena.create({ nome: 'heroi', Transform: heroi, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 11, massa: 1, amortecimento: plat ? 0 : 9, camada: 'jogador' }, Sprite: { forma: 'circulo', raio: 12, cor: '#FFFFFF', camada: 3 }, Script: { nome: 'heroi', params: { plat } } });
         const h = cena.find('heroi');
