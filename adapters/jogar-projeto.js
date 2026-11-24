@@ -4,14 +4,19 @@
 (function () {
   const C = Core, U = 32;
   const hex = n => '#' + (n & 0xFFFFFF).toString(16).padStart(6, '0');
-  window.iniciarProjeto = function (dados) {
+  window.iniciarProjeto = async function (dados) {
     const proj = dados.projeto, pal = dados.paleta || [];
     const retrato = proj.ori === 'retrato';
     const L = retrato ? 450 : 800, A = retrato ? 800 : 450;
     const tela = document.getElementById('tela');
     const ajustar = () => { const k = Math.min(innerWidth / L, innerHeight / A); tela.style.width = L * k + 'px'; tela.style.height = A * k + 'px'; };
     addEventListener('resize', ajustar); ajustar();
-    const renderer = new C.CanvasRenderer(tela, { largura: L, altura: A, fundo: '#141414', assets: new C.Assets() });
+    const assets = new C.Assets();
+    // desenhos do usuario (PNG em data URL) viram imagens da engine: nome 'a<valor da celula>'
+    const manifesto = {};
+    for (const [v, im] of Object.entries(dados.imagens || {})) manifesto['a' + v] = im.png;
+    try { await assets.carregar(manifesto); } catch (e) { console.error(String(e)); }
+    const renderer = new C.CanvasRenderer(tela, { largura: L, altura: A, fundo: '#141414', assets });
     const input = new C.Input(tela, renderer), engine = new C.Engine({ renderer, input }), cena = engine.scene;
     const texto = (t, x, y, tam, cor = '#fff') => cena.create({ nome: 'texto', Transform: { x, y }, Sprite: { fixo: true, forma: 'retangulo', w: 1, h: 1, cor: 'rgba(0,0,0,0)', rotulo: t, tamanhoTexto: tam, corTexto: cor, camada: 9 } });
     const botao = (t, x, y, acao, w = 200, h = 48, tam = 20) => cena.create({ nome: 'botao', Transform: { x, y }, Botao: { acao }, Sprite: { fixo: true, forma: 'retangulo', w, h, cor: '#1D9BF0', corSobre: '#4db3f5', rotulo: t, corTexto: '#ffffff', tamanhoTexto: tam, camada: 10 } });
@@ -60,17 +65,18 @@
           cena.create({ nome: 'borda', Transform: { x, y }, Body: { forma: 'retangulo', w, h, massa: 0 } });
         let heroi = null;
         for (const k of Object.keys(sc.cel)) {
-          const [cx, cy] = k.split(',').map(Number), it = pal[sc.cel[k]]; if (!it) continue;
+          const [cx, cy] = k.split(',').map(Number), v = sc.cel[k], img = (dados.imagens || {})[v], it = v >= 100000 ? (img ? { nome: img.nome, aba: 'Meus', cor: 0xFFFFFF } : null) : pal[v]; if (!it) continue;
           const x = cx * U + U / 2, y = (sc.a - 1 - cy) * U + U / 2, cor = hex(it.cor);
           if (it.nome === 'Herói') { heroi = { x, y }; continue; }
           const ob = (sc.obj && sc.obj[k]) || {};
           if (ob.visivel === false && !(ob.scripts || []).length && !ob.solido) continue;
           const tile = it.aba === 'Tile', solido = ob.solido !== undefined ? ob.solido : (tile && !!SOLIDOS[it.nome]);
           const scripts = ob.scripts || [], camada = (tile ? 0 : 1) + (ob.camada || 0);
-          const forma = it.nome === 'Bandeira' ? { forma: 'retangulo', w: 14, h: 26 } : tile ? { forma: 'retangulo', w: U, h: U } : { forma: 'circulo', raio: it.nome === 'Moeda' ? 8 : 12 };
+          const kimg = img ? U / Math.max(img.l, img.a) : 1;
+          const forma = img ? { imagem: 'a' + v, quadroW: img.l, quadroH: img.a, escala: kimg, suavizar: false } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 14, h: 26 } : tile ? { forma: 'retangulo', w: U, h: U } : { forma: 'circulo', raio: it.nome === 'Moeda' ? 8 : 12 };
           const e = { nome: (ob.nome || it.nome).toLowerCase(), Transform: { x, y }, Sprite: Object.assign({ cor: it.nome === 'Moeda' ? '#F59E0B' : it.nome === 'Bandeira' ? '#F23F43' : cor, camada }, forma) };
-          if (ob.visivel === false) e.Sprite.cor = 'rgba(0,0,0,0)';
-          const corpo = tile ? { forma: 'retangulo', w: U, h: U } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 20, h: 28 } : { forma: 'circulo', raio: 10 };
+          if (ob.visivel === false) { e.Sprite.cor = 'rgba(0,0,0,0)'; if (img) delete e.Sprite.imagem; }
+          const corpo = img ? { forma: 'retangulo', w: img.l * kimg, h: img.a * kimg } : tile ? { forma: 'retangulo', w: U, h: U } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 20, h: 28 } : { forma: 'circulo', raio: 10 };
           if (solido) e.Body = Object.assign({ massa: 0 }, corpo);
           else if (scripts.length) e.Body = Object.assign({ massa: scripts.includes('perseguir') ? 1 : 0, sensor: true, camada: 'item', colide: ['jogador'] }, corpo);
           if (scripts.includes('perseguir')) e.Velocity = { vx: 0, vy: 0 };
