@@ -65,15 +65,16 @@
           cena.create({ nome: 'borda', Transform: { x, y }, Body: { forma: 'retangulo', w, h, massa: 0 } });
         let heroi = null;
         for (const k of Object.keys(sc.cel)) {
-          const [cx, cy] = k.split(',').map(Number), v = sc.cel[k], img = (dados.imagens || {})[v], it = v >= 100000 ? (img ? { nome: img.nome, aba: 'Meus', cor: 0xFFFFFF } : null) : pal[v]; if (!it) continue;
+          const [cx, cy] = k.split(',').map(Number), v = sc.cel[k], ob = (sc.obj && sc.obj[k]) || {};
+          const imgs = dados.imagens || {}, chave = ob.textura != null && imgs[ob.textura] ? ob.textura : v, img = imgs[chave];
+          const it = pal[v] || (imgs[v] ? { nome: imgs[v].nome, aba: 'Meus', cor: 0xFFFFFF } : null); if (!it) continue;
           const x = cx * U + U / 2, y = (sc.a - 1 - cy) * U + U / 2, cor = hex(it.cor);
-          if (it.nome === 'Herói') { heroi = { x, y }; continue; }
-          const ob = (sc.obj && sc.obj[k]) || {};
+          if (it.nome === 'Herói') { heroi = { x, y, img: img ? { chave, l: img.l, a: img.a } : null }; continue; }
           if (ob.visivel === false && !(ob.scripts || []).length && !ob.solido) continue;
           const tile = it.aba === 'Tile', solido = ob.solido !== undefined ? ob.solido : (tile && !!SOLIDOS[it.nome]);
           const scripts = ob.scripts || [], camada = (tile ? 0 : 1) + (ob.camada || 0);
           const kimg = img ? U / Math.max(img.l, img.a) : 1;
-          const forma = img ? { imagem: 'a' + v, quadroW: img.l, quadroH: img.a, escala: kimg, suavizar: false } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 14, h: 26 } : tile ? { forma: 'retangulo', w: U, h: U } : { forma: 'circulo', raio: it.nome === 'Moeda' ? 8 : 12 };
+          const forma = img ? { imagem: 'a' + chave, quadroW: img.l, quadroH: img.a, escala: kimg, suavizar: false } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 14, h: 26 } : tile ? { forma: 'retangulo', w: U, h: U } : { forma: 'circulo', raio: it.nome === 'Moeda' ? 8 : 12 };
           const e = { nome: (ob.nome || it.nome).toLowerCase(), Transform: { x, y }, Sprite: Object.assign({ cor: it.nome === 'Moeda' ? '#F59E0B' : it.nome === 'Bandeira' ? '#F23F43' : cor, camada }, forma) };
           if (ob.visivel === false) { e.Sprite.cor = 'rgba(0,0,0,0)'; if (img) delete e.Sprite.imagem; }
           const corpo = img ? { forma: 'retangulo', w: img.l * kimg, h: img.a * kimg } : tile ? { forma: 'retangulo', w: U, h: U } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 20, h: 28 } : { forma: 'circulo', raio: 10 };
@@ -83,7 +84,7 @@
           if (scripts.length) e.Script = { nome: combinar(scripts), params: { plat, x0: x, fase: (cx * 7 + cy * 13) % 6 } };
           cena.create(e);
         }
-        if (heroi) cena.create({ nome: 'heroi', Transform: heroi, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 11, massa: 1, amortecimento: plat ? 0 : 9, camada: 'jogador' }, Sprite: { forma: 'circulo', raio: 12, cor: '#FFFFFF', camada: 3 }, Script: { nome: 'heroi', params: { plat } } });
+        if (heroi) cena.create({ nome: 'heroi', Transform: { x: heroi.x, y: heroi.y }, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 11, massa: 1, amortecimento: plat ? 0 : 9, camada: 'jogador' }, Sprite: heroi.img ? { imagem: 'a' + heroi.img.chave, quadroW: heroi.img.l, quadroH: heroi.img.a, escala: 28 / Math.max(heroi.img.l, heroi.img.a), suavizar: false, camada: 3 } : { forma: 'circulo', raio: 12, cor: '#FFFFFF', camada: 3 }, Script: { nome: 'heroi', params: { plat } } });
         const h = cena.find('heroi');
         texto('Moedas 0', 70, 24, 18).Script = { nome: 'hud' };
         botao('Sair', L - 50, 24, { evento: 'sair' }, 70, 32, 14);
