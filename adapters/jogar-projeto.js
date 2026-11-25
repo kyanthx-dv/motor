@@ -64,20 +64,22 @@
         for (const [x, y, w, h] of [[W / 2, -20, W + 80, 40], [W / 2, H + 20, W + 80, 40], [-20, H / 2, 40, H + 80], [W + 20, H / 2, 40, H + 80]])
           cena.create({ nome: 'borda', Transform: { x, y }, Body: { forma: 'retangulo', w, h, massa: 0 } });
         let heroi = null;
-        for (const k of Object.keys(sc.cel)) {
-          const [cx, cy] = k.split(',').map(Number), v = sc.cel[k], ob = (sc.obj && sc.obj[k]) || {};
+        // sc.objs (editor novo): lista livre {x,y,w,h,v,...props}; sc.cel (antigo): uma celula = um objeto 1x1
+        const lista = sc.objs || Object.keys(sc.cel || {}).map(k => { const [x, y] = k.split(',').map(Number); return Object.assign({ x, y, w: 1, h: 1, v: sc.cel[k] }, (sc.obj && sc.obj[k]) || {}); });
+        for (const ob of lista) {
+          const cx = ob.x, cy = ob.y, v = ob.v, ow = ob.w || 1, oh = ob.h || 1, mx = Math.max(ow, oh);
           const imgs = dados.imagens || {}, chave = ob.textura != null && imgs[ob.textura] ? ob.textura : v, img = imgs[chave];
           const it = pal[v] || (imgs[v] ? { nome: imgs[v].nome, aba: 'Meus', cor: 0xFFFFFF } : null); if (!it) continue;
-          const x = cx * U + U / 2, y = (sc.a - 1 - cy) * U + U / 2, cor = hex(it.cor);
+          const x = (cx + ow / 2) * U, y = (sc.a - cy - oh / 2) * U, cor = hex(it.cor);
           if (it.nome === 'Herói') { heroi = { x, y, img: img ? { chave, l: img.l, a: img.a } : null }; continue; }
           if (ob.visivel === false && !(ob.scripts || []).length && !ob.solido) continue;
           const tile = it.aba === 'Tile', solido = ob.solido !== undefined ? ob.solido : (tile && !!SOLIDOS[it.nome]);
           const scripts = ob.scripts || [], camada = (tile ? 0 : 1) + (ob.camada || 0);
           const kimg = img ? U / Math.max(img.l, img.a) : 1;
-          const forma = img ? { imagem: 'a' + chave, quadroW: img.l, quadroH: img.a, escala: kimg, suavizar: false } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 14, h: 26 } : tile ? { forma: 'retangulo', w: U, h: U } : { forma: 'circulo', raio: it.nome === 'Moeda' ? 8 : 12 };
+          const forma = img ? { imagem: 'a' + chave, quadroW: img.l, quadroH: img.a, escala: kimg, escalaX: ow, escalaY: oh, suavizar: false } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 14 * ow, h: 26 * oh } : tile ? { forma: 'retangulo', w: U * ow, h: U * oh } : { forma: 'circulo', raio: (it.nome === 'Moeda' ? 8 : 12) * mx };
           const e = { nome: (ob.nome || it.nome).toLowerCase(), Transform: { x, y }, Sprite: Object.assign({ cor: it.nome === 'Moeda' ? '#F59E0B' : it.nome === 'Bandeira' ? '#F23F43' : cor, camada }, forma) };
           if (ob.visivel === false) { e.Sprite.cor = 'rgba(0,0,0,0)'; if (img) delete e.Sprite.imagem; }
-          const corpo = img ? { forma: 'retangulo', w: img.l * kimg, h: img.a * kimg } : tile ? { forma: 'retangulo', w: U, h: U } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 20, h: 28 } : { forma: 'circulo', raio: 10 };
+          const corpo = img ? { forma: 'retangulo', w: img.l * kimg * ow, h: img.a * kimg * oh } : tile ? { forma: 'retangulo', w: U * ow, h: U * oh } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 20 * ow, h: 28 * oh } : { forma: 'circulo', raio: 10 * mx };
           if (solido) e.Body = Object.assign({ massa: 0 }, corpo);
           else if (scripts.length) e.Body = Object.assign({ massa: scripts.includes('perseguir') ? 1 : 0, sensor: true, camada: 'item', colide: ['jogador'] }, corpo);
           if (scripts.includes('perseguir')) e.Velocity = { vx: 0, vy: 0 };

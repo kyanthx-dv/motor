@@ -2,7 +2,7 @@
    Desenha a cena num <canvas> 2D. Só LÊ a cena. O mundo tem uma "janela" lógica fixa (largura x altura) encaixada
    na tela com faixas laterais. Com scene.estado.camera, a janela passeia pelo mundo (zoom e seguir entidade).
    Sprite: { cor, borda, forma, raio, w, h, camada, ordenarY, rotulo,
-             imagem, quadroW, quadroH, escala, offX, offY, espelhar, suavizar }  (imagem usa Animacao se existir) */
+             imagem, quadroW, quadroH, escala, escalaX, escalaY, offX, offY, espelhar, suavizar }  (imagem usa Animacao se existir) */
 (function (root) {
   const C = root.Core = root.Core || {};
   class CanvasRenderer {
@@ -118,11 +118,11 @@
         const x = t.px === undefined ? t.x : t.px + (t.x - t.px) * alpha, y = t.py === undefined ? t.y : t.py + (t.y - t.py) * alpha;
         const img = s.imagem && this.assets && this.assets.get(s.imagem);
         if (img) {
-          const fw = s.quadroW || img.width, fh = s.quadroH || img.height, k = s.escala || 1, a = e.Animacao || {};
-          if (Math.abs(x - cx) - fw * k / 2 > meioW || Math.abs(y - cy) - fh * k / 2 > meioH) return;          // fora da tela: não desenha
+          const fw = s.quadroW || img.width, fh = s.quadroH || img.height, k = s.escala || 1, ex = (s.escalaX || 1) * k, ey = (s.escalaY || 1) * k, a = e.Animacao || {};
+          if (Math.abs(x - cx) - fw * ex / 2 > meioW || Math.abs(y - cy) - fh * ey / 2 > meioH) return;          // fora da tela: não desenha
           g.save(); g.translate(x, y); if (s.espelhar) g.scale(-1, 1); if (t.rot) g.rotate(t.rot);
           g.imageSmoothingEnabled = !!s.suavizar;
-          g.drawImage(img, (a.quadro || 0) * fw, (a.linha || 0) * fh, fw, fh, -fw * k / 2 + (s.offX || 0), -fh * k / 2 + (s.offY || 0), fw * k, fh * k);
+          g.drawImage(img, (a.quadro || 0) * fw, (a.linha || 0) * fh, fw, fh, -fw * ex / 2 + (s.offX || 0), -fh * ey / 2 + (s.offY || 0), fw * ex, fh * ey);
           g.restore(); return;
         }
         const f = s.forma || b.forma || (s.raio || b.raio ? 'circulo' : 'retangulo');
