@@ -149,7 +149,7 @@
     engine.events.on('pular', () => { const h = engine.scene.find('heroi'); if (h && h.Script && h.Script.params) h.Script.params.fila = 0.15; });
     // qualidade de desenho (resolução do canvas): 3 = nativa, 1.5 = média, 1 = baixa (menos pixels = mais FPS)
     window.definirQualidade = k => { renderer.dprMax = k; renderer.redimensionar(); };
-    window.definirQualidade(1.5); tela.style.imageRendering = 'pixelated';   // pixel art nítida mesmo com o canvas em resolução menor
+    window.definirQualidade(1.5);   // sem 'pixelated': a ampliação suave do navegador deixa o texto liso (a pixel art já sai nítida no próprio canvas)
     engine.irPara('c:' + inicial.nome); engine.iniciar();
     window.jogo = { engine, get cena() { return engine.scene; } };   // sempre a cena atual
   };
