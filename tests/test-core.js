@@ -43,7 +43,13 @@ const nova=()=>new C.Engine();
  f.scene.create({nome:'alvo',Transform:{x:1000,y:500}});for(let i=0;i<120;i++)f.passo();
  ok(Math.abs(f.scene.estado.camera.x-1000)<1&&Math.abs(f.scene.estado.camera.y-500)<1,'câmera segue o alvo');
  f.scene.find('alvo').Transform.x=5000;f.scene.find('alvo').Transform.y=-900;for(let i=0;i<200;i++)f.passo();
- ok(f.scene.estado.camera.x===2000-400&&f.scene.estado.camera.y===225,'câmera respeita os limites do mundo');}
+ ok(f.scene.estado.camera.x===2000-400&&f.scene.estado.camera.y===225,'câmera respeita os limites do mundo');
+ const g=nova();g.scene.estado.camera={modo:'seguir',x:100,y:100,zoom:1,seguir:'@ator',suavizar:50,limites:{x0:0,y0:0,x1:500,y1:500}};
+ for(let i=0;i<20;i++)g.passo();ok(g.scene.estado.camera.x===100&&g.scene.estado.camera.y===100,'câmera sem ator principal fica parada (sem erro)');
+ g.scene.create({nome:'p',Transform:{x:3000,y:3000}});g.scene.estado.atorPrincipal='p';for(let i=0;i<200;i++)g.passo();
+ ok(g.scene.estado.camera.x>2900,'modo seguir acompanha o ator principal sem limites');
+ g.scene.estado.camera.modo='restrito';for(let i=0;i<20;i++)g.passo();ok(g.scene.estado.camera.x<=500,'modo restrito volta para dentro dos limites (troca em tempo real)');
+ g.scene.estado.camera.modo='fixo';const px=g.scene.estado.camera.x;g.scene.find('p').Transform.x=0;for(let i=0;i<20;i++)g.passo();ok(g.scene.estado.camera.x===px,'modo fixo não anda');}
 // 7) camadas de colisão
 {const passa=(ca,cb,colA,colB)=>{const e=nova();const a=e.scene.create({Transform:{x:0,y:0},Velocity:{vx:100,vy:0},Body:{raio:10,massa:1,elasticidade:1,camada:ca,colide:colA}});
   e.scene.create({Transform:{x:40,y:0},Body:{raio:10,massa:0,camada:cb,colide:colB}});for(let i=0;i<60;i++)e.passo();return a.Transform.x>40;};
