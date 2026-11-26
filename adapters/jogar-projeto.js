@@ -54,13 +54,31 @@
     engine.registrarScript('hud', { atualizar(e) { e.Sprite.rotulo = 'Moedas ' + (cena.estado.pegas || 0); } });
 
     const SOLIDOS = { Grama: 1, Terra: 1, Pedra: 1, Areia: 1 };
+    // câmera 'arrastar': o dedo move a câmera (limitada ao mapa); some se o modo mudar
+    let arr = null;
+    function ativarArrasto(cam, L) {
+      const cv = document.querySelector('canvas'); if (!cv || cv._arr) return; cv._arr = true;
+      cv.addEventListener('pointerdown', e => { arr = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
+      cv.addEventListener('pointermove', e => {
+        const c = window.jogo && window.jogo.cena.estado.camera; if (!arr || arr.id !== e.pointerId || !c || c.modo !== 'arrastar') return;
+        const k = L / cv.clientWidth / (c.zoom || 1), l = c.limites;
+        c.x -= (e.clientX - arr.x) * k; c.y -= (e.clientY - arr.y) * k; arr.x = e.clientX; arr.y = e.clientY;
+        if (l) { c.x = Math.max(l.x0, Math.min(l.x1, c.x)); c.y = Math.max(l.y0, Math.min(l.y1, c.y)); }
+        c.px = c.x; c.py = c.y;
+      });
+      const fim = e => { if (arr && arr.id === e.pointerId) arr = null; };
+      cv.addEventListener('pointerup', fim); cv.addEventListener('pointercancel', fim);
+    }
     for (const sc of proj.cenas) {
       engine.registrarCena('c:' + sc.nome, { montar() {
         const plat = sc.fisica === 'plataforma', W = sc.l * U, H = sc.a * U;
         cena.estado.fundo = hex(sc.cor); cena.estado.pegas = 0;
         cena.estado.gravidade = plat ? { x: 0, y: 1500 } : { x: 0, y: 0 };
         cena.estado.joystick = { modo: 'flutuante', zona: 'esquerda', visivel: true };
-        cena.estado.camera = { x: W / 2, y: H / 2, zoom: 1.4, seguir: 'heroi', suavizar: 6, limites: { x0: 0, y0: 0, x1: W, y1: H } };
+        const cm = sc.cam || {}, lm = cm.lim;   // câmera da cena: modo fixo|arrastar|seguir|restrito, zoom, posição fixa e limites (em células)
+        cena.estado.camera = { modo: cm.modo || 'restrito', x: cm.fx != null ? (cm.fx + 0.5) * U : W / 2, y: cm.fy != null ? (sc.a - cm.fy - 0.5) * U : H / 2, zoom: cm.zoom > 0 ? cm.zoom : 1.4, seguir: '@ator', suavizar: 6,
+          limites: lm ? { x0: lm.x * U, y0: (sc.a - lm.y - lm.h) * U, x1: (lm.x + lm.w) * U, y1: (sc.a - lm.y) * U } : { x0: 0, y0: 0, x1: W, y1: H } };
+        const atorId = sc.ator && sc.ator.obj != null ? sc.ator.obj : null;   // ator principal escolhido no editor (null = nenhum; vale o Herói antigo)
         for (const [x, y, w, h] of [[W / 2, -20, W + 80, 40], [W / 2, H + 20, W + 80, 40], [-20, H / 2, 40, H + 80], [W + 20, H / 2, 40, H + 80]])
           cena.create({ nome: 'borda', Transform: { x, y }, Body: { forma: 'retangulo', w, h, massa: 0 } });
         let heroi = null;
@@ -71,7 +89,7 @@
           const imgs = dados.imagens || {}, chave = ob.textura != null && imgs[ob.textura] ? ob.textura : v, img = imgs[chave];
           const it = pal[v] || (imgs[v] ? { nome: imgs[v].nome, aba: 'Meus', cor: 0xFFFFFF } : null); if (!it) continue;
           const x = (cx + ow / 2) * U, y = (sc.a - cy - oh / 2) * U, cor = hex(it.cor);
-          if (it.nome === 'Herói') { heroi = { x, y, img: img ? { chave, l: img.l, a: img.a } : null }; continue; }
+          if (atorId != null ? ob.id === atorId : it.nome === 'Herói') { heroi = { x, y, img: img ? { chave, l: img.l, a: img.a } : null }; continue; }
           if (ob.visivel === false && !(ob.scripts || []).length && !ob.solido) continue;
           const tile = it.aba === 'Tile', solido = ob.solido !== undefined ? ob.solido : (tile && !!SOLIDOS[it.nome]);
           const scripts = ob.scripts || [], camada = (tile ? 0 : 1) + (ob.camada || 0);
@@ -87,11 +105,12 @@
           cena.create(e);
         }
         if (heroi) cena.create({ nome: 'heroi', Transform: { x: heroi.x, y: heroi.y }, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 11, massa: 1, amortecimento: plat ? 0 : 9, camada: 'jogador' }, Sprite: heroi.img ? { imagem: 'a' + heroi.img.chave, quadroW: heroi.img.l, quadroH: heroi.img.a, escala: 28 / Math.max(heroi.img.l, heroi.img.a), suavizar: false, camada: 3 } : { forma: 'circulo', raio: 12, cor: '#FFFFFF', camada: 3 }, Script: { nome: 'heroi', params: { plat } } });
+        if (heroi) cena.estado.atorPrincipal = 'heroi';   // referência trocável por script
         const h = cena.find('heroi');
         texto('Moedas 0', 70, 24, 18).Script = { nome: 'hud' };
         botao('Sair', L - 50, 24, { evento: 'sair' }, 70, 32, 14);
         if (plat) botao('Pular', L - 70, A - 50, { evento: 'pular' }, 110, 56, 18);
-        if (!h) texto('Falta o Herói neste mapa', L / 2, A / 2, 22, '#F59E0B');
+        ativarArrasto(cena.estado.camera, L);   // idempotente; só age enquanto o modo for 'arrastar'
       } });
     }
     engine.registrarCena('fim', { montar() {
