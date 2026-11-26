@@ -43,8 +43,8 @@
       coletavel: { eventos: { gatilho(e) { cena.destroy(e.id); cena.estado.pegas = (cena.estado.pegas || 0) + 1; } } },
       vitoria: { eventos: { gatilho(e, d, ctx) { ctx.engine.irPara('fim'); } } },
       perigo: { eventos: { gatilho() { reiniciar(); } } },
-      perseguir: { atualizar(e) { const h = cena.find('heroi'); if (!h || !e.Velocity) return; const dx = h.Transform.x - e.Transform.x, dy = h.Transform.y - e.Transform.y, d = Math.hypot(dx, dy) || 1; if (d > 260) { e.Velocity.vx = 0; e.Velocity.vy = 0; return; } e.Velocity.vx = dx / d * 60; e.Velocity.vy = e.Script.params.plat ? 0 : dy / d * 60; } },
-      patrulha: { atualizar(e) { const p = e.Script.params; e.Transform.x = p.x0 + Math.sin(performance.now() / 1000 * 1.5 + p.fase) * 48; } }
+      perseguir: { atualizar(e) { const h = cena.find('heroi'); if (!h || !e.Velocity) return; const dx = h.Transform.x - e.Transform.x, dy = h.Transform.y - e.Transform.y, d = Math.hypot(dx, dy) || 1; if (d > 260) { e.Velocity.vx = 0; e.Velocity.vy = 0; return; } const vm = e.Script.params.vel > 0 ? e.Script.params.vel : 60; e.Velocity.vx = dx / d * vm; e.Velocity.vy = e.Script.params.plat ? 0 : dy / d * vm; } },
+      patrulha: { atualizar(e) { const p = e.Script.params; e.Transform.x = p.x0 + Math.sin(performance.now() / 1000 * (p.vel > 0 ? p.vel / 32 : 1.5) + p.fase) * 48; } }
     };
     const combinar = lista => {
       const nome = 's:' + lista.slice().sort().join('+');
@@ -115,7 +115,7 @@
           else if (solido) e.Body = Object.assign({ massa: 0 }, corpo);
           else if (scripts.length) e.Body = Object.assign({ massa: scripts.includes('perseguir') ? 1 : 0, sensor: true, camada: 'item', colide: ['jogador'] }, corpo);
           if (scripts.includes('perseguir')) e.Velocity = { vx: 0, vy: 0 };
-          if (scripts.length) e.Script = { nome: combinar(scripts), params: { plat, x0: x, fase: (cx * 7 + cy * 13) % 6 } };
+          if (scripts.length) e.Script = { nome: combinar(scripts), params: { plat, x0: x, fase: (cx * 7 + cy * 13) % 6, vel: ob.movVel } };
           cena.create(e);
         }
         if (bake.n) { assets.registrar('bake:' + sc.nome, bake.c); cena.create({ nome: 'tiles', Transform: { x: W / 2, y: H / 2 }, Sprite: { imagem: 'bake:' + sc.nome, quadroW: W, quadroH: H, escala: 1, suavizar: false, camada: 0 } }); }
