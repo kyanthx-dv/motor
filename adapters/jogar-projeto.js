@@ -142,15 +142,15 @@
     (function quadro(t) { const d = t - dbg.t; dbg.t = t; dbg.n++; dbg.ms += d; if (d > dbg.pior) dbg.pior = d;
       if (t - dbg.t0 >= 500) { dbg.fps = Math.round(dbg.n * 1000 / (t - dbg.t0)); dbg.med = +(dbg.ms / dbg.n).toFixed(1); dbg.max = Math.round(dbg.pior); dbg.n = 0; dbg.ms = 0; dbg.pior = 0; dbg.t0 = t; }
       requestAnimationFrame(quadro); })(performance.now());
-    window.dbgInfo = () => { const c = window.jogo && window.jogo.cena; return JSON.stringify({ fps: dbg.fps, ms: dbg.med || 0, pior: dbg.max, ent: c ? c.query('Transform').length : 0, corpos: c ? c.query('Body').length : 0, mem: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); };
+    window.dbgInfo = () => { const c = window.jogo && window.jogo.cena; return JSON.stringify({ dpr: renderer.dpr, res: renderer.canvas.width + 'x' + renderer.canvas.height, fps: dbg.fps, ms: dbg.med || 0, pior: dbg.max, ent: c ? c.query('Transform').length : 0, corpos: c ? c.query('Body').length : 0, mem: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); };
     window.sair = () => { try { Sair.postMessage('sair'); } catch (e) {} };
     engine.events.on('sair', window.sair);
     // o botão Pular emite 'pular' com { para: id do botão }; aqui o evento chega ao herói (fila de pulo)
-    engine.events.on('pular', () => { const h = cena.find('heroi'); if (h && h.Script && h.Script.params) h.Script.params.fila = 0.15; });
+    engine.events.on('pular', () => { const h = engine.scene.find('heroi'); if (h && h.Script && h.Script.params) h.Script.params.fila = 0.15; });
     // qualidade de desenho (resolução do canvas): 3 = nativa, 1.5 = média, 1 = baixa (menos pixels = mais FPS)
     window.definirQualidade = k => { renderer.dprMax = k; renderer.redimensionar(); };
-    window.definirQualidade(1.5);
+    window.definirQualidade(1.5); tela.style.imageRendering = 'pixelated';   // pixel art nítida mesmo com o canvas em resolução menor
     engine.irPara('c:' + inicial.nome); engine.iniciar();
-    window.jogo = { engine, cena };
+    window.jogo = { engine, get cena() { return engine.scene; } };   // sempre a cena atual
   };
 })();
