@@ -101,7 +101,7 @@
           if (it.g) it.g.visible = false; if (!tex) return;
           tex.source.scaleMode = s.suavizar ? 'linear' : 'nearest';
           if (!it.sp) { it.sp = new P.Sprite(tex); it.sp.anchor.set(0.5); it.c.addChildAt(it.sp, 0); } it.sp.visible = true; it.sp.texture = tex;
-          it.sp.scale.set((s.espelhar ? -1 : 1) * k, k); it.sp.position.set(s.offX || 0, s.offY || 0); this._texto(it, s, fw * k, e.Botao && e.Botao.sobre); return;
+          it.sp.scale.set((s.espelhar ? -1 : 1) * k * (s.escalaX || 1), k * (s.escalaY || 1)); it.sp.position.set(s.offX || 0, s.offY || 0); this._texto(it, s, fw * k, e.Botao && e.Botao.sobre); return;
         }
         if (it.sp) it.sp.visible = false; if (it.g) it.g.visible = true;
         this._forma(it, s, b, e); this._texto(it, s, s.w ?? b.w ?? 20, e.Botao && e.Botao.sobre);

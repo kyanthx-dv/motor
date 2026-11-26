@@ -9,14 +9,21 @@
     const retrato = proj.ori === 'retrato';
     const L = retrato ? 450 : 800, A = retrato ? 800 : 450;
     const tela = document.getElementById('tela');
-    const ajustar = () => { const k = Math.min(innerWidth / L, innerHeight / A); tela.style.width = L * k + 'px'; tela.style.height = A * k + 'px'; };
+    const ajustar = () => { const k = Math.min(innerWidth / L, innerHeight / A); tela.style.width = L * k + 'px'; tela.style.height = A * k + 'px'; const gl = document.querySelector('.tela-gl'); if (gl) { gl.style.width = tela.style.width; gl.style.height = tela.style.height; } };
     addEventListener('resize', ajustar); ajustar();
     const assets = new C.Assets();
     // desenhos do usuario (PNG em data URL) viram imagens da engine: nome 'a<valor da celula>'
     const manifesto = {};
     for (const [v, im] of Object.entries(dados.imagens || {})) manifesto['a' + v] = im.png;
     try { await assets.carregar(manifesto); } catch (e) { console.error(String(e)); }
-    const renderer = new C.CanvasRenderer(tela, { largura: L, altura: A, fundo: '#141414', assets });
+    // renderizador: Canvas 2D (padrão) ou WebGL (dados.render === 'webgl', opcional; volta ao Canvas se o aparelho não suportar)
+    let renderer = null;
+    if (dados.render === 'webgl' && C.PixiRenderer) {
+      renderer = await C.PixiRenderer.criar(tela, { largura: L, altura: A, fundo: '#141414', assets, pixiUrl: 'adapters/vendor/pixi.min.js' });
+      if (renderer) { renderer.gl.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;display:block;z-index:0'; tela.style.zIndex = 1; }   // a tela 2D (HUD, joystick) fica por cima do WebGL
+    }
+    const webgl = !!renderer; window.renderizador = webgl ? 'webgl' : 'canvas';
+    if (!renderer) renderer = new C.CanvasRenderer(tela, { largura: L, altura: A, fundo: '#141414', assets });
     const input = new C.Input(tela, renderer), engine = new C.Engine({ renderer, input }), cena = engine.scene;
     const texto = (t, x, y, tam, cor = '#fff') => cena.create({ nome: 'texto', Transform: { x, y }, Sprite: { fixo: true, forma: 'retangulo', w: 1, h: 1, cor: 'rgba(0,0,0,0)', rotulo: t, tamanhoTexto: tam, corTexto: cor, camada: 9 } });
     const botao = (t, x, y, acao, w = 200, h = 48, tam = 20) => cena.create({ nome: 'botao', Transform: { x, y }, Botao: { acao }, Sprite: { fixo: true, forma: 'retangulo', w, h, cor: '#1D9BF0', corSobre: '#4db3f5', rotulo: t, corTexto: '#ffffff', tamanhoTexto: tam, camada: 10 } });
@@ -142,7 +149,7 @@
     (function quadro(t) { const d = t - dbg.t; dbg.t = t; dbg.n++; dbg.ms += d; if (d > dbg.pior) dbg.pior = d;
       if (t - dbg.t0 >= 500) { dbg.fps = Math.round(dbg.n * 1000 / (t - dbg.t0)); dbg.med = +(dbg.ms / dbg.n).toFixed(1); dbg.max = Math.round(dbg.pior); dbg.n = 0; dbg.ms = 0; dbg.pior = 0; dbg.t0 = t; }
       requestAnimationFrame(quadro); })(performance.now());
-    window.dbgInfo = () => { const c = window.jogo && window.jogo.cena; return JSON.stringify({ dpr: renderer.dpr, res: renderer.canvas.width + 'x' + renderer.canvas.height, fps: dbg.fps, ms: dbg.med || 0, pior: dbg.max, ent: c ? c.query('Transform').length : 0, corpos: c ? c.query('Body').length : 0, mem: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); };
+    window.dbgInfo = () => { const c = window.jogo && window.jogo.cena; return JSON.stringify({ render: window.renderizador, dpr: renderer.dpr, res: renderer.canvas.width + 'x' + renderer.canvas.height, fps: dbg.fps, ms: dbg.med || 0, pior: dbg.max, ent: c ? c.query('Transform').length : 0, corpos: c ? c.query('Body').length : 0, mem: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); };
     window.sair = () => { try { Sair.postMessage('sair'); } catch (e) {} };
     engine.events.on('sair', window.sair);
     // o botão Pular emite 'pular' com { para: id do botão }; aqui o evento chega ao herói (fila de pulo)
