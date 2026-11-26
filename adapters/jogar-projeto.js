@@ -27,11 +27,16 @@
     engine.registrarScript('heroi', {
       atualizar(e, dt, ctx) {
         const ax = ctx.input.axes, v = e.Velocity, p = e.Script.params, vel = 170;
-        if (p.plat) { v.vx = ax.x * vel; if (ax.y < -0.6 && Math.abs(v.vy) < 8) v.vy = -520; }
-        else { v.vx = ax.x * vel; v.vy = ax.y * vel; }
+        if (p.plat) {
+          v.vx = ax.x * vel;
+          // chão = parado na vertical (y não mudou). Pequena tolerância (coyote) e fila de pulo (buffer) para o botão nunca "perder" o toque
+          const parado = p.ly !== undefined && Math.abs(e.Transform.y - p.ly) < 0.15 && Math.abs(v.vy) < 40; p.ly = e.Transform.y;
+          p.chao = parado ? 0.12 : Math.max(0, (p.chao || 0) - dt); p.fila = Math.max(0, (p.fila || 0) - dt);
+          if (p.fila > 0 && p.chao > 0) { v.vy = -520; p.chao = 0; p.fila = 0; }
+        } else { v.vx = ax.x * vel; v.vy = ax.y * vel; }
         if (Math.abs(v.vx) > 5) e.Sprite.espelhar = v.vx < 0;
       },
-      eventos: { pular(e) { if (e.Script.params.plat && Math.abs(e.Velocity.vy) < 8) e.Velocity.vy = -520; } }
+      eventos: { pular(e) { if (e.Script.params.plat) e.Script.params.fila = 0.15; } }
     });
     // comportamentos anexaveis (ids iguais aos do app); um objeto pode ter varios
     const defs = {
@@ -81,7 +86,7 @@
         const atorId = sc.ator && sc.ator.obj != null ? sc.ator.obj : null;   // ator principal escolhido no editor (null = nenhum; vale o Herói antigo)
         for (const [x, y, w, h] of [[W / 2, -20, W + 80, 40], [W / 2, H + 20, W + 80, 40], [-20, H / 2, 40, H + 80], [W + 20, H / 2, 40, H + 80]])
           cena.create({ nome: 'borda', Transform: { x, y }, Body: { forma: 'retangulo', w, h, massa: 0 } });
-        let heroi = null;
+        let heroi = null; const linhasSolidas = {};
         // sc.objs (editor novo): lista livre {x,y,w,h,v,...props}; sc.cel (antigo): uma celula = um objeto 1x1
         const lista = sc.objs || Object.keys(sc.cel || {}).map(k => { const [x, y] = k.split(',').map(Number); return Object.assign({ x, y, w: 1, h: 1, v: sc.cel[k] }, (sc.obj && sc.obj[k]) || {}); });
         for (const ob of lista) {
@@ -98,17 +103,23 @@
           const e = { nome: (ob.nome || it.nome).toLowerCase(), Transform: { x, y }, Sprite: Object.assign({ cor: it.nome === 'Moeda' ? '#F59E0B' : it.nome === 'Bandeira' ? '#F23F43' : cor, camada }, forma) };
           if (ob.visivel === false) { e.Sprite.cor = 'rgba(0,0,0,0)'; if (img) delete e.Sprite.imagem; }
           const corpo = img ? { forma: 'retangulo', w: img.l * kimg * ow, h: img.a * kimg * oh } : tile ? { forma: 'retangulo', w: U * ow, h: U * oh } : it.nome === 'Bandeira' ? { forma: 'retangulo', w: 20 * ow, h: 28 * oh } : { forma: 'circulo', raio: 10 * mx };
-          if (solido) e.Body = Object.assign({ massa: 0 }, corpo);
+          const mesclar = tile && solido && !scripts.length && ow === 1 && oh === 1;   // tiles sólidos comuns viram poucos corpos largos (física leve)
+          if (mesclar) (linhasSolidas[cy] = linhasSolidas[cy] || []).push(cx);
+          else if (solido) e.Body = Object.assign({ massa: 0 }, corpo);
           else if (scripts.length) e.Body = Object.assign({ massa: scripts.includes('perseguir') ? 1 : 0, sensor: true, camada: 'item', colide: ['jogador'] }, corpo);
           if (scripts.includes('perseguir')) e.Velocity = { vx: 0, vy: 0 };
           if (scripts.length) e.Script = { nome: combinar(scripts), params: { plat, x0: x, fase: (cx * 7 + cy * 13) % 6 } };
           cena.create(e);
         }
+        for (const yy of Object.keys(linhasSolidas)) {
+          const xs = linhasSolidas[yy].sort((a, b) => a - b); let i = 0;
+          while (i < xs.length) { let j = i; while (j + 1 < xs.length && xs[j + 1] === xs[j] + 1) j++;
+            const n = j - i + 1; cena.create({ nome: 'solido', Transform: { x: (xs[i] + n / 2) * U, y: (sc.a - Number(yy) - 0.5) * U }, Body: { forma: 'retangulo', w: n * U, h: U, massa: 0 } }); i = j + 1; }
+        }
         if (heroi) cena.create({ nome: 'heroi', Transform: { x: heroi.x, y: heroi.y }, Velocity: { vx: 0, vy: 0 }, Body: { forma: 'circulo', raio: 11, massa: 1, amortecimento: plat ? 0 : 9, camada: 'jogador' }, Sprite: heroi.img ? { imagem: 'a' + heroi.img.chave, quadroW: heroi.img.l, quadroH: heroi.img.a, escala: 28 / Math.max(heroi.img.l, heroi.img.a), suavizar: false, camada: 3 } : { forma: 'circulo', raio: 12, cor: '#FFFFFF', camada: 3 }, Script: { nome: 'heroi', params: { plat } } });
         if (heroi) cena.estado.atorPrincipal = 'heroi';   // referência trocável por script
         const h = cena.find('heroi');
         texto('Moedas 0', 70, 24, 18).Script = { nome: 'hud' };
-        botao('Sair', L - 50, 24, { evento: 'sair' }, 70, 32, 14);
         if (plat) botao('Pular', L - 70, A - 50, { evento: 'pular' }, 110, 56, 18);
         ativarArrasto(cena.estado.camera, L);   // idempotente; só age enquanto o modo for 'arrastar'
       } });
@@ -117,6 +128,12 @@
       cena.estado.fundo = '#141414'; cena.estado.camera = null;
       texto('Você chegou na bandeira!', L / 2, A / 2 - 50, 28); botao('Jogar de novo', L / 2, A / 2 + 20, { irPara: 'c:' + inicial.nome }); botao('Sair', L / 2, A / 2 + 84, { evento: 'sair' });
     } });
+    // depuração (lida pelo app): FPS e tempo de quadro medidos no navegador + tamanho da cena
+    const dbg = window.dbg = { fps: 0, ms: 0, max: 0, n: 0, t: performance.now(), t0: performance.now(), pior: 0 };
+    (function quadro(t) { const d = t - dbg.t; dbg.t = t; dbg.n++; dbg.ms += d; if (d > dbg.pior) dbg.pior = d;
+      if (t - dbg.t0 >= 500) { dbg.fps = Math.round(dbg.n * 1000 / (t - dbg.t0)); dbg.med = +(dbg.ms / dbg.n).toFixed(1); dbg.max = Math.round(dbg.pior); dbg.n = 0; dbg.ms = 0; dbg.pior = 0; dbg.t0 = t; }
+      requestAnimationFrame(quadro); })(performance.now());
+    window.dbgInfo = () => { const c = window.jogo && window.jogo.cena; return JSON.stringify({ fps: dbg.fps, ms: dbg.med || 0, pior: dbg.max, ent: c ? c.query('Transform').length : 0, corpos: c ? c.query('Body').length : 0, mem: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); };
     window.sair = () => { try { Sair.postMessage('sair'); } catch (e) {} };
     engine.events.on('sair', window.sair);
     engine.irPara('c:' + inicial.nome); engine.iniciar();
