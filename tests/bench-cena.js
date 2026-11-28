@@ -33,6 +33,7 @@ medir('query_rara', nada, () => { let n = 0; for (let k = 0; k < 20; k++) n += b
 medir('find_inexistente', nada, () => { let n = 0; for (let k = 0; k < 20; k++) n += base.find('nada') ? 1 : 0; return n; });
 medir('find_primeiro', nada, () => { let n = 0; for (let k = 0; k < 2000; k++) n += base.find('e99') ? 1 : 0; return n; });
 medir('destroy_flush_20_arvores', () => criar(), s => { for (let k = 0; k < 20; k++) s.destroy(1 + 10 * k); s.flush(); return s.entities.size; });
+medir('mover_60_quadros', () => criar(), s => { const dt = 0.016; for (let f = 0; f < 60; f++) for (const e of s.query('Transform', 'Velocity')) { e.Transform.x += e.Velocity.vx * dt; e.Transform.y += e.Velocity.vy * dt; } return s.entities.size; });
 medir('serializar_objeto', nada, () => C.Serializer.paraJSON(base));
 const texto = JSON.stringify(C.Serializer.paraJSON(base));
 const objeto = C.Serializer.paraJSON(base);
